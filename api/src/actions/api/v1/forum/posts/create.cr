@@ -2,6 +2,7 @@ class Api::V1::Forum::Posts::Create < ApiAction
   include Api::V1::Forum::Params
   include Api::V1::Forum::Lookup
   include Api::V1::Forum::Visibility
+  include Api::Auth::RequireConfirmedEmail
 
   post "/api/v1/forum/topics/:id/posts" do
     topic = find_forum_topic!(params.get(:id))

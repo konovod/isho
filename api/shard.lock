@@ -44,6 +44,10 @@ shards:
     git: https://github.com/luckyframework/dexter.git
     version: 0.3.4
 
+  email:
+    git: https://github.com/arcage/crystal-email.git
+    version: 0.7.1
+
   exception_page:
     git: https://github.com/crystal-loot/exception_page.git
     version: 0.5.0

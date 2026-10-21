@@ -12,6 +12,7 @@ export interface Me extends ApiUser {
   email: string
   theme: Theme
   is_admin: boolean
+  email_confirmed: boolean
 }
 
 export interface ForumSectionRef {
@@ -143,6 +144,7 @@ export interface ProjectList {
 export interface AdminUser extends ApiUser {
   email: string
   is_admin: boolean
+  email_confirmed: boolean
   projects_count: number
 }
 

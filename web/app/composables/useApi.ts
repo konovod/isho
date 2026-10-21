@@ -44,6 +44,14 @@ const detailMessages: Record<string, string> = {
   'must be a post in this topic': 'можно цитировать только сообщение из этой темы',
 }
 
+const codeMessages: Record<string, string> = {
+  email_not_confirmed: 'Подтвердите почту — тогда можно публиковать проекты и писать на форуме.',
+  invalid_token: 'Ссылка недействительна или устарела. Запросите новое письмо.',
+  email_delivery_failed: 'Не удалось отправить письмо. Попробуйте позже.',
+  too_many_requests: 'Слишком много попыток. Попробуйте позже.',
+  unauthorized: 'Нужно войти в аккаунт.',
+}
+
 function translateDetail(message: string): string {
   return detailMessages[message] ?? message
 }
@@ -59,7 +67,7 @@ export function formatApiError(err: unknown, fallback = 'Что-то пошло 
     if (details) return `Проверьте поля — ${details}`
   }
 
-  return err.message
+  return codeMessages[err.code] ?? err.message
 }
 
 export function useApi() {

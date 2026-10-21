@@ -36,6 +36,7 @@ await fetchMe()
     <AppHeader />
 
     <main class="main">
+      <EmailConfirmationBanner />
       <NuxtPage />
     </main>
 

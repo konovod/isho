@@ -1,9 +1,17 @@
 import type { Me, Theme } from '~/types/api'
 
+export interface ResendConfirmationResult {
+  sent: boolean
+  retry_after?: number
+  already_confirmed?: boolean
+}
+
 export function useAuth() {
   const user = useState<Me | null>('auth.user', () => null)
   const loaded = useState<boolean>('auth.loaded', () => false)
   const canModerate = computed(() => user.value?.is_admin === true)
+  // Visitors and accounts created before confirmation existed are not nagged.
+  const emailConfirmed = computed(() => user.value?.email_confirmed !== false)
   const api = useApi()
 
   async function fetchMe(force = false): Promise<Me | null> {
@@ -40,6 +48,10 @@ export function useAuth() {
     return user.value
   }
 
+  async function resendEmailConfirmation(): Promise<ResendConfirmationResult> {
+    return await api.post<ResendConfirmationResult>('/api/v1/email_confirmations/resend')
+  }
+
   async function signOut(): Promise<void> {
     try {
       await api.del('/api/v1/sign_ins')
@@ -60,5 +72,5 @@ export function useAuth() {
     }
   }
 
-  return { user, loaded, canModerate, fetchMe, signIn, signUp, signOut, saveTheme }
+  return { user, loaded, canModerate, emailConfirmed, fetchMe, signIn, signUp, resendEmailConfirmation, signOut, saveTheme }
 }

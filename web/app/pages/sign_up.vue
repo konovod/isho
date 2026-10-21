@@ -3,6 +3,14 @@ import { formatApiError } from '~/composables/useApi'
 
 const { signUp } = useAuth()
 const router = useRouter()
+const {
+  pending: resendPending,
+  message: resendMessage,
+  error: resendError,
+  cooldown,
+  cooldownLabel,
+  resend,
+} = useEmailConfirmation()
 
 const email = ref('')
 const username = ref('')
@@ -11,6 +19,7 @@ const password = ref('')
 const passwordConfirmation = ref('')
 const error = ref('')
 const pending = ref(false)
+const created = ref(false)
 
 async function submit() {
   error.value = ''
@@ -24,7 +33,7 @@ async function submit() {
       password: password.value,
       password_confirmation: passwordConfirmation.value,
     })
-    await router.push('/dashboard')
+    created.value = true
   }
   catch (err) {
     error.value = formatApiError(err, 'Не удалось создать аккаунт')
@@ -33,11 +42,48 @@ async function submit() {
     pending.value = false
   }
 }
+
+async function goToDashboard() {
+  await router.push('/dashboard')
+}
 </script>
 
 <template>
   <div class="auth-wrap">
-    <div class="card auth-card">
+    <div v-if="created" class="card auth-card">
+      <h1>Проверьте почту</h1>
+      <p class="sub">
+        Аккаунт создан. Мы отправили письмо на <strong>{{ email.trim() }}</strong> — откройте ссылку из него.
+      </p>
+      <p class="sub">
+        Пока адрес не подтверждён, публиковать проекты и писать на форуме нельзя.
+      </p>
+
+      <div v-if="resendMessage" class="form-success">
+        {{ resendMessage }}
+      </div>
+      <div v-if="resendError" class="form-error">
+        {{ resendError }}
+      </div>
+
+      <button class="btn btn-ghost w-full" :disabled="resendPending || cooldown > 0" @click="resend">
+        <template v-if="resendPending">
+          Отправляем…
+        </template>
+        <template v-else-if="cooldown > 0">
+          Отправить ещё раз через {{ cooldownLabel }}
+        </template>
+        <template v-else>
+          Отправить письмо ещё раз
+        </template>
+      </button>
+
+      <button class="btn btn-primary w-full mt-16" @click="goToDashboard">
+        Перейти в кабинет
+      </button>
+    </div>
+
+    <div v-else class="card auth-card">
       <h1>Регистрация</h1>
       <p class="sub">
         Аккаунт нужен, чтобы публиковать проекты и собирать аудиторию.

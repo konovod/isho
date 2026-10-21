@@ -2,6 +2,7 @@ class Api::V1::Projects::Forum::Topics::Create < ApiAction
   include Api::V1::Projects::ProjectParams
   include Api::V1::Forum::Params
   include Api::V1::Forum::Lookup
+  include Api::Auth::RequireConfirmedEmail
 
   post "/api/v1/projects/:slug/forum/topics" do
     unless project_visible?

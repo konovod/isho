@@ -7,6 +7,7 @@ definePageMeta({ middleware: 'auth' })
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
+const { emailConfirmed } = useAuth()
 const { dateTime } = useFormat()
 const slug = route.params.slug as string
 
@@ -275,7 +276,12 @@ async function deleteDownload(id: number) {
           <NuxtLink :to="`/p/${project.slug}`" class="btn btn-ghost btn-sm">
             Открыть страницу
           </NuxtLink>
-          <button class="btn btn-ghost btn-sm" @click="togglePublish">
+          <button
+            class="btn btn-ghost btn-sm"
+            :disabled="project.status !== 'published' && !emailConfirmed"
+            :title="project.status !== 'published' && !emailConfirmed ? 'Подтвердите почту, чтобы публиковать проекты' : undefined"
+            @click="togglePublish"
+          >
             {{ project.status === 'published' ? 'Снять с публикации' : 'Опубликовать' }}
           </button>
           <button class="btn btn-danger btn-sm" @click="removeProject">

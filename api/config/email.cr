@@ -1,18 +1,33 @@
 require "carbon_sendgrid_adapter"
 
 BaseEmail.configure do |settings|
-  if LuckyEnv.production?
-    # If you don't need to send emails, set the adapter to DevAdapter instead:
-    #
-    #   settings.adapter = Carbon::DevAdapter.new
-    #
-    # If you do need emails, get a key from SendGrid and set an ENV variable
-    send_grid_key = send_grid_key_from_env
-    settings.adapter = Carbon::SendGridAdapter.new(api_key: send_grid_key)
-  elsif LuckyEnv.development?
-    settings.adapter = Carbon::DevAdapter.new(print_emails: true)
+  settings.adapter = mail_adapter
+end
+
+# `MAIL_ADAPTER` picks the transport:
+#
+#   smtp      – any SMTP provider (mail.ru, Yandex, Brevo, Unisender Go, ...)
+#   sendgrid  – SendGrid HTTP API, needs SEND_GRID_KEY
+#   dev       – prints letters to the log instead of sending (default)
+#
+private def mail_adapter : Carbon::Adapter
+  # Specs never send real letters, whatever .env says.
+  return Carbon::DevAdapter.new if LuckyEnv.test?
+
+  case ENV["MAIL_ADAPTER"]?.try(&.strip.downcase)
+  when "smtp"
+    SmtpMailAdapter.new(
+      host: ENV.fetch("SMTP_HOST", "localhost"),
+      port: ENV.fetch("SMTP_PORT", "465").to_i,
+      mode: SmtpMailAdapter::Mode.parse(ENV["SMTP_TLS"]?),
+      username: ENV["SMTP_USER"]?,
+      password: ENV["SMTP_PASSWORD"]?,
+      helo_domain: ENV["SMTP_HELO_DOMAIN"]?,
+    )
+  when "sendgrid"
+    Carbon::SendGridAdapter.new(api_key: send_grid_key_from_env)
   else
-    settings.adapter = Carbon::DevAdapter.new
+    Carbon::DevAdapter.new(print_emails: LuckyEnv.development?)
   end
 end
 

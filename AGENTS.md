@@ -63,6 +63,15 @@
   `replies_count`/`last_post_at` останутся неверными. Для аккаунта целиком используйте
   `DeleteUserAccount` (он вызывает `DeleteUserContent`, удаляет файлы скриншотов и
   осиротевшие теги).
+- **Подтверждение почты:** регистрация создаёт аккаунт с `users.email_confirmed_at = NULL`
+  и отправляет письмо со ссылкой `/confirm_email?token=...`. Токен одноразовый, в БД
+  лежит только SHA-256, срок — 24 часа, повторная отправка не чаще 5 минут
+  (`EmailConfirmation`, `SaveEmailConfirmation`, `ConfirmUserEmail`). Пока адрес не
+  подтверждён, вход и черновики работают, а публикация проектов и создание тем/сообщений
+  форума отдают 403 `email_not_confirmed` (`Api::Auth::RequireConfirmedEmail`).
+  Транспорт: `MAIL_ADAPTER=dev|smtp|sendgrid` (`MAIL_FROM`, `SMTP_*`); в тестах всегда
+  dev-адаптер. `EMAIL_CONFIRMATION=off` отключает требование, а `tasks.exe db.confirm_email
+  <email>` подтверждает вручную. Письма собирает `EmailConfirmationEmail`.
 - **UI:** русский язык, светлая и тёмная темы, стили в `web/app/assets/css/main.css`.
   Палитра — токены через `light-dark()`; выбор хранится в cookie `isho_theme` и в
   `users.theme`, атрибут `data-theme` на `<html>` Nuxt ставит на SSR.
@@ -79,6 +88,9 @@
 - **Timestamps:** модели Avram ожидают `created_at`/`updated_at`; не забывать `add_timestamps`.
 - **Cookie:** не называть auth-cookie так же, как `Lucky::Session.settings.key`, иначе Lucky перезапишет значение.
 - **Windows:** собранный `api.exe` блокируется запущенным процессом; перед пересборкой остановить сервер.
+- **`.env` перекрывает окружение:** `LuckyEnv.load?` пишет значения файла в `ENV` поверх уже
+  установленных, поэтому `LUCKY_ENV` и `DEV_PORT` в `api/.env` уводят спеки в dev-среду и
+  dev-базу. Держите в `.env` только то, что нужно рантайму (например, `MAIL_*`).
 
 ## Проверки перед коммитом
 

@@ -20,7 +20,7 @@ class Db::Seed::SampleData < LuckyTask::Task
   end
 
   private def find_or_create_user : User
-    UserQuery.new.username(DEMO_USERNAME).first? || begin
+    user = UserQuery.new.username(DEMO_USERNAME).first? || begin
       SignUpUser.create!(
         email: DEMO_EMAIL,
         username: DEMO_USERNAME,
@@ -29,6 +29,10 @@ class Db::Seed::SampleData < LuckyTask::Task
         password_confirmation: DEMO_PASSWORD,
       )
     end
+
+    # The demo author publishes projects, which needs a confirmed address.
+    ConfirmUserEmail.update!(user, email_confirmed_at: Time.utc) unless user.email_confirmed?
+    user
   end
 
   private def ensure_tags

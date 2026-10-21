@@ -116,6 +116,16 @@ set_env() {
   fi
 }
 
+# set_env_if_missing FILE KEY VALUE -- append only when KEY is absent, so values
+# edited on the server (mail credentials, for instance) survive the next deploy.
+set_env_if_missing() {
+  local file=$1 key=$2 value=$3
+  if [ -f "$file" ] && grep -q "^${key}=" "$file"; then
+    return 0
+  fi
+  printf '%s=%s\n' "$key" "$value" >> "$file"
+}
+
 if [ ! -f "$ENV_DIR/api.env" ]; then
   db_password=$(openssl rand -hex 16)
   secret_key=$(openssl rand -base64 64 | tr -d '\n')
@@ -127,11 +137,29 @@ SECRET_KEY_BASE=${secret_key}
 SEND_GRID_KEY=unused
 EOF
 fi
-set_env "$ENV_DIR/api.env" SEND_GRID_KEY unused
 set_env "$ENV_DIR/api.env" HOST 127.0.0.1
 set_env "$ENV_DIR/api.env" APP_ORIGIN "$PUBLIC_ORIGIN"
 set_env "$ENV_DIR/api.env" APP_DOMAIN "$PUBLIC_ORIGIN"
 set_env "$ENV_DIR/api.env" COOKIE_SECURE "$COOKIE_SECURE"
+
+# Mail. deploy.ps1 passes -MailFrom (and the SMTP settings) on the first run;
+# afterwards the values in this file are the source of truth. Without MAIL_FROM
+# the API prints letters to the journal instead of sending them.
+set_env_if_missing "$ENV_DIR/api.env" MAIL_ADAPTER "${ISHO_MAIL_ADAPTER:-dev}"
+if [ -n "${ISHO_MAIL_FROM:-}" ]; then
+  set_env_if_missing "$ENV_DIR/api.env" MAIL_FROM "$ISHO_MAIL_FROM"
+  set_env_if_missing "$ENV_DIR/api.env" SMTP_HOST "${ISHO_SMTP_HOST:-smtp.mail.ru}"
+  set_env_if_missing "$ENV_DIR/api.env" SMTP_PORT "${ISHO_SMTP_PORT:-465}"
+  set_env_if_missing "$ENV_DIR/api.env" SMTP_TLS "${ISHO_SMTP_TLS:-ssl}"
+  set_env_if_missing "$ENV_DIR/api.env" SMTP_USER "${ISHO_SMTP_USER:-$ISHO_MAIL_FROM}"
+  set_env_if_missing "$ENV_DIR/api.env" SMTP_PASSWORD "${ISHO_SMTP_PASSWORD:-}"
+  set_env_if_missing "$ENV_DIR/api.env" EMAIL_CONFIRMATION on
+else
+  # No transport: printing letters is fine for a demo, but nobody could confirm,
+  # so new accounts are allowed to publish right away.
+  set_env_if_missing "$ENV_DIR/api.env" EMAIL_CONFIRMATION off
+fi
+
 chown root:isho "$ENV_DIR/api.env"
 chmod 0640 "$ENV_DIR/api.env"
 
@@ -215,4 +243,5 @@ wait_for http://127.0.0.1:3000/ "Nuxt"
 wait_for "http://127.0.0.1/" "Caddy"
 
 log "Deployed"
-printf 'public origin: %s\ncaddy site:    %s\nsecure cookies: %s\n' "$PUBLIC_ORIGIN" "$SITE_ADDRESS" "$COOKIE_SECURE"
+printf 'public origin: %s\ncaddy site:    %s\nsecure cookies: %s\nmail adapter:  %s\n' \
+  "$PUBLIC_ORIGIN" "$SITE_ADDRESS" "$COOKIE_SECURE" "$(sed -nE 's|^MAIL_ADAPTER=(.*)$|\1|p' "$ENV_DIR/api.env" | tail -1)"

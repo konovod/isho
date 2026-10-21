@@ -20,6 +20,11 @@
 
 .EXAMPLE
   .\deploy\deploy.ps1 -SampleData   # also seed demo projects and accounts
+
+.EXAMPLE
+  # Confirmation letters from a mail.ru mailbox (see deploy/README.md)
+  $env:ISHO_SMTP_PASSWORD = 'app-password'
+  .\deploy\deploy.ps1 -SiteAddress https://example.com -MailFrom isho2026@mail.ru
 #>
 [CmdletBinding()]
 param(
@@ -32,6 +37,18 @@ param(
   [string]$PublicOrigin = '',
   [ValidateSet('auto', 'true', 'false')]
   [string]$SecureCookies = 'auto',
+  # Mail. Without -MailFrom the API prints letters to the journal instead of
+  # sending them, and the confirmation requirement can be turned off with
+  # EMAIL_CONFIRMATION=off in /etc/isho/api.env.
+  [string]$MailFrom = '',
+  [ValidateSet('smtp', 'sendgrid', 'dev')]
+  [string]$MailAdapter = 'smtp',
+  [string]$SmtpHost = 'smtp.mail.ru',
+  [string]$SmtpPort = '465',
+  [ValidateSet('ssl', 'starttls', 'none')]
+  [string]$SmtpTls = 'ssl',
+  [string]$SmtpUser = '',
+  [string]$SmtpPassword = $env:ISHO_SMTP_PASSWORD,
   [switch]$SampleData,
   [switch]$SkipBuild
 )
@@ -41,8 +58,21 @@ $artifact = Join-Path $PSScriptRoot 'artifacts\isho-deploy.tar.gz'
 
 if (-not $SiteAddress) { $SiteAddress = ':80' }
 if (-not $PublicOrigin) { $PublicOrigin = "http://$Server" }
-foreach ($value in @($SiteAddress, $PublicOrigin, $SshUser, $Server)) {
+if ($MailFrom) {
+  if (-not $SmtpUser) { $SmtpUser = $MailFrom }
+}
+else {
+  $MailAdapter = 'dev'
+}
+foreach ($value in @($SiteAddress, $PublicOrigin, $SshUser, $Server, $MailFrom, $MailAdapter, $SmtpHost, $SmtpPort, $SmtpTls, $SmtpUser, $SmtpPassword)) {
   if ($value -match "'") { throw "Values passed to the server must not contain single quotes: $value" }
+}
+
+# Values are interpolated into a double-quoted here-string below, so a literal
+# $ or ` inside a password would be eaten by PowerShell.
+function ConvertTo-RemoteLiteral([string]$Value) {
+  if (-not $Value) { return '' }
+  return $Value.Replace('`', '``').Replace('$', '`$')
 }
 
 foreach ($tool in @('wsl', 'plink.exe', 'pscp.exe')) {
@@ -99,7 +129,11 @@ $seedSample = if ($SampleData) { '1' } else { '0' }
 $remote = @"
 rm -rf /opt/isho-release && mkdir -p /opt/isho-release &&
 tar -xzf /tmp/isho-deploy.tar.gz -C /opt/isho-release &&
-ISHO_SITE_ADDRESS='$SiteAddress' ISHO_PUBLIC_ORIGIN='$PublicOrigin' ISHO_COOKIE_SECURE='$SecureCookies' ISHO_SEED_SAMPLE='$seedSample' bash /opt/isho-release/server/bootstrap.sh /opt/isho-release
+ISHO_SITE_ADDRESS='$SiteAddress' ISHO_PUBLIC_ORIGIN='$PublicOrigin' ISHO_COOKIE_SECURE='$SecureCookies' ISHO_SEED_SAMPLE='$seedSample' \
+ISHO_MAIL_ADAPTER='$MailAdapter' ISHO_MAIL_FROM='$(ConvertTo-RemoteLiteral $MailFrom)' \
+ISHO_SMTP_HOST='$(ConvertTo-RemoteLiteral $SmtpHost)' ISHO_SMTP_PORT='$SmtpPort' ISHO_SMTP_TLS='$SmtpTls' \
+ISHO_SMTP_USER='$(ConvertTo-RemoteLiteral $SmtpUser)' ISHO_SMTP_PASSWORD='$(ConvertTo-RemoteLiteral $SmtpPassword)' \
+bash /opt/isho-release/server/bootstrap.sh /opt/isho-release
 "@
 # plink passes the command verbatim; CRLF would become part of the last argument.
 $remote = $remote.Replace("`r`n", "`n")

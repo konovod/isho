@@ -2,10 +2,18 @@
 class Errors::Show < Lucky::ErrorAction
   DEFAULT_MESSAGE = "Something went wrong."
   default_format :json
-  dont_report [Lucky::RouteNotFoundError, Avram::RecordNotFoundError, Api::ForbiddenError]
+  dont_report [Lucky::RouteNotFoundError, Avram::RecordNotFoundError, Api::ForbiddenError, Api::EmailNotConfirmedError, Api::InvalidEmailTokenError]
 
   def render(error : Lucky::RouteNotFoundError | Avram::RecordNotFoundError)
     error_json code: "not_found", message: "Not found", status: 404
+  end
+
+  def render(error : Api::EmailNotConfirmedError)
+    error_json code: "email_not_confirmed", message: error.renderable_message, status: 403
+  end
+
+  def render(error : Api::InvalidEmailTokenError)
+    error_json code: "invalid_token", message: error.renderable_message, status: 422
   end
 
   def render(error : Avram::InvalidOperationError)
@@ -26,6 +34,7 @@ class Errors::Show < Lucky::ErrorAction
            when 401 then "unauthorized"
            when 403 then "forbidden"
            when 404 then "not_found"
+           when 429 then "too_many_requests"
            else          "error"
            end
 
