@@ -22,7 +22,7 @@ if (!project.value) {
 }
 
 useSeoMeta({
-  title: () => `Новая тема — ${project.value?.title || 'Проект'} — isho`,
+  title: () => `Новая тема — ${project.value?.title || 'Проект'} — ${SITE_NAME}`,
 })
 
 async function submit() {

@@ -11,8 +11,8 @@ const { data, error } = await useAsyncData(
 const sections = computed(() => data.value?.items ?? [])
 
 useSeoMeta({
-  title: 'Форум — isho',
-  description: 'Обсуждения разработки игр, проектов и инструментов на isho.',
+  title: `Форум — ${SITE_NAME}`,
+  description: `Форум ${SITE_NAME}: обсуждения разработки игр, проектов и инструментов.`,
 })
 </script>
 

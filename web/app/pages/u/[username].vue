@@ -17,7 +17,7 @@ const name = computed(() => data.value?.user.display_name || data.value?.user.us
 const initials = computed(() => name.value.slice(0, 2))
 
 useSeoMeta({
-  title: () => `${name.value} — isho`,
+  title: () => `${name.value} — ${SITE_NAME}`,
   description: () => data.value?.user.bio || `Проекты пользователя ${name.value}`,
 })
 </script>

@@ -146,11 +146,11 @@ async function onDeleted(post: ForumPost) {
 const description = computed(() => {
   const first = data.value?.items[0]
   const text = markdownToText(first?.body)
-  return text.slice(0, 160) || topic.value?.title || 'Обсуждение на форуме isho'
+  return text.slice(0, 160) || topic.value?.title || `Обсуждение на форуме ${SITE_NAME}`
 })
 
 useSeoMeta({
-  title: () => `${topic.value?.title || 'Тема'} — isho`,
+  title: () => `${topic.value?.title || 'Тема'} — ${SITE_NAME}`,
   description: () => description.value,
 })
 </script>

@@ -5,7 +5,7 @@ const { signIn } = useAuth()
 const route = useRoute()
 const router = useRouter()
 
-const email = ref('')
+const login = ref('')
 const password = ref('')
 const error = ref('')
 const pending = ref(false)
@@ -15,12 +15,12 @@ async function submit() {
   pending.value = true
 
   try {
-    await signIn(email.value.trim(), password.value)
+    await signIn(login.value.trim(), password.value)
     await router.push(route.query.redirect?.toString() || '/dashboard')
   }
   catch (err) {
     error.value = err instanceof ApiError
-      ? (err.code === 'validation_failed' ? 'Неверная почта или пароль' : err.message)
+      ? (err.code === 'validation_failed' ? 'Неверная почта, ник или пароль' : err.message)
       : 'Не удалось войти'
   }
   finally {
@@ -43,8 +43,18 @@ async function submit() {
 
       <form @submit.prevent="submit">
         <div class="field">
-          <label class="label" for="email">Почта</label>
-          <input id="email" v-model="email" class="input" type="email" autocomplete="email" required>
+          <label class="label" for="login">Почта или ник</label>
+          <input
+            id="login"
+            v-model="login"
+            class="input"
+            type="text"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder="you@example.com или ваш_ник"
+            required
+          >
         </div>
 
         <div class="field">

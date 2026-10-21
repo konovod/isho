@@ -190,6 +190,11 @@ p {
   text-overflow: ellipsis;
 }
 
+.user-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .avatar {
   display: inline-flex;
   align-items: center;
@@ -1656,17 +1661,40 @@ p {
   }
 
   .header-inner {
-    gap: 14px;
+    flex-wrap: wrap;
+    height: auto;
+    gap: 8px 14px;
+    padding: 10px 0;
+  }
+
+  .header-actions {
+    gap: 8px;
   }
 
   .nav {
-    display: none;
+    order: 3;
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 4px;
   }
 }
 
 @media (max-width: 600px) {
   .container {
     padding: 0 16px;
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .header-actions .btn-sm {
+    padding: 7px 9px;
+  }
+
+  .user-chip {
+    max-width: 120px;
   }
 
   .page-head {
@@ -1693,5 +1721,15 @@ p {
 
   .project-head {
     margin-top: -40px;
+  }
+}
+
+@media (max-width: 420px) {
+  .user-chip-name {
+    display: none;
+  }
+
+  .user-chip {
+    padding-right: 4px;
   }
 }

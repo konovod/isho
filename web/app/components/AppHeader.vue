@@ -2,6 +2,7 @@
 const { user, canModerate, signOut, saveTheme } = useAuth()
 const { toggleTheme } = useTheme()
 const router = useRouter()
+const siteName = SITE_NAME
 
 const initials = computed(() => {
   const name = user.value?.display_name || user.value?.username || '?'
@@ -25,7 +26,7 @@ async function onToggleTheme() {
     <div class="container header-inner">
       <NuxtLink to="/" class="brand">
         <span class="brand-mark">◆</span>
-        isho
+        {{ siteName }}
       </NuxtLink>
 
       <nav class="nav">
@@ -80,7 +81,7 @@ async function onToggleTheme() {
         <template v-if="user">
           <NuxtLink :to="`/u/${user.username}`" class="user-chip">
             <span class="avatar">{{ initials }}</span>
-            <span>{{ user.display_name || user.username }}</span>
+            <span class="user-chip-name">{{ user.display_name || user.username }}</span>
           </NuxtLink>
           <button class="btn btn-ghost btn-sm" @click="logout">
             Выйти

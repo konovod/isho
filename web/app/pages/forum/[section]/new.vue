@@ -22,7 +22,7 @@ if (!section.value) {
 }
 
 useSeoMeta({
-  title: () => `Новая тема — ${section.value?.section.title || 'Форум'} — isho`,
+  title: () => `Новая тема — ${section.value?.section.title || 'Форум'} — ${SITE_NAME}`,
 })
 
 async function submit() {

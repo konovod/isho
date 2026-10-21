@@ -28,8 +28,8 @@ if (!data.value && error.value) {
 }
 
 useSeoMeta({
-  title: () => `${section.value?.title || 'Форум'} — isho`,
-  description: () => section.value?.description || 'Форум isho',
+  title: () => `${section.value?.title || 'Форум'} — ${SITE_NAME}`,
+  description: () => section.value?.description || `Форум ${SITE_NAME}`,
 })
 </script>
 

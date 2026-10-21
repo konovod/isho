@@ -31,7 +31,7 @@ if (!project.value) {
 const topics = computed(() => data.value?.items ?? [])
 
 useSeoMeta({
-  title: () => `Обсуждение «${project.value?.title}» — isho`,
+  title: () => `Обсуждение «${project.value?.title}» — ${SITE_NAME}`,
   description: () => `Вопросы и ответы по проекту ${project.value?.title}.`,
 })
 </script>

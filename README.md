@@ -69,6 +69,9 @@ docker-compose.yml   PostgreSQL
 
 Все ответы — JSON. Ошибки: `{"error":{"code","message","details"}}`.
 
+Вход (`POST /api/v1/sign_ins`) принимает `user.login` — почту или ник без учёта регистра;
+`user.email` поддерживается для старых клиентов.
+
 | Метод | Путь | Доступ |
 |---|---|---|
 | POST | `/api/v1/sign_ups` | публично |

@@ -30,7 +30,7 @@ const devlog = computed(() => data.value?.devlog ?? null)
 const isOwner = computed(() => user.value?.id === project.value?.author.id)
 
 useSeoMeta({
-  title: () => `${devlog.value?.title} — ${project.value?.title} — isho`,
+  title: () => `${devlog.value?.title} — ${project.value?.title} — ${SITE_NAME}`,
   description: () => markdownToText(devlog.value?.body).slice(0, 160),
   ogTitle: () => devlog.value?.title,
   ogDescription: () => markdownToText(devlog.value?.body).slice(0, 160),

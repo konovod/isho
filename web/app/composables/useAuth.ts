@@ -22,8 +22,8 @@ export function useAuth() {
     return user.value
   }
 
-  async function signIn(email: string, password: string): Promise<Me> {
-    user.value = await api.post<Me>('/api/v1/sign_ins', { user: { email, password } })
+  async function signIn(login: string, password: string): Promise<Me> {
+    user.value = await api.post<Me>('/api/v1/sign_ins', { user: { login, password } })
     loaded.value = true
     return user.value
   }

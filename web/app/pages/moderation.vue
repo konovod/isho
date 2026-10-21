@@ -5,7 +5,7 @@ import { formatApiError } from '~/composables/useApi'
 definePageMeta({ middleware: ['auth', 'admin'] })
 
 useSeoMeta({
-  title: 'Модерация — isho',
+  title: `Модерация — ${SITE_NAME}`,
   description: 'Удаление пользователей и снятие проектов с публикации.',
 })
 

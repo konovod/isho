@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const THEME_COLORS = { dark: '#0f1116', light: '#f6f7fb' } as const
+const siteName = SITE_NAME
 
 const { user, fetchMe } = useAuth()
 const { theme, applyUserTheme } = useTheme()
@@ -40,7 +41,7 @@ await fetchMe()
 
     <footer class="footer">
       <div class="container">
-        isho — прототип витрины игр. Crystal + Nuxt.
+        {{ siteName }} — прототип витрины игр. Crystal + Nuxt.
       </div>
     </footer>
   </div>

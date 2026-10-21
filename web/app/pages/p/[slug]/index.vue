@@ -43,7 +43,7 @@ function onModerated(updated: ProjectDetail) {
 }
 
 useSeoMeta({
-  title: () => `${project.value?.title} — isho`,
+  title: () => `${project.value?.title} — ${SITE_NAME}`,
   description: () => project.value?.tagline || markdownToText(project.value?.description).slice(0, 160),
   ogTitle: () => project.value?.title,
   ogDescription: () => project.value?.tagline || '',

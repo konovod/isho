@@ -1,3 +1,5 @@
+import { SITE_NAME } from './app/utils/site'
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-10-01',
   devtools: { enabled: false },
@@ -23,7 +25,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'isho',
+      title: SITE_NAME,
       htmlAttrs: { lang: 'ru' },
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },

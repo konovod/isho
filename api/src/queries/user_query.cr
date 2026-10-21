@@ -3,6 +3,12 @@ class UserQuery < User::BaseQuery
     username(username)
   end
 
+  # Sign-in accepts either an email or a username. Usernames are lowercase
+  # and cannot contain "@", so the two can never both match.
+  def by_login(login : String)
+    email(login).or(&.username(login))
+  end
+
   def search(term : String)
     pattern = "%#{term}%"
 
