@@ -15,6 +15,8 @@
 - БД: `docker compose up -d db` (PostgreSQL 16, `postgres/postgres`, порт 5432).
 - Миграции: `cd api && .\bin\tasks.exe db.migrate` после `crystal build tasks.cr -o bin/tasks.exe`.
 - Сид: `.\bin\tasks.exe db.seed.sample_data`.
+- Деплой на сервер: `.\deploy\deploy.ps1` — сборка в WSL и установка на Ubuntu
+  (см. `deploy/README.md`). На сервере нет Crystal: туда едут только бинарники.
 
 ## Архитектурные правила
 

@@ -1,0 +1,24 @@
+[Unit]
+Description=isho web (Nuxt SSR)
+After=network-online.target isho-api.service
+Wants=network-online.target isho-api.service
+
+[Service]
+Type=simple
+User=isho
+Group=isho
+WorkingDirectory=/srv/isho/web
+EnvironmentFile=/etc/isho/web.env
+Environment=NODE_OPTIONS=--max-old-space-size=320
+ExecStart=/opt/node22/bin/node .output/server/index.mjs
+Restart=always
+RestartSec=3
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/srv/isho/web
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,26 @@
+[Unit]
+Description=isho API (Lucky + Avram)
+Documentation=https://luckyframework.org
+After=network-online.target postgresql.service
+Wants=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=isho
+Group=isho
+WorkingDirectory=/srv/isho/api
+EnvironmentFile=/etc/isho/api.env
+ExecStart=/srv/isho/api/bin/api
+Restart=always
+RestartSec=3
+KillSignal=SIGINT
+TimeoutStopSec=10
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/srv/isho/api
+
+[Install]
+WantedBy=multi-user.target

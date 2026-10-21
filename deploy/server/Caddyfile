@@ -1,0 +1,25 @@
+# isho in front of the Lucky API and the Nuxt server.
+#
+# ISHO_SITE_ADDRESS comes from /etc/isho/caddy.env:
+#   :80                                   plain HTTP on any host (no domain yet)
+#   https://vm4775508.firstbyte.club      automatic HTTPS once DNS points here
+{
+	admin off
+	storage file_system /var/lib/caddy
+}
+
+{$ISHO_SITE_ADDRESS::80} {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy 127.0.0.1:4000
+	}
+
+	handle /media/* {
+		reverse_proxy 127.0.0.1:4000
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
+}

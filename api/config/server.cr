@@ -5,7 +5,8 @@
 Lucky::Server.configure do |settings|
   if LuckyEnv.production?
     settings.secret_key_base = secret_key_from_env
-    settings.host = "0.0.0.0"
+    # Behind a reverse proxy the app only needs loopback; HOST can override it.
+    settings.host = ENV["HOST"]? || "0.0.0.0"
     settings.port = ENV["PORT"].to_i
     settings.gzip_enabled = true
     # By default certain content types will be gzipped.

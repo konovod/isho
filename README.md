@@ -129,23 +129,24 @@ docker-compose.yml   PostgreSQL
 удаляются: каскад в БД и операция `DeleteUserContent`, которая пересчитывает счётчики
 тем.
 
-## Production (набросок)
+## Production
 
-```bash
-# API
-cd api
-crystal build --release src/api.cr -o bin/api
-LUCKY_ENV=production \
-DATABASE_URL=postgres://user:pass@host:5432/isho_production \
-APP_ORIGIN=https://your-domain.example \
-COOKIE_SECURE=true \
-./bin/api
+Готовые скрипты лежат в `deploy/` (подробности — `deploy/README.md`). Сборка идёт
+локально в WSL (Ubuntu 24.04), на сервер уезжают только release-бинарники Lucky
+и серверный бандл Nuxt:
 
-# Web
-cd web
-npm ci && npm run build
-NUXT_API_INTERNAL_BASE=http://127.0.0.1:4000 node .output/server/index.mjs
+```powershell
+$env:ISHO_SSH_PASSWORD = '<пароль root>'
+.\deploy\deploy.ps1                       # собрать и раскатать, http://<ip>
+.\deploy\deploy.ps1 -SampleData           # плюс демо-проекты и demo@isho.local
+.\deploy\deploy.ps1 -SiteAddress https://vm4775508.firstbyte.club   # домен + TLS
 ```
+
+На сервере `bootstrap.sh` ставит PostgreSQL, Node.js 22, Caddy и ImageMagick,
+создаёт БД, пользователя `isho`, swap и службы `isho-api`, `isho-web`, `caddy`.
+Секреты и параметры окружения — в `/etc/isho/api.env` и `/etc/isho/web.env`;
+при повторном деплое они сохраняются. API слушает `127.0.0.1:4000` (порт задаётся
+`HOST`/`PORT`), Nuxt — `127.0.0.1:3000`, наружу смотрит только Caddy.
 
 Caddy отдаёт `/api/*` и `/media/*` в Lucky, всё остальное — в Nuxt. Так браузер
 работает с одним origin, а cookie остаются first-party. Для S3 нужно заменить

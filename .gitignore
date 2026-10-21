@@ -27,3 +27,6 @@ Thumbs.db
 # Local notes and tool captures
 *.local.md
 .openchamber/
+
+# Deployment build output (see deploy/README.md)
+deploy/artifacts/
