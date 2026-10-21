@@ -38,7 +38,9 @@
   40 символов, до 8 тегов на проект).
 - **Фронтенд:** `useApi()` для всех запросов (прокси и cookie-forwarding на SSR),
   `useAuth()` для состояния пользователя. Не класть токены в localStorage.
-- **UI:** русский язык, тёмная тема, стили в `web/app/assets/css/main.css`.
+- **UI:** русский язык, светлая и тёмная темы, стили в `web/app/assets/css/main.css`.
+  Палитра — токены через `light-dark()`; выбор хранится в cookie `isho_theme` и в
+  `users.theme`, атрибут `data-theme` на `<html>` Nuxt ставит на SSR.
 
 ## Ловушки
 

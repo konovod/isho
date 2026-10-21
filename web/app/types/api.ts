@@ -1,3 +1,5 @@
+export type Theme = 'light' | 'dark'
+
 export interface ApiUser {
   id: number
   username: string
@@ -8,6 +10,7 @@ export interface ApiUser {
 
 export interface Me extends ApiUser {
   email: string
+  theme: Theme
   is_admin: boolean
 }
 

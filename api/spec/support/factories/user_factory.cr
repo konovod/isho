@@ -4,6 +4,7 @@ class UserFactory < Avram::Factory
     username "user#{sequence("test-username")}"
     display_name "Test User"
     encrypted_password Authentic.generate_encrypted_password("password1234")
+    theme "dark"
     is_admin false
   end
 end

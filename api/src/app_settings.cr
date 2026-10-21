@@ -6,6 +6,7 @@ module AppSettings
   MAX_SCREENSHOTS       =             20
   MAX_DOWNLOADS         =             20
   MAX_EXTERNAL_URL_SIZE =           2048
+  THEMES                = %w[light dark]
   RESERVED_USERNAMES    = %w[
     admin api dashboard login logout me new settings sign_in sign_up
     projects users assets articles jams forum support help about terms privacy

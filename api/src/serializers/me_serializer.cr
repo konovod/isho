@@ -9,6 +9,7 @@ class MeSerializer < BaseSerializer
       username:     @user.username,
       display_name: @user.display_name,
       bio:          @user.bio,
+      theme:        @user.theme,
       is_admin:     @user.is_admin,
       created_at:   @user.created_at,
     }

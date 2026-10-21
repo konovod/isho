@@ -18,6 +18,7 @@ class SignUpUser < User::SaveOperation
     email.value = email.value.to_s.strip.downcase
     username.value = username.value.to_s.strip.downcase
     is_admin.value = false if is_admin.value.nil?
+    theme.value = "dark" if theme.value.to_s.strip.empty?
 
     name = display_name.value.to_s.strip
     display_name.value = name.empty? ? nil : name

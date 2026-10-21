@@ -1,4 +1,4 @@
-import type { Me } from '~/types/api'
+import type { Me, Theme } from '~/types/api'
 
 export function useAuth() {
   const user = useState<Me | null>('auth.user', () => null)
@@ -50,5 +50,14 @@ export function useAuth() {
     loaded.value = true
   }
 
-  return { user, loaded, fetchMe, signIn, signUp, signOut }
+  async function saveTheme(next: Theme): Promise<void> {
+    try {
+      user.value = await api.patch<Me>('/api/v1/me/theme', { user: { theme: next } })
+    }
+    catch {
+      // The cookie still keeps the choice on this device if the API call fails.
+    }
+  }
+
+  return { user, loaded, fetchMe, signIn, signUp, signOut, saveTheme }
 }

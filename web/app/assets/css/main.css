@@ -1,33 +1,53 @@
+/* Every colour resolves through light-dark(light, dark), so one token set
+   serves both themes. The scheme comes from the OS until the visitor picks
+   one; an explicit choice is pinned with data-theme on <html>. */
 :root {
-  --bg: #0f1116;
-  --bg-elev: #151821;
-  --bg-soft: #1b1f2a;
-  --bg-hover: #222736;
-  --border: #262b38;
-  --border-strong: #343b4d;
-  --text: #e9ebf1;
-  --muted: #9aa1b2;
-  --muted-strong: #c2c8d4;
-  --accent: #ff6b5e;
-  --accent-hover: #ff857a;
+  color-scheme: light dark;
+
+  --bg: light-dark(#f6f7fb, #0f1116);
+  --bg-elev: light-dark(#ffffff, #151821);
+  --bg-soft: light-dark(#eef0f6, #1b1f2a);
+  --bg-hover: light-dark(#e5e8f1, #222736);
+  --border: light-dark(#e0e4ee, #262b38);
+  --border-strong: light-dark(#c8cedb, #343b4d);
+  --text: light-dark(#161a24, #e9ebf1);
+  --muted: light-dark(#5f6a7d, #9aa1b2);
+  --muted-strong: light-dark(#39414f, #c2c8d4);
+  --accent: light-dark(#cf3a24, #ff6b5e);
+  --accent-hover: light-dark(#ad2c19, #ff857a);
+  --accent-contrast: light-dark(#ffffff, #1a0d0b);
   --accent-2: #7c5cff;
-  --success: #4ade80;
-  --danger: #f87171;
-  --warning: #fbbf24;
+  --success: light-dark(#15803d, #4ade80);
+  --success-text: light-dark(#166534, #b7f7c8);
+  --danger: light-dark(#dc2626, #f87171);
+  --danger-text: light-dark(#b42318, #ffb4b4);
+  --warning: light-dark(#b45309, #fbbf24);
+  --header-bg: light-dark(rgba(255, 255, 255, 0.82), rgba(15, 17, 22, 0.86));
+  --overlay-soft: light-dark(rgba(246, 247, 251, 0.12), rgba(15, 17, 22, 0.2));
+  --overlay-strong: light-dark(rgba(246, 247, 251, 0.22), rgba(15, 17, 22, 0.4));
+  --cover-a: light-dark(#e7eaf3, #242938);
+  --cover-b: light-dark(#f4f5fa, #171a22);
+  --cover-c: light-dark(#f7e9ec, #2a1d2a);
+  --gallery-bg: light-dark(#e7eaf2, #0a0c10);
+  --shadow-color: light-dark(rgba(23, 32, 56, 0.12), rgba(0, 0, 0, 0.35));
   --radius: 12px;
   --radius-sm: 8px;
-  --shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  --shadow: 0 16px 40px var(--shadow-color);
   --font: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+:root[data-theme='light'] {
+  color-scheme: only light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: only dark;
 }
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
-}
-
-html {
-  color-scheme: dark;
 }
 
 body {
@@ -101,7 +121,7 @@ p {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(15, 17, 22, 0.86);
+  background: var(--header-bg);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
 }
@@ -219,7 +239,7 @@ p {
 
 .btn-primary {
   background: var(--accent);
-  color: #1a0d0b;
+  color: var(--accent-contrast);
 }
 
 .btn-primary:hover {
@@ -258,6 +278,37 @@ p {
 
 .btn-icon {
   padding: 7px 10px;
+}
+
+/* Theme switch */
+
+.theme-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.theme-toggle .icon-moon {
+  display: none;
+}
+
+/* The glyph shows the theme the button switches to. Guests without a saved
+   choice get it from the same OS preference the palette follows. */
+:root[data-theme='light'] .theme-toggle .icon-sun {
+  display: none;
+}
+
+:root[data-theme='light'] .theme-toggle .icon-moon {
+  display: inline;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .theme-toggle .icon-sun {
+    display: none;
+  }
+
+  :root:not([data-theme]) .theme-toggle .icon-moon {
+    display: inline;
+  }
 }
 
 /* Forms */
@@ -314,7 +365,7 @@ p {
   padding: 11px 13px;
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--danger) 12%, transparent);
-  color: #ffb4b4;
+  color: var(--danger-text);
   font-size: 13px;
   margin-bottom: 16px;
 }
@@ -323,7 +374,7 @@ p {
   padding: 11px 13px;
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--success) 12%, transparent);
-  color: #b7f7c8;
+  color: var(--success-text);
   font-size: 13px;
   margin-bottom: 16px;
 }
@@ -381,7 +432,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #242938, #171a22 60%, #2a1d2a);
+  background: linear-gradient(135deg, var(--cover-a), var(--cover-b) 60%, var(--cover-c));
   color: var(--muted);
   font-size: 26px;
   font-weight: 750;
@@ -645,8 +696,8 @@ p {
   padding: 54px 0 34px;
   border-bottom: 1px solid var(--border);
   background:
-    radial-gradient(900px 260px at 18% -10%, rgba(255, 107, 94, 0.16), transparent 60%),
-    radial-gradient(700px 260px at 88% -30%, rgba(124, 92, 255, 0.16), transparent 60%);
+    radial-gradient(900px 260px at 18% -10%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
+    radial-gradient(700px 260px at 88% -30%, color-mix(in srgb, var(--accent-2) 16%, transparent), transparent 60%);
 }
 
 .hero h1 {
@@ -696,13 +747,13 @@ p {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, var(--bg) 4%, rgba(15, 17, 22, 0.2) 70%, rgba(15, 17, 22, 0.4));
+  background: linear-gradient(to top, var(--bg) 4%, var(--overlay-soft) 70%, var(--overlay-strong));
 }
 
 .project-hero-empty {
   background:
-    radial-gradient(600px 200px at 30% 0%, rgba(255, 107, 94, 0.2), transparent 60%),
-    radial-gradient(500px 200px at 80% 0%, rgba(124, 92, 255, 0.18), transparent 60%),
+    radial-gradient(600px 200px at 30% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 60%),
+    radial-gradient(500px 200px at 80% 0%, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 60%),
     var(--bg-soft);
 }
 
@@ -758,7 +809,7 @@ p {
 .gallery-main {
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: #0a0c10;
+  background: var(--gallery-bg);
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid var(--border);

@@ -60,7 +60,7 @@ api/                 Lucky API
 web/                 Nuxt 4
   app/pages          страницы
   app/components     компоненты
-  app/composables    useApi / useAuth / useFormat
+  app/composables    useApi / useAuth / useTheme / useFormat
 docker-compose.yml   PostgreSQL
 ```
 
@@ -75,6 +75,7 @@ docker-compose.yml   PostgreSQL
 | DELETE | `/api/v1/sign_ins` | вход |
 | GET | `/api/v1/me` | вход |
 | PATCH | `/api/v1/me` | вход |
+| PATCH | `/api/v1/me/theme` | вход |
 | GET | `/api/v1/me/projects` | вход |
 | GET | `/api/v1/projects` | публично |
 | GET | `/api/v1/projects/:slug` | публично (черновик — владельцу) |
@@ -92,6 +93,10 @@ docker-compose.yml   PostgreSQL
 | GET | `/api/v1/users/:username` | публично |
 | GET | `/api/v1/tags` | публично |
 | GET | `/api/v1/health` | публично |
+
+Тема интерфейса хранится в `users.theme` для аккаунта и в cookie `isho_theme` для
+устройства. Гость без сохранённого выбора видит тему системы; `data-theme` на
+`<html>` выставляет Nuxt ещё на SSR, поэтому при загрузке нет вспышки.
 
 ## Production (набросок)
 

@@ -7,6 +7,7 @@ class User < BaseModel
     column username : String
     column display_name : String?
     column bio : String?
+    column theme : String
     column encrypted_password : String
     column is_admin : Bool
     has_many projects : Project
