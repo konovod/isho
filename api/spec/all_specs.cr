@@ -1,0 +1,8 @@
+require "./spec_helper"
+
+require "./slugify_spec"
+require "./requests/api/v1/sign_ups/create_spec"
+require "./requests/api/v1/sign_ins/create_spec"
+require "./requests/api/v1/me/show_spec"
+require "./requests/api/v1/projects/crud_spec"
+require "./requests/api/v1/projects/downloads_spec"

@@ -1,0 +1,29 @@
+# Crystal / Lucky
+api/lib/
+api/bin/
+api/.env
+api/.crystal/
+api/.lucky/
+api/tmp/
+api/public/media/
+api/public/assets/
+api/public/*.gz
+api/db/*.dump
+
+# Nuxt
+web/node_modules/
+web/.nuxt/
+web/.output/
+web/.data/
+web/dist/
+web/.env
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local notes and tool captures
+*.local.md
+.openchamber/
