@@ -17,6 +17,19 @@ describe Api::V1::Projects::Downloads do
     DownloadQuery.new.project_id(project.id).select_count.should eq 1
   end
 
+  it "defaults a blank label" do
+    user = UserFactory.create
+    project = ProjectFactory.create &.user_id(user.id)
+
+    response = AuthHelper.client_for(user).post("/api/v1/projects/#{project.slug}/downloads", download: {
+      label: "",
+      url:   "https://example.com/build.zip",
+    })
+
+    response.status_code.should eq 201
+    JSON.parse(response.body)["label"].as_s.should eq "Скачать"
+  end
+
   it "rejects non-https links" do
     user = UserFactory.create
     project = ProjectFactory.create &.user_id(user.id)

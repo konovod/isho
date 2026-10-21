@@ -12,6 +12,10 @@ class CreateDownload < Download::SaveOperation
 
   private def normalize
     label.value = label.value.to_s.strip
+    # A label is useful when a project has several builds, but requiring it
+    # makes the simplest case ("just a link") fail. Default to a neutral one.
+    label.value = "Скачать" if label.value.to_s.empty?
+
     url.value = url.value.to_s.strip
     platform.value = platform.value.to_s.strip
     version.value = version.value.to_s.strip

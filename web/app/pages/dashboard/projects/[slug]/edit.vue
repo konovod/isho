@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Download, ProjectDetail, Screenshot, Tag } from '~/types/api'
-import { ApiError } from '~/composables/useApi'
+import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -41,7 +41,7 @@ watch(project, (value) => {
 }, { immediate: true })
 
 function fail(err: unknown) {
-  error.value = err instanceof ApiError ? err.message : 'Что-то пошло не так'
+  error.value = formatApiError(err)
 }
 
 function clearMessages() {
@@ -403,7 +403,7 @@ function toggleTag(slugValue: string) {
         </h2>
         <p class="muted small mb-24">
           Пока поддерживаются только внешние ссылки: Google Drive, Dropbox, собственный сайт.
-          Ссылка должна начинаться с https://.
+          Ссылка должна начинаться с https://. Название можно не заполнять — тогда будет «Скачать».
         </p>
 
         <div v-if="project.downloads.length" class="mb-24">
@@ -425,7 +425,7 @@ function toggleTag(slugValue: string) {
         <div class="row" style="align-items: flex-end;">
           <div class="field" style="margin-bottom: 0; min-width: 180px;">
             <label class="label" for="dl-label">Название</label>
-            <input id="dl-label" v-model="downloadForm.label" class="input" maxlength="80" placeholder="Windows build">
+            <input id="dl-label" v-model="downloadForm.label" class="input" maxlength="80" placeholder="Скачать">
           </div>
 
           <div class="field" style="margin-bottom: 0; flex: 1; min-width: 240px;">

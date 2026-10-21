@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ProjectDetail } from '~/types/api'
-import { ApiError } from '~/composables/useApi'
+import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -34,7 +34,7 @@ async function submit() {
     await router.push(`/dashboard/projects/${project.slug}/edit`)
   }
   catch (err) {
-    error.value = err instanceof ApiError ? err.message : 'Не удалось создать проект'
+    error.value = formatApiError(err, 'Не удалось создать проект')
   }
   finally {
     pending.value = false

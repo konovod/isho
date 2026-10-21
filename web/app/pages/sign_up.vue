@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ApiError } from '~/composables/useApi'
+import { formatApiError } from '~/composables/useApi'
 
 const { signUp } = useAuth()
 const router = useRouter()
@@ -27,7 +27,7 @@ async function submit() {
     await router.push('/dashboard')
   }
   catch (err) {
-    error.value = err instanceof ApiError ? err.message : 'Не удалось создать аккаунт'
+    error.value = formatApiError(err, 'Не удалось создать аккаунт')
   }
   finally {
     pending.value = false

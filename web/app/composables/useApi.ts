@@ -16,6 +16,48 @@ export class ApiError extends Error {
   }
 }
 
+const fieldNames: Record<string, string> = {
+  label: 'Название',
+  url: 'Ссылка',
+  title: 'Название',
+  tagline: 'Короткое описание',
+  description: 'Описание',
+  image_file: 'Файл',
+  caption: 'Подпись',
+  username: 'Имя пользователя',
+  email: 'Почта',
+  password: 'Пароль',
+  password_confirmation: 'Повтор пароля',
+}
+
+const detailMessages: Record<string, string> = {
+  'is required': 'обязательное поле',
+  'is too long': 'слишком длинное',
+  'is too short': 'слишком короткое',
+  'is invalid': 'неверное значение',
+  'has already been taken': 'уже занято',
+  'must be a public https:// link': 'нужна публичная ссылка https://',
+  'must not point to a local address': 'нельзя ссылаться на локальный адрес',
+}
+
+function translateDetail(message: string): string {
+  return detailMessages[message] ?? message
+}
+
+export function formatApiError(err: unknown, fallback = 'Что-то пошло не так'): string {
+  if (!(err instanceof ApiError)) return fallback
+
+  if (err.code === 'validation_failed' && err.details) {
+    const details = Object.entries(err.details)
+      .map(([field, messages]) => `${fieldNames[field] ?? field}: ${messages.map(translateDetail).join(', ')}`)
+      .join('; ')
+
+    if (details) return `Проверьте поля — ${details}`
+  }
+
+  return err.message
+}
+
 export function useApi() {
   const config = useRuntimeConfig()
 
