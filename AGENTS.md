@@ -9,6 +9,7 @@
 
 ## Запуск
 
+- Оба сервера: `.\dev.ps1` из корня (API :4000, web :3000; Ctrl+C останавливает оба).
 - API: `cd api && .\script\dev-api.ps1` (Windows) — порт 4000.
 - Web: `cd web && npm run dev` — порт 3000, проксирует `/api` и `/media` на 4000.
 - БД: `docker compose up -d db` (PostgreSQL 16, `postgres/postgres`, порт 5432).

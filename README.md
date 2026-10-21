@@ -19,20 +19,24 @@
 # 1. База
 docker compose up -d db
 
-# 2. API
+# 2. Зависимости и база
 cd api
 shards install
 crystal build tasks.cr -o bin/tasks.exe
 .\bin\tasks.exe db.create
 .\bin\tasks.exe db.migrate
 .\bin\tasks.exe db.seed.sample_data
-.\script\dev-api.ps1        # http://127.0.0.1:4000
-
-# 3. Фронтенд (второй терминал)
-cd web
+cd ..\web
 npm install
-npm run dev              # http://localhost:3000
+cd ..
+
+# 3. Оба сервера одной командой
+.\dev.ps1                # API :4000, web :3000
 ```
+
+`dev.ps1` собирает и запускает API, ждёт `/api/v1/health`, затем поднимает Nuxt.
+Ctrl+C останавливает оба сервера. По отдельности: `cd api; .\script\dev-api.ps1`
+и `cd web; npm run dev`.
 
 Демо-аккаунт после сида: `demo@isho.local` / `password1234`.
 
