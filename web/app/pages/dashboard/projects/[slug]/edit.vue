@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Download, ProjectDetail, Screenshot, Tag } from '~/types/api'
+import type { Download, ProjectDetail, Screenshot, Tag, TagDraft } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
@@ -26,7 +26,7 @@ const allTags = computed(() => data.value?.tags ?? [])
 
 const tab = ref<'details' | 'screenshots' | 'downloads'>('details')
 const form = reactive({ title: '', tagline: '', description: '', kind: 'game' })
-const selectedTags = ref<string[]>([])
+const selectedTags = ref<TagDraft[]>([])
 const error = ref('')
 const notice = ref('')
 const saving = ref(false)
@@ -37,7 +37,7 @@ watch(project, (value) => {
   form.tagline = value.tagline ?? ''
   form.description = value.description ?? ''
   form.kind = value.kind
-  selectedTags.value = value.tags.map(tag => tag.slug)
+  selectedTags.value = value.tags.map(tag => ({ name: tag.name, slug: tag.slug }))
 }, { immediate: true })
 
 function fail(err: unknown) {
@@ -61,11 +61,17 @@ async function save() {
         description: form.description.trim() || undefined,
         kind: form.kind,
       },
-      tag_slugs: selectedTags.value,
+      tag_names: selectedTags.value.map(tag => tag.name),
     })
 
+    const mergedTags = new Map(allTags.value.map(tag => [tag.slug, tag]))
+    updated.tags.forEach(tag => mergedTags.set(tag.slug, tag))
+
     data.value!.project = updated
+    data.value!.tags = [...mergedTags.values()]
     notice.value = 'Сохранено'
+
+    await refreshNuxtData('tags')
   }
   catch (err) {
     fail(err)
@@ -226,12 +232,6 @@ async function deleteDownload(id: number) {
     fail(err)
   }
 }
-
-function toggleTag(slugValue: string) {
-  selectedTags.value = selectedTags.value.includes(slugValue)
-    ? selectedTags.value.filter(item => item !== slugValue)
-    : [...selectedTags.value, slugValue]
-}
 </script>
 
 <template>
@@ -320,19 +320,7 @@ function toggleTag(slugValue: string) {
 
         <div class="field">
           <label class="label">Теги</label>
-          <div class="row">
-            <button
-              v-for="tag in allTags"
-              :key="tag.id"
-              type="button"
-              class="tag"
-              :class="{ active: selectedTags.includes(tag.slug) }"
-              @click="toggleTag(tag.slug)"
-            >
-              {{ tag.name }}
-            </button>
-          </div>
-          <span class="hint">До 8 тегов.</span>
+          <TagInput v-model="selectedTags" :suggestions="allTags" :max="8" />
         </div>
 
         <button class="btn btn-primary" :disabled="saving" @click="save">

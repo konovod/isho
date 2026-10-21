@@ -19,11 +19,14 @@ module Api::V1::Projects::ProjectParams
       .first? || raise Avram::RecordNotFoundError.new(Project.table_name, project.id.to_s)
   end
 
-  def tag_slugs : Array(String)
-    params.get_all?(:tag_slugs) || [] of String
+  # `tag_names` are human-readable names; unknown ones become new tags.
+  # `tag_slugs` is kept for backwards compatibility and matches existing tags.
+  def tag_names : Array(String)?
+    params.get_all?(:tag_names) || params.get_all?(:tag_slugs)
   end
 
   def sync_tags(project : Project) : Nil
-    SetProjectTags.new(project: project, tag_slugs: tag_slugs).run if params.get_all?(:tag_slugs)
+    names = tag_names
+    SetProjectTags.new(project: project, tag_names: names).run if names
   end
 end

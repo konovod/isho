@@ -9,9 +9,9 @@ class Db::Seed::SampleData < LuckyTask::Task
   def call
     user = find_or_create_user
     ensure_tags
-    create_project(user, "Ночная смена", "Атмосферный хоррор про одинокий маяк.", "Ты — смотритель маяка. На улице шторм, а в дверь кто-то стучит. Игра про звук, свет и решения, которые нельзя отменить.", "game", %w[action horror])
-    create_project(user, "Пиксельный сад", "Уютная головоломка о выращивании странных растений.", "Каждый цветок меняет правила сада. Собирай семена, переставляй грядки и найди путь к сердцу сада.", "game", %w[puzzle cozy])
-    create_project(user, "Карта миров", "Инструмент для писателей и мастеров НРИ.", "Описывай регионы, связи между ними и события. Экспортируй карту в Markdown и используй в своей игре.", "tool", %w[worldbuilding])
+    create_project(user, "Ночная смена", "Атмосферный хоррор про одинокий маяк.", "Ты — смотритель маяка. На улице шторм, а в дверь кто-то стучит. Игра про звук, свет и решения, которые нельзя отменить.", "game", %w[Экшен Хоррор])
+    create_project(user, "Пиксельный сад", "Уютная головоломка о выращивании странных растений.", "Каждый цветок меняет правила сада. Собирай семена, переставляй грядки и найди путь к сердцу сада.", "game", %w[Головоломка Уютное])
+    create_project(user, "Карта миров", "Инструмент для писателей и мастеров НРИ.", "Описывай регионы, связи между ними и события. Экспортируй карту в Markdown и используй в своей игре.", "tool", %w[Мирастроение])
 
     puts "Done adding sample data"
   end
@@ -45,7 +45,7 @@ class Db::Seed::SampleData < LuckyTask::Task
     end
   end
 
-  private def create_project(user : User, title : String, tagline : String, description : String, kind : String, tags : Array(String))
+  private def create_project(user : User, title : String, tagline : String, description : String, kind : String, tag_names : Array(String))
     slug = Slugify.call(title)
     return if ProjectQuery.new.slug(slug).first?
 
@@ -57,7 +57,7 @@ class Db::Seed::SampleData < LuckyTask::Task
       user_id: user.id,
     )
 
-    SetProjectTags.new(project: project, tag_slugs: tags).run
+    SetProjectTags.new(project: project, tag_names: tag_names).run
     ChangeProjectStatus.new(project: project, publish: true).run
   end
 end

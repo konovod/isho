@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import type { ProjectDetail } from '~/types/api'
+import type { ProjectDetail, Tag, TagDraft } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
 
 const api = useApi()
 const router = useRouter()
+
+const { data: tagData } = await useAsyncData(
+  'new-project-tags',
+  () => api.get<{ items: Tag[] }>('/api/v1/tags'),
+)
+
+const allTags = computed(() => tagData.value?.items ?? [])
+const selectedTags = ref<TagDraft[]>([])
 
 const form = reactive({
   title: '',
@@ -29,8 +37,10 @@ async function submit() {
         description: form.description.trim() || undefined,
         kind: form.kind,
       },
+      tag_names: selectedTags.value.map(tag => tag.name),
     })
 
+    await refreshNuxtData('tags')
     await router.push(`/dashboard/projects/${project.slug}/edit`)
   }
   catch (err) {
@@ -79,6 +89,11 @@ async function submit() {
         <div class="field">
           <label class="label" for="description">Описание</label>
           <textarea id="description" v-model="form.description" class="textarea" maxlength="20000" placeholder="Что это, для кого и как играть" />
+        </div>
+
+        <div class="field">
+          <label class="label">Теги</label>
+          <TagInput v-model="selectedTags" :suggestions="allTags" :max="8" />
         </div>
 
         <div class="row">

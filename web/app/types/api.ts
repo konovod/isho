@@ -17,6 +17,12 @@ export interface Tag {
   slug: string
 }
 
+/** Tag chosen in the editor: `slug` is null until the server creates it. */
+export interface TagDraft {
+  name: string
+  slug: string | null
+}
+
 export interface Screenshot {
   id: number
   caption: string | null
