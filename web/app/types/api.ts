@@ -14,6 +14,67 @@ export interface Me extends ApiUser {
   is_admin: boolean
 }
 
+export interface ForumSectionRef {
+  id: number
+  slug: string
+  title: string
+}
+
+export interface ForumProjectRef {
+  id: number
+  slug: string
+  title: string
+}
+
+export interface ForumSection {
+  id: number
+  slug: string
+  title: string
+  description: string | null
+  group_title: string | null
+  position: number
+  topics_count: number
+  posts_count: number
+}
+
+export interface ForumTopic {
+  id: number
+  slug: string
+  title: string
+  section: ForumSectionRef
+  project: ForumProjectRef | null
+  author: ApiUser
+  replies_count: number
+  last_post_at: string
+  created_at: string
+  updated_at: string
+  last_page: number
+}
+
+export interface ForumPostQuote {
+  post_id: number | null
+  author_name: string | null
+  author_username: string | null
+  body: string | null
+}
+
+export interface ForumPost {
+  id: number
+  body: string
+  author: ApiUser
+  created_at: string
+  updated_at: string
+  edited: boolean
+  quote: ForumPostQuote | null
+}
+
+export interface ForumMeta {
+  page: number
+  per_page: number
+  total: number
+  pages: number
+}
+
 export interface Tag {
   id: number
   name: string
@@ -42,6 +103,15 @@ export interface Download {
   url: string
   platform: string | null
   version: string | null
+}
+
+export interface Devlog {
+  id: number
+  slug: string
+  title: string
+  body: string
+  created_at: string
+  updated_at: string
 }
 
 export interface ProjectCard {

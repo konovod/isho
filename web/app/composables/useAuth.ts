@@ -3,6 +3,7 @@ import type { Me, Theme } from '~/types/api'
 export function useAuth() {
   const user = useState<Me | null>('auth.user', () => null)
   const loaded = useState<boolean>('auth.loaded', () => false)
+  const canModerate = computed(() => user.value?.is_admin === true)
   const api = useApi()
 
   async function fetchMe(force = false): Promise<Me | null> {
@@ -59,5 +60,5 @@ export function useAuth() {
     }
   }
 
-  return { user, loaded, fetchMe, signIn, signUp, signOut, saveTheme }
+  return { user, loaded, canModerate, fetchMe, signIn, signUp, signOut, saveTheme }
 }

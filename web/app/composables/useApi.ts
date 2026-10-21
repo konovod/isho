@@ -20,6 +20,8 @@ const fieldNames: Record<string, string> = {
   label: 'Название',
   url: 'Ссылка',
   title: 'Название',
+  body: 'Текст',
+  quoted_post_id: 'Цитата',
   tagline: 'Короткое описание',
   description: 'Описание',
   image_file: 'Файл',
@@ -38,6 +40,7 @@ const detailMessages: Record<string, string> = {
   'has already been taken': 'уже занято',
   'must be a public https:// link': 'нужна публичная ссылка https://',
   'must not point to a local address': 'нельзя ссылаться на локальный адрес',
+  'must be a post in this topic': 'можно цитировать только сообщение из этой темы',
 }
 
 function translateDetail(message: string): string {

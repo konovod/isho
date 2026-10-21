@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProjectDetail } from '~/types/api'
+import type { Devlog, ForumTopic, ProjectDetail } from '~/types/api'
 
 const route = useRoute()
 const api = useApi()
@@ -10,6 +10,19 @@ const { data: project, error } = await useAsyncData(
   `project-${route.params.slug}`,
   () => api.get<ProjectDetail>(`/api/v1/projects/${route.params.slug}`),
 )
+
+const { data: devlogData } = await useAsyncData(
+  `project-devlogs-${route.params.slug}`,
+  () => api.get<{ items: Devlog[] }>(`/api/v1/projects/${route.params.slug}/devlogs`),
+)
+
+const { data: forumData } = await useAsyncData(
+  `project-forum-${route.params.slug}`,
+  () => api.get<{ items: ForumTopic[] }>(`/api/v1/projects/${route.params.slug}/forum/topics?per_page=3`),
+)
+
+const devlogs = computed(() => devlogData.value?.items ?? [])
+const forumTopics = computed(() => forumData.value?.items ?? [])
 
 if (!project.value) {
   throw createError({ statusCode: 404, statusMessage: 'Проект не найден' })
@@ -25,7 +38,7 @@ const initials = computed(() => authorName.value.slice(0, 2))
 
 useSeoMeta({
   title: () => `${project.value?.title} — isho`,
-  description: () => project.value?.tagline || project.value?.description?.slice(0, 160) || '',
+  description: () => project.value?.tagline || markdownToText(project.value?.description).slice(0, 160),
   ogTitle: () => project.value?.title,
   ogDescription: () => project.value?.tagline || '',
   ogImage: () => project.value?.cover_url || undefined,
@@ -76,9 +89,67 @@ useSeoMeta({
             <h2 class="section-title">
               Об игре
             </h2>
-            <p class="description">
-              {{ project.description || 'Автор пока не добавил описание.' }}
+            <MarkdownBody v-if="project.description" :source="project.description" />
+            <p v-else class="description">
+              Автор пока не добавил описание.
             </p>
+          </section>
+
+          <section v-if="devlogs.length" class="section" style="padding-top: 0;">
+            <h2 class="section-title">
+              Девлоги
+            </h2>
+
+            <div class="devlog-feed">
+              <article v-for="devlog in devlogs" :key="devlog.id" class="devlog-entry">
+                <div class="row-between mb-8">
+                  <h3 class="devlog-entry-title">
+                    {{ devlog.title }}
+                  </h3>
+                  <span class="muted small">{{ date(devlog.created_at) }}</span>
+                </div>
+
+                <MarkdownBody v-if="!isLongDevlog(devlog.body)" :source="devlog.body" />
+
+                <template v-else>
+                  <p class="description devlog-entry-preview">
+                    {{ devlogPreview(devlog.body) }}
+                  </p>
+                  <NuxtLink
+                    :to="`/p/${project.slug}/devlog/${devlog.slug}`"
+                    class="btn btn-ghost btn-sm mt-16"
+                  >
+                    Читать целиком
+                  </NuxtLink>
+                </template>
+              </article>
+            </div>
+          </section>
+
+          <section class="section" style="padding-top: 0;">
+            <div class="row-between mb-16">
+              <h2 class="section-title" style="margin-bottom: 0;">
+                Обсуждение
+              </h2>
+              <NuxtLink :to="`/p/${project.slug}/forum`" class="btn btn-ghost btn-sm">
+                Все темы
+              </NuxtLink>
+            </div>
+
+            <ForumTopicList
+              v-if="forumTopics.length"
+              :topics="forumTopics"
+              :show-project="false"
+            />
+
+            <div v-else class="card card-pad">
+              <p class="muted">
+                Вопросов по проекту пока нет. Спросите автора или начните обсуждение.
+              </p>
+              <NuxtLink :to="`/p/${project.slug}/forum/new`" class="btn btn-primary btn-sm mt-16">
+                Задать вопрос
+              </NuxtLink>
+            </div>
           </section>
 
           <DownloadList class="mt-24" :downloads="project.downloads" />

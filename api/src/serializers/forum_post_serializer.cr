@@ -1,0 +1,31 @@
+class ForumPostSerializer < BaseSerializer
+  def initialize(@post : ForumPost)
+  end
+
+  def render
+    {
+      id:         @post.id,
+      body:       @post.body,
+      author:     UserSerializer.new(@post.user),
+      created_at: @post.created_at,
+      updated_at: @post.updated_at,
+      edited:     edited?,
+      quote:      quote,
+    }
+  end
+
+  private def edited? : Bool
+    @post.updated_at > @post.created_at
+  end
+
+  private def quote
+    return nil unless @post.quoted?
+
+    {
+      post_id:         @post.quoted_post_id,
+      author_name:     @post.quote_author_name,
+      author_username: @post.quote_author_username,
+      body:            @post.quote_body,
+    }
+  end
+end

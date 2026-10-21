@@ -4,6 +4,17 @@ export function useFormat() {
     return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value))
   }
 
+  function dateTime(value: string | null | undefined): string {
+    if (!value) return '—'
+    return new Intl.DateTimeFormat('ru-RU', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(value))
+  }
+
   function bytes(value: number | null | undefined): string {
     if (!value) return ''
     if (value < 1024) return `${value} Б`
@@ -22,5 +33,5 @@ export function useFormat() {
     return many
   }
 
-  return { date, bytes, plural }
+  return { date, dateTime, bytes, plural }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Download, ProjectDetail, Screenshot, Tag, TagDraft } from '~/types/api'
+import type { Devlog, Download, ProjectDetail, Screenshot, Tag, TagDraft } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
@@ -12,19 +12,21 @@ const slug = route.params.slug as string
 const { data, pending, error: loadError, refresh } = await useAsyncData(
   `edit-${slug}`,
   async () => {
-    const [project, tags] = await Promise.all([
+    const [project, tags, devlogs] = await Promise.all([
       api.get<ProjectDetail>(`/api/v1/projects/${slug}`),
       api.get<{ items: Tag[] }>('/api/v1/tags'),
+      api.get<{ items: Devlog[] }>(`/api/v1/projects/${slug}/devlogs`),
     ])
 
-    return { project, tags: tags.items }
+    return { project, tags: tags.items, devlogs: devlogs.items }
   },
 )
 
 const project = computed(() => data.value?.project ?? null)
 const allTags = computed(() => data.value?.tags ?? [])
+const devlogs = computed(() => data.value?.devlogs ?? [])
 
-const tab = ref<'details' | 'screenshots' | 'downloads'>('details')
+const tab = ref<'details' | 'screenshots' | 'devlogs' | 'downloads'>('details')
 const form = reactive({ title: '', tagline: '', description: '', kind: 'game' })
 const selectedTags = ref<TagDraft[]>([])
 const error = ref('')
@@ -192,6 +194,12 @@ async function moveScreenshot(id: number, delta: number) {
   }
 }
 
+/* Devlogs */
+
+function updateDevlogs(value: Devlog[]) {
+  if (data.value) data.value.devlogs = value
+}
+
 /* Downloads */
 
 const downloadForm = reactive({ label: '', url: '', platform: 'windows', version: '' })
@@ -285,6 +293,9 @@ async function deleteDownload(id: number) {
         <button class="editor-tab" :class="{ active: tab === 'details' }" @click="tab = 'details'">
           Детали
         </button>
+        <button class="editor-tab" :class="{ active: tab === 'devlogs' }" @click="tab = 'devlogs'">
+          Девлоги ({{ devlogs.length }})
+        </button>
         <button class="editor-tab" :class="{ active: tab === 'screenshots' }" @click="tab = 'screenshots'">
           Скриншоты ({{ project.screenshots.length }})
         </button>
@@ -315,7 +326,13 @@ async function deleteDownload(id: number) {
 
         <div class="field">
           <label class="label" for="description">Описание</label>
-          <textarea id="description" v-model="form.description" class="textarea" maxlength="20000" />
+          <MarkdownEditor
+            id="description"
+            v-model="form.description"
+            :maxlength="20000"
+            :rows="12"
+            placeholder="Что это, для кого и как играть. Поддерживается Markdown."
+          />
         </div>
 
         <div class="field">
@@ -326,6 +343,16 @@ async function deleteDownload(id: number) {
         <button class="btn btn-primary" :disabled="saving" @click="save">
           {{ saving ? 'Сохраняем…' : 'Сохранить' }}
         </button>
+      </div>
+
+      <div v-else-if="tab === 'devlogs'">
+        <DevlogManager
+          :devlogs="devlogs"
+          :project-slug="slug"
+          @update:devlogs="updateDevlogs"
+          @notice="notice = $event"
+          @error="error = $event"
+        />
       </div>
 
       <div v-else-if="tab === 'screenshots'" class="card card-pad">

@@ -88,7 +88,13 @@ async function submit() {
 
         <div class="field">
           <label class="label" for="description">Описание</label>
-          <textarea id="description" v-model="form.description" class="textarea" maxlength="20000" placeholder="Что это, для кого и как играть" />
+          <MarkdownEditor
+            id="description"
+            v-model="form.description"
+            :maxlength="20000"
+            :rows="12"
+            placeholder="Что это, для кого и как играть. Поддерживается Markdown."
+          />
         </div>
 
         <div class="field">

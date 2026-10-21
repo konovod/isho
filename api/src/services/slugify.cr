@@ -38,4 +38,30 @@ module Slugify
 
     candidate
   end
+
+  def self.unique_devlog_slug(project_id : Int64, title : String) : String
+    base = call(title, "devlog")
+    candidate = base
+    suffix = 2
+
+    while DevlogQuery.new.project_id(project_id).slug(candidate).first?
+      candidate = "#{base}-#{suffix}"
+      suffix += 1
+    end
+
+    candidate
+  end
+
+  def self.unique_forum_topic_slug(section_id : Int64, title : String) : String
+    base = call(title, "topic")
+    candidate = base
+    suffix = 2
+
+    while ForumTopicQuery.new.section_id(section_id).slug(candidate).first?
+      candidate = "#{base}-#{suffix}"
+      suffix += 1
+    end
+
+    candidate
+  end
 end

@@ -9,6 +9,15 @@ module Api::V1::Projects::ProjectParams
       .first? || raise Avram::RecordNotFoundError.new(Project.table_name, params.get(:slug).to_s)
   end
 
+  def project_visible? : Bool
+    return true if project.published?
+
+    user = current_user?
+    return false unless user
+
+    project.user_id == user.id
+  end
+
   def reload_project(project : Project) : Project
     ProjectQuery.new
       .id(project.id)

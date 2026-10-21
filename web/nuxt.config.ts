@@ -15,6 +15,12 @@ export default defineNuxtConfig({
       '/media': { target: 'http://127.0.0.1:4000/media', changeOrigin: true },
     },
   },
+  vite: {
+    optimizeDeps: {
+      // Pre-bundle the Markdown renderer so dev does not reload on first use.
+      include: ['markdown-it'],
+    },
+  },
   app: {
     head: {
       title: 'isho',

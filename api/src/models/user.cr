@@ -12,6 +12,8 @@ class User < BaseModel
     column is_admin : Bool
     has_many projects : Project
     has_many auth_sessions : AuthSession
+    has_many forum_topics : ForumTopic
+    has_many forum_posts : ForumPost
   end
 
   def emailable : Carbon::Address
@@ -20,5 +22,10 @@ class User < BaseModel
 
   def name : String
     display_name || username
+  end
+
+  # Only admins moderate for now; the separate moderator role can be added later.
+  def moderator? : Bool
+    is_admin
   end
 end
