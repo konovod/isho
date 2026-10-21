@@ -9,6 +9,7 @@ class Api::V1::Projects::Show < ApiAction
       raise Avram::RecordNotFoundError.new(Project.table_name, params.get(:slug).to_s)
     end
 
-    json ProjectSerializer.new(project, detailed: true)
+    can_moderate = current_user?.try { |user| user.id == project.user_id || user.moderator? } || false
+    json ProjectSerializer.new(project, detailed: true, moderation: can_moderate)
   end
 end

@@ -30,6 +30,7 @@ const fieldNames: Record<string, string> = {
   email: 'Почта',
   password: 'Пароль',
   password_confirmation: 'Повтор пароля',
+  moderation_note: 'Причина',
 }
 
 const detailMessages: Record<string, string> = {

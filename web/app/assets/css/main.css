@@ -1575,6 +1575,46 @@ p {
   }
 }
 
+/* Moderation */
+
+.moderation-panel {
+  margin-bottom: 24px;
+}
+
+.textarea-sm {
+  min-height: 90px;
+}
+
+.moderation-unpublish {
+  max-width: 680px;
+}
+
+.moderation-note {
+  border-left: 3px solid var(--danger);
+}
+
+.moderation-note-text {
+  margin-top: 6px;
+  white-space: pre-line;
+}
+
+.moderation-note-date {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.moderation-projects {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.moderation-project-head h3 {
+  font-size: 16px;
+  font-weight: 650;
+}
+
 /* Utilities */
 
 .row {

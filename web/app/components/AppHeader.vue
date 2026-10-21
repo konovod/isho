@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { user, signOut, saveTheme } = useAuth()
+const { user, canModerate, signOut, saveTheme } = useAuth()
 const { toggleTheme } = useTheme()
 const router = useRouter()
 
@@ -37,6 +37,9 @@ async function onToggleTheme() {
         </NuxtLink>
         <NuxtLink v-if="user" to="/dashboard" class="nav-link">
           Мои проекты
+        </NuxtLink>
+        <NuxtLink v-if="canModerate" to="/moderation" class="nav-link">
+          Модерация
         </NuxtLink>
       </nav>
 

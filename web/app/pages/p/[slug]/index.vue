@@ -3,8 +3,9 @@ import type { Devlog, ForumTopic, ProjectDetail } from '~/types/api'
 
 const route = useRoute()
 const api = useApi()
-const { user } = useAuth()
+const { user, canModerate } = useAuth()
 const { date } = useFormat()
+const moderatedNotice = ref('')
 
 const { data: project, error } = await useAsyncData(
   `project-${route.params.slug}`,
@@ -35,6 +36,11 @@ const kindLabel = computed(() => {
   return labels[project.value?.kind ?? ''] ?? project.value?.kind ?? ''
 })
 const initials = computed(() => authorName.value.slice(0, 2))
+
+function onModerated(updated: ProjectDetail) {
+  project.value = updated
+  moderatedNotice.value = 'Проект снят с публикации. Причина сохранена и видна автору в редакторе.'
+}
 
 useSeoMeta({
   title: () => `${project.value?.title} — isho`,
@@ -75,6 +81,20 @@ useSeoMeta({
             Редактировать
           </NuxtLink>
         </div>
+      </div>
+
+      <div v-if="canModerate && project.status === 'published'" class="card card-pad moderation-panel">
+        <h2 class="section-title" style="margin-bottom: 4px;">
+          Модерация
+        </h2>
+        <p class="muted small mb-16">
+          Снимите проект с публикации, указав причину. Автор увидит её в редакторе и сможет опубликовать проект снова.
+        </p>
+        <ModerationUnpublish :slug="project.slug" @done="onModerated" />
+      </div>
+
+      <div v-if="moderatedNotice" class="form-success mt-16">
+        {{ moderatedNotice }}
       </div>
 
       <div class="project-layout">

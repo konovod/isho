@@ -131,10 +131,23 @@ export interface ProjectDetail extends ProjectCard {
   description: string | null
   screenshots: Screenshot[]
   downloads: Download[]
+  moderation_note: string | null
+  moderated_at: string | null
 }
 
 export interface ProjectList {
   items: ProjectCard[]
+  meta: { page: number, per_page: number, total: number }
+}
+
+export interface AdminUser extends ApiUser {
+  email: string
+  is_admin: boolean
+  projects_count: number
+}
+
+export interface AdminUserList {
+  items: AdminUser[]
   meta: { page: number, per_page: number, total: number }
 }
 

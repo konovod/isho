@@ -1,5 +1,5 @@
 class ProjectSerializer < BaseSerializer
-  def initialize(@project : Project, @detailed : Bool = false)
+  def initialize(@project : Project, @detailed : Bool = false, @moderation : Bool = false)
   end
 
   def render
@@ -17,14 +17,24 @@ class ProjectSerializer < BaseSerializer
     }
 
     if @detailed
-      base.merge({
+      detailed = base.merge({
         description: @project.description,
         screenshots: screenshots,
         downloads:   downloads,
       })
+
+      @moderation ? detailed.merge(moderation) : detailed
     else
       base
     end
+  end
+
+  # Only the author and moderators may see why a project was unpublished.
+  private def moderation
+    {
+      moderation_note: @project.moderation_note,
+      moderated_at:    @project.moderated_at,
+    }
   end
 
   private def tags : Array(TagSerializer)

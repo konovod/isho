@@ -7,6 +7,7 @@ definePageMeta({ middleware: 'auth' })
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
+const { dateTime } = useFormat()
 const slug = route.params.slug as string
 
 const { data, pending, error: loadError, refresh } = await useAsyncData(
@@ -73,7 +74,7 @@ async function save() {
     data.value!.tags = [...mergedTags.values()]
     notice.value = 'Сохранено'
 
-    await refreshNuxtData('tags')
+    await Promise.all([refreshNuxtData('tags'), refresh()])
   }
   catch (err) {
     fail(err)
@@ -91,6 +92,7 @@ async function togglePublish() {
     const action = project.value.status === 'published' ? 'unpublish' : 'publish'
     data.value!.project = await api.post<ProjectDetail>(`/api/v1/projects/${slug}/${action}`)
     notice.value = action === 'publish' ? 'Проект опубликован' : 'Проект снят с публикации'
+    await refresh()
   }
   catch (err) {
     fail(err)
@@ -279,6 +281,16 @@ async function deleteDownload(id: number) {
           <button class="btn btn-danger btn-sm" @click="removeProject">
             Удалить
           </button>
+        </div>
+      </div>
+
+      <div v-if="project.moderation_note" class="form-error moderation-note">
+        <strong>Проект снят с публикации модератором.</strong>
+        <div class="moderation-note-text">
+          {{ project.moderation_note }}
+        </div>
+        <div v-if="project.moderated_at" class="moderation-note-date">
+          Снят: {{ dateTime(project.moderated_at) }}
         </div>
       </div>
 

@@ -8,6 +8,9 @@ class Project < BaseModel
     column description : String?
     column status : String
     column published_at : Time?
+    column moderation_note : String?
+    column moderated_at : Time?
+    belongs_to moderated_by : User?
     has_many screenshots : Screenshot
     has_many downloads : Download
     has_many devlogs : Devlog

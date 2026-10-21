@@ -4,6 +4,6 @@ class Api::V1::Projects::Update < ApiAction
   patch "/api/v1/projects/:slug" do
     SaveProject.update!(project, params)
     sync_tags(project)
-    json ProjectSerializer.new(reload_project(project), detailed: true)
+    json ProjectSerializer.new(reload_project(project), detailed: true, moderation: true)
   end
 end
