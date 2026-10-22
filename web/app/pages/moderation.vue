@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import type { AdminUser, AdminUserList, ProjectCard, ProjectList } from '~/types/api'
+import type { AdminBlockedEmail, AdminBlockedEmailList, AdminUser, AdminUserList, ProjectCard, ProjectList } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: ['auth', 'admin'] })
 
 useSeoMeta({
   title: `Модерация — ${SITE_NAME}`,
-  description: 'Удаление пользователей и снятие проектов с публикации.',
+  description: 'Удаление пользователей, чёрный список почт и снятие проектов с публикации.',
 })
 
 const api = useApi()
 const { user } = useAuth()
-const { plural } = useFormat()
+const { date, plural } = useFormat()
 
-const tab = ref<'users' | 'projects'>('users')
+const tab = ref<'users' | 'projects' | 'blocked'>('users')
 const notice = ref('')
 const actionError = ref('')
 
@@ -61,6 +61,28 @@ const {
 const projects = computed(() => projectsData.value?.items ?? [])
 const projectsTotal = computed(() => projectsData.value?.meta.total ?? 0)
 
+const blockedSearch = ref('')
+const blockedQuery = ref('')
+const blockedPage = ref(1)
+
+const {
+  data: blockedData,
+  pending: blockedPending,
+  error: blockedLoadError,
+  refresh: refreshBlocked,
+} = await useAsyncData(
+  'admin-blocked-emails',
+  () => api.get<AdminBlockedEmailList>('/api/v1/admin/blocked_emails', {
+    q: blockedQuery.value || undefined,
+    page: blockedPage.value,
+    per_page: 50,
+  }),
+  { watch: [blockedQuery] },
+)
+
+const blockedEmails = computed(() => blockedData.value?.items ?? [])
+const blockedTotal = computed(() => blockedData.value?.meta.total ?? 0)
+
 function searchUsers() {
   usersPage.value = 1
   userQuery.value = userSearch.value.trim()
@@ -71,24 +93,53 @@ function searchProjects() {
   projectQuery.value = projectSearch.value.trim()
 }
 
+function searchBlocked() {
+  blockedPage.value = 1
+  blockedQuery.value = blockedSearch.value.trim()
+}
+
 async function removeUser(item: AdminUser) {
   if (item.id === user.value?.id) return
 
   const count = `${item.projects_count} ${plural(item.projects_count, 'проект', 'проекта', 'проектов')}`
 
-  if (!confirm(`Удалить @${item.username} вместе с ${count}? Это действие необратимо.`)) return
+  if (!confirm(`Удалить @${item.username} вместе с ${count}? Почта попадёт в чёрный список, и зарегистрироваться с ней снова будет нельзя. Это действие необратимо.`)) return
 
   notice.value = ''
   actionError.value = ''
 
   try {
     await api.del(`/api/v1/admin/users/${item.username}`)
-    notice.value = `Пользователь @${item.username} удалён`
-    await refreshUsers()
+    notice.value = `Пользователь @${item.username} удалён, почта добавлена в чёрный список`
+    await Promise.all([refreshUsers(), refreshBlocked()])
   }
   catch (err) {
     actionError.value = formatApiError(err)
   }
+}
+
+async function unblockEmail(item: AdminBlockedEmail) {
+  if (!confirm(`Разблокировать ${item.email}? Адрес снова можно будет использовать для регистрации.`)) return
+
+  notice.value = ''
+  actionError.value = ''
+
+  try {
+    await api.del(`/api/v1/admin/blocked_emails/${item.id}`)
+    notice.value = `Адрес ${item.email} разблокирован`
+    await refreshBlocked()
+  }
+  catch (err) {
+    actionError.value = formatApiError(err)
+  }
+}
+
+async function onUserChanged(updated: AdminUser) {
+  notice.value = updated.ban
+    ? `Пользователь @${updated.username} забанен до ${date(updated.ban.banned_until)}`
+    : `Бан с @${updated.username} снят`
+  actionError.value = ''
+  await refreshUsers()
 }
 
 async function onProjectModerated(_project: ProjectCard) {
@@ -103,7 +154,7 @@ async function onProjectModerated(_project: ProjectCard) {
     <div class="page-head">
       <div>
         <h1>Модерация</h1>
-        <p>Удаление пользователей и снятие проектов с публикации.</p>
+        <p>Удаление пользователей, чёрный список почт и снятие проектов с публикации.</p>
       </div>
     </div>
 
@@ -120,6 +171,9 @@ async function onProjectModerated(_project: ProjectCard) {
       </button>
       <button class="editor-tab" :class="{ active: tab === 'projects' }" @click="tab = 'projects'">
         Проекты
+      </button>
+      <button class="editor-tab" :class="{ active: tab === 'blocked' }" @click="tab = 'blocked'">
+        Чёрный список
       </button>
     </div>
 
@@ -163,6 +217,8 @@ async function onProjectModerated(_project: ProjectCard) {
               @{{ item.username }} · {{ item.email }} ·
               {{ item.projects_count }} {{ plural(item.projects_count, 'проект', 'проекта', 'проектов') }}
             </div>
+
+            <ModerationBan :user="item" class="mt-16" @done="onUserChanged" />
           </div>
 
           <div class="dash-actions">
@@ -187,7 +243,7 @@ async function onProjectModerated(_project: ProjectCard) {
       </p>
     </section>
 
-    <section v-else>
+    <section v-else-if="tab === 'projects'">
       <form class="search-row" @submit.prevent="searchProjects">
         <input
           v-model="projectSearch"
@@ -247,6 +303,62 @@ async function onProjectModerated(_project: ProjectCard) {
 
       <p v-if="projectsTotal > projects.length" class="muted small mt-16">
         Показаны первые {{ projects.length }} из {{ projectsTotal }}.
+      </p>
+    </section>
+
+    <section v-else>
+      <p class="muted small mb-16">
+        Сюда попадают почты удалённых аккаунтов. Пока адрес в списке, зарегистрироваться с ним нельзя.
+      </p>
+
+      <form class="search-row" @submit.prevent="searchBlocked">
+        <input
+          v-model="blockedSearch"
+          class="input"
+          type="search"
+          placeholder="почта или ник удалённого аккаунта"
+          aria-label="Поиск в чёрном списке"
+        >
+        <button class="btn btn-ghost" type="submit">
+          Найти
+        </button>
+      </form>
+
+      <div v-if="blockedPending" class="empty">
+        Загружаем чёрный список…
+      </div>
+
+      <div v-else-if="blockedLoadError" class="empty">
+        Не удалось загрузить чёрный список.
+        <button class="btn btn-ghost btn-sm mt-16" @click="refreshBlocked()">
+          Повторить
+        </button>
+      </div>
+
+      <div v-else-if="!blockedEmails.length" class="empty">
+        Чёрный список пуст.
+      </div>
+
+      <div v-else class="dash-list">
+        <div v-for="item in blockedEmails" :key="item.id" class="dash-row">
+          <div class="dash-info">
+            <h3>{{ item.email }}</h3>
+            <div class="muted small">
+              <template v-if="item.username">@{{ item.username }} · </template>
+              заблокирован {{ date(item.created_at) }}
+            </div>
+          </div>
+
+          <div class="dash-actions">
+            <button class="btn btn-ghost btn-sm" type="button" @click="unblockEmail(item)">
+              Разблокировать
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p v-if="blockedTotal > blockedEmails.length" class="muted small mt-16">
+        Показаны первые {{ blockedEmails.length }} из {{ blockedTotal }}.
       </p>
     </section>
   </div>

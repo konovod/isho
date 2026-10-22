@@ -3,6 +3,8 @@ class AdminUserSerializer < BaseSerializer
   end
 
   def render
+    ban = @user.active_ban
+
     {
       id:              @user.id,
       email:           @user.email,
@@ -13,6 +15,7 @@ class AdminUserSerializer < BaseSerializer
       email_confirmed: @user.email_confirmed?,
       projects_count:  @projects_count,
       created_at:      @user.created_at,
+      ban:             ban ? ActiveBanSerializer.new(ban) : nil,
     }
   end
 end

@@ -49,6 +49,20 @@ describe Api::V1::Admin::Users do
       ProjectQuery.new.id(project.id).first?.should be_nil
       TagQuery.new.id(orphan.id).first?.should be_nil
       AuthSessionQuery.new.user_id(author.id).select_count.should eq 0
+
+      blocked = BlockedEmailQuery.new.by_email(author.email).first?
+      blocked.should_not be_nil
+      blocked.not_nil!.username.should eq author.username
+    end
+
+    it "blacklists the email regardless of its case" do
+      admin = UserFactory.create &.is_admin(true)
+      author = UserFactory.create &.email("Deleted@Example.com")
+
+      response = AuthHelper.client_for(admin).delete("/api/v1/admin/users/#{author.username}")
+
+      response.status_code.should eq 204
+      BlockedEmailQuery.new.by_email("deleted@example.com").first?.should_not be_nil
     end
 
     it "keeps tags that other projects still use" do

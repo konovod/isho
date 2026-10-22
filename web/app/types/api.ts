@@ -13,6 +13,28 @@ export interface Me extends ApiUser {
   theme: Theme
   is_admin: boolean
   email_confirmed: boolean
+  ban: ActiveBan | null
+}
+
+/** Active moderation ban shown to the user and in the admin list. */
+export interface ActiveBan {
+  id: number
+  reason: string
+  banned_at: string
+  banned_until: string
+  days_left: number
+}
+
+/** One row of the ban history kept for moderators. */
+export interface UserBanRecord {
+  id: number
+  reason: string
+  banned_at: string
+  expires_at: string
+  active: boolean
+  lifted_at: string | null
+  banned_by: string | null
+  lifted_by: string | null
 }
 
 export interface ForumSectionRef {
@@ -165,10 +187,25 @@ export interface AdminUser extends ApiUser {
   is_admin: boolean
   email_confirmed: boolean
   projects_count: number
+  ban: ActiveBan | null
 }
 
 export interface AdminUserList {
   items: AdminUser[]
+  meta: { page: number, per_page: number, total: number }
+}
+
+/** Address of a deleted account that cannot register again. */
+export interface AdminBlockedEmail {
+  id: number
+  email: string
+  /** Username of the account when it was deleted, for context. */
+  username: string | null
+  created_at: string
+}
+
+export interface AdminBlockedEmailList {
+  items: AdminBlockedEmail[]
   meta: { page: number, per_page: number, total: number }
 }
 

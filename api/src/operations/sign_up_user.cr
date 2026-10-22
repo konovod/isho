@@ -9,6 +9,7 @@ class SignUpUser < User::SaveOperation
   before_save do
     normalize
     validate_username
+    validate_email_not_blocked
     validate_uniqueness_of email
     validate_uniqueness_of username
     Authentic.copy_and_encrypt(password, to: encrypted_password) if password.valid?
@@ -34,5 +35,15 @@ class SignUpUser < User::SaveOperation
     elsif AppSettings::RESERVED_USERNAMES.includes?(value)
       username.add_error "is reserved"
     end
+  end
+
+  # Addresses of accounts deleted by a moderator stay in the blacklist until
+  # an admin removes them there.
+  private def validate_email_not_blocked
+    value = email.value.to_s
+    return if value.empty?
+    return unless BlockedEmailQuery.new.by_email(value).first?
+
+    email.add_error "is not allowed"
   end
 end

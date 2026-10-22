@@ -17,6 +17,7 @@ class User < BaseModel
     has_many auth_sessions : AuthSession
     has_many forum_topics : ForumTopic
     has_many forum_posts : ForumPost
+    has_many bans : UserBan
   end
 
   def emailable : Carbon::Address
@@ -34,5 +35,15 @@ class User < BaseModel
 
   def email_confirmed? : Bool
     !email_confirmed_at.nil?
+  end
+
+  # A ban expires by itself: no job has to clear anything, and the history row
+  # stays for the moderation log.
+  def active_ban : UserBan?
+    UserBanQuery.new.for_user(id).active.newest_first.first?
+  end
+
+  def banned? : Bool
+    !active_ban.nil?
   end
 end

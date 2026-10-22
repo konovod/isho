@@ -9,9 +9,18 @@ class DeleteUserAccount < Avram::Operation
     DeleteUserContent.run!(user: user)
 
     AppDatabase.transaction do
+      block_email
       User::DeleteOperation.delete!(user)
       purge_orphan_tags
     end
+  end
+
+  # A deleted account must not come back under the same address, so the email
+  # is kept in the blacklist together with the last username.
+  private def block_email
+    return if BlockedEmailQuery.new.by_email(user.email).first?
+
+    BlockEmail.create!(email: user.email, username: user.username)
   end
 
   private def delete_screenshot_files

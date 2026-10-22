@@ -12,6 +12,7 @@ export function useAuth() {
   const canModerate = computed(() => user.value?.is_admin === true)
   // Visitors and accounts created before confirmation existed are not nagged.
   const emailConfirmed = computed(() => user.value?.email_confirmed !== false)
+  const banned = computed(() => !!user.value?.ban)
   const api = useApi()
 
   async function fetchMe(force = false): Promise<Me | null> {
@@ -72,5 +73,5 @@ export function useAuth() {
     }
   }
 
-  return { user, loaded, canModerate, emailConfirmed, fetchMe, signIn, signUp, resendEmailConfirmation, signOut, saveTheme }
+  return { user, loaded, canModerate, emailConfirmed, banned, fetchMe, signIn, signUp, resendEmailConfirmation, signOut, saveTheme }
 }

@@ -50,6 +50,7 @@ if (import.meta.server) {
 
     <main class="main">
       <EmailConfirmationBanner />
+      <BanBanner />
       <NuxtPage />
     </main>
 

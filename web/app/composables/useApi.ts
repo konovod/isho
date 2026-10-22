@@ -31,6 +31,8 @@ const fieldNames: Record<string, string> = {
   password: 'Пароль',
   password_confirmation: 'Повтор пароля',
   moderation_note: 'Причина',
+  reason: 'Причина',
+  days: 'Срок',
 }
 
 const detailMessages: Record<string, string> = {
@@ -39,6 +41,9 @@ const detailMessages: Record<string, string> = {
   'is too short': 'слишком короткое',
   'is invalid': 'неверное значение',
   'has already been taken': 'уже занято',
+  'is not allowed': 'нельзя использовать для регистрации',
+  'must be at least 1': 'минимум 1',
+  'must be at most 3650': 'максимум 3650',
   'must be a public https:// link': 'нужна публичная ссылка https://',
   'must not point to a local address': 'нельзя ссылаться на локальный адрес',
   'must be a post in this topic': 'можно цитировать только сообщение из этой темы',
@@ -50,6 +55,9 @@ const codeMessages: Record<string, string> = {
   email_delivery_failed: 'Не удалось отправить письмо. Попробуйте позже.',
   too_many_requests: 'Слишком много попыток. Попробуйте позже.',
   unauthorized: 'Нужно войти в аккаунт.',
+  user_banned: 'Аккаунт забанен — публикация недоступна до окончания срока.',
+  cannot_ban_self: 'Нельзя забанить свой аккаунт.',
+  cannot_ban_admin: 'Нельзя забанить администратора.',
 }
 
 function translateDetail(message: string): string {

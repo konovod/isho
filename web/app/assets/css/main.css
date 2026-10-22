@@ -402,6 +402,10 @@ p {
   background: color-mix(in srgb, var(--warning) 14%, transparent);
 }
 
+.notice-error {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
 .notice-body {
   min-width: 0;
 }
@@ -749,6 +753,11 @@ p {
 .badge-published {
   background: color-mix(in srgb, var(--success) 14%, transparent);
   color: var(--success);
+}
+
+.badge-banned {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger-text);
 }
 
 .badge-external {
@@ -1533,6 +1542,59 @@ p {
   padding: 28px;
 }
 
+.ban-card {
+  max-width: 480px;
+}
+
+.ban-reason {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+}
+
+.ban-reason-text {
+  margin-top: 4px;
+  white-space: pre-line;
+}
+
+.ban-dates {
+  margin-top: 12px;
+}
+
+.ban-countdown {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.ban-countdown-cell {
+  flex: 1;
+  padding: 12px 8px;
+  text-align: center;
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+}
+
+.ban-countdown-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.ban-expired {
+  margin-top: 18px;
+}
+
+.ban-hint {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.ban-hint a {
+  color: var(--accent);
+}
+
 .auth-card h1 {
   font-size: 24px;
   font-weight: 750;
@@ -1945,6 +2007,54 @@ p {
 }
 
 /* Moderation */
+
+.ban-manager {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+.ban-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ban-status-reason {
+  max-width: 420px;
+}
+
+.ban-form {
+  width: 100%;
+  max-width: 680px;
+}
+
+.field-narrow {
+  max-width: 160px;
+}
+
+.ban-history {
+  width: 100%;
+  max-width: 680px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+}
+
+.ban-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ban-history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
 .moderation-panel {
   margin-bottom: 24px;

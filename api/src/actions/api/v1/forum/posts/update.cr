@@ -2,6 +2,7 @@ class Api::V1::Forum::Posts::Update < ApiAction
   include Api::V1::Forum::Lookup
   include Api::V1::Forum::Authorization
   include Api::V1::Forum::Visibility
+  include Api::Auth::RequireNotBanned
 
   patch "/api/v1/forum/posts/:id" do
     post = find_forum_post!(params.get(:id))

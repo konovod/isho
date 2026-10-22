@@ -15,8 +15,8 @@ async function submit() {
   pending.value = true
 
   try {
-    await signIn(login.value.trim(), password.value)
-    await router.push(route.query.redirect?.toString() || '/dashboard')
+    const me = await signIn(login.value.trim(), password.value)
+    await router.push(me.ban ? '/banned' : (route.query.redirect?.toString() || '/dashboard'))
   }
   catch (err) {
     error.value = err instanceof ApiError

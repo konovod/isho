@@ -2,6 +2,7 @@ class Api::V1::Forum::Topics::Update < ApiAction
   include Api::V1::Forum::Lookup
   include Api::V1::Forum::Authorization
   include Api::V1::Forum::Visibility
+  include Api::Auth::RequireNotBanned
 
   patch "/api/v1/forum/topics/:id" do
     topic = find_forum_topic!(params.get(:id))

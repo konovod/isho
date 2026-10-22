@@ -56,6 +56,23 @@ describe Api::V1::SignUps::Create do
     Carbon::DevAdapter.delivered_emails.should be_empty
   end
 
+  it "rejects a blacklisted email" do
+    BlockEmail.create!(email: "blocked@example.com", username: "old_user")
+
+    response = ApiClient.exec(Api::V1::SignUps::Create, user: {
+      email:                 "Blocked@Example.com",
+      username:              "new_user",
+      password:              "password1234",
+      password_confirmation: "password1234",
+    })
+
+    response.status_code.should eq 422
+    details = JSON.parse(response.body)["error"]["details"]
+    details["email"].as_a.map(&.as_s).should contain "is not allowed"
+    UserQuery.new.email("blocked@example.com").first?.should be_nil
+    Carbon::DevAdapter.delivered_emails.should be_empty
+  end
+
   it "rejects a reserved username" do
     response = ApiClient.exec(Api::V1::SignUps::Create, user: {
       email:                 "admin@example.com",

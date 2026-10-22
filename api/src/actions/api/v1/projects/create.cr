@@ -1,5 +1,6 @@
 class Api::V1::Projects::Create < ApiAction
   include Api::V1::Projects::ProjectParams
+  include Api::Auth::RequireNotBanned
 
   post "/api/v1/projects" do
     project = SaveProject.create!(params, user_id: current_user.id)

@@ -35,3 +35,17 @@ class Api::InvalidEmailTokenError < Exception
     "The confirmation link is invalid or has expired"
   end
 end
+
+# A banned account can sign in and read, but every action that changes content
+# is rejected until the ban expires or a moderator lifts it.
+class Api::UserBannedError < Exception
+  include Lucky::RenderableError
+
+  def renderable_status : Int32
+    403
+  end
+
+  def renderable_message : String
+    "User is banned"
+  end
+end
