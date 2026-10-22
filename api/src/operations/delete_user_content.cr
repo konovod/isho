@@ -43,6 +43,7 @@ class DeleteUserContent < Avram::Operation
       topic,
       replies_count: replies.to_i32,
       last_post_at: remaining.created_at,
+      last_post_user_id: remaining.user_id,
     )
   end
 end

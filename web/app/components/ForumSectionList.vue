@@ -34,7 +34,17 @@ const groups = computed(() => {
           class="forum-section-row"
         >
           <div class="forum-section-info">
-            <h3>{{ section.title }}</h3>
+            <h3>
+              {{ section.title }}
+              <span
+                v-if="section.unread_topics_count > 0"
+                class="forum-unread-badge"
+                :title="`Непрочитанных тем: ${section.unread_topics_count}`"
+                :aria-label="`Непрочитанных тем: ${section.unread_topics_count}`"
+              >
+                {{ section.unread_topics_count }}
+              </span>
+            </h3>
             <p v-if="section.description" class="muted small">{{ section.description }}</p>
             <p class="muted small">
               {{ section.topics_count }}

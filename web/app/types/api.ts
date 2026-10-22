@@ -36,6 +36,7 @@ export interface ForumSection {
   position: number
   topics_count: number
   posts_count: number
+  unread_topics_count: number
 }
 
 export interface ForumTopic {
@@ -45,11 +46,16 @@ export interface ForumTopic {
   section: ForumSectionRef
   project: ForumProjectRef | null
   author: ApiUser
+  last_post_author: ApiUser | null
   replies_count: number
   last_post_at: string
   created_at: string
   updated_at: string
   last_page: number
+  /** Posts already seen by the current user; null for visitors. */
+  read_posts_count: number | null
+  unread_count: number
+  first_unread_page: number
 }
 
 export interface ForumPostQuote {

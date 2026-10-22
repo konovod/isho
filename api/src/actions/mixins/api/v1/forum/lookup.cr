@@ -9,6 +9,7 @@ module Api::V1::Forum::Lookup
       .preload_user
       .preload_section
       .preload_project
+      .preload_last_post_user
       .first? || raise Avram::RecordNotFoundError.new(ForumTopic.table_name, id)
   end
 
@@ -19,6 +20,7 @@ module Api::V1::Forum::Lookup
       .preload_user
       .preload_section
       .preload_project
+      .preload_last_post_user
       .first? || raise Avram::RecordNotFoundError.new(ForumTopic.table_name, slug)
   end
 
@@ -36,6 +38,7 @@ module Api::V1::Forum::Lookup
       .preload_user
       .preload_section
       .preload_project
+      .preload_last_post_user
       .first? || raise Avram::RecordNotFoundError.new(ForumTopic.table_name, topic.id.to_s)
   end
 

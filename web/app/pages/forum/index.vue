@@ -2,10 +2,14 @@
 import type { ForumSection } from '~/types/api'
 
 const api = useApi()
+const { user } = useAuth()
+
+const userKey = computed(() => user.value?.id ?? 'guest')
 
 const { data, error } = await useAsyncData(
-  'forum-sections',
+  () => `forum-sections-${userKey.value}`,
   () => api.get<{ items: ForumSection[] }>('/api/v1/forum/sections'),
+  { watch: [userKey] },
 )
 
 const sections = computed(() => data.value?.items ?? [])

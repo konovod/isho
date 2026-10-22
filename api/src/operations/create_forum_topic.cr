@@ -16,6 +16,7 @@ class CreateForumTopic < Avram::Operation
         title: title,
         replies_count: 0,
         last_post_at: Time.utc,
+        last_post_user_id: user.id,
       )
 
       SaveForumPost.create!(

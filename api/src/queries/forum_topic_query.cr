@@ -15,6 +15,19 @@ class ForumTopicQuery < ForumTopic::BaseQuery
     slug(slug)
   end
 
+  # Topics with posts the user has not seen yet. A missing read row means the
+  # topic was never opened, so everything in it counts as unread.
+  def unread_for(user_id : Int64) : self
+    where(<<-SQL, user_id)
+      (forum_topics.replies_count + 1) > COALESCE((
+        SELECT forum_topic_reads.read_count
+        FROM forum_topic_reads
+        WHERE forum_topic_reads.topic_id = forum_topics.id
+          AND forum_topic_reads.user_id = ?
+      ), 0)
+    SQL
+  end
+
   # Project discussions live in the public "projects" section. Draft projects
   # must not leak there, so only topics of published projects are listed.
   def with_published_project

@@ -13,11 +13,12 @@ const { user } = useAuth()
 
 const sectionSlug = computed(() => route.params.section as string)
 const page = computed(() => Math.max(1, Number(route.query.page) || 1))
+const userKey = computed(() => user.value?.id ?? 'guest')
 
 const { data, pending, error } = await useAsyncData(
-  `forum-section-${sectionSlug.value}`,
+  () => `forum-section-${sectionSlug.value}-${userKey.value}`,
   () => api.get<SectionResponse>(`/api/v1/forum/sections/${sectionSlug.value}?page=${page.value}`),
-  { watch: [page, sectionSlug] },
+  { watch: [page, sectionSlug, userKey] },
 )
 
 const section = computed(() => data.value?.section ?? null)

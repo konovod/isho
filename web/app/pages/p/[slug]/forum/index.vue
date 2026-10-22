@@ -12,6 +12,7 @@ const { user } = useAuth()
 
 const slug = computed(() => route.params.slug as string)
 const page = computed(() => Math.max(1, Number(route.query.page) || 1))
+const userKey = computed(() => user.value?.id ?? 'guest')
 
 const { data: project } = await useAsyncData(
   `project-forum-project-${slug.value}`,
@@ -19,9 +20,9 @@ const { data: project } = await useAsyncData(
 )
 
 const { data, pending } = await useAsyncData(
-  `project-forum-${slug.value}`,
+  () => `project-forum-${slug.value}-${userKey.value}`,
   () => api.get<ProjectForumResponse>(`/api/v1/projects/${slug.value}/forum/topics?page=${page.value}`),
-  { watch: [page, slug] },
+  { watch: [page, slug, userKey] },
 )
 
 if (!project.value) {

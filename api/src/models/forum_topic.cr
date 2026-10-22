@@ -3,6 +3,7 @@ class ForumTopic < BaseModel
     belongs_to section : ForumSection
     belongs_to user : User
     belongs_to project : Project?
+    belongs_to last_post_user : User?
     column title : String
     column slug : String
     column replies_count : Int32

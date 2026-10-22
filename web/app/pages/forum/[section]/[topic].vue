@@ -16,15 +16,77 @@ const { dateTime, plural } = useFormat()
 const sectionSlug = computed(() => route.params.section as string)
 const topicSlug = computed(() => route.params.topic as string)
 const page = computed(() => Math.max(1, Number(route.query.page) || 1))
+const userKey = computed(() => user.value?.id ?? 'guest')
 
 const { data, pending, error, refresh } = await useAsyncData(
-  `forum-topic-${sectionSlug.value}-${topicSlug.value}`,
+  () => `forum-topic-${sectionSlug.value}-${topicSlug.value}-${userKey.value}`,
   () => api.get<TopicResponse>(`/api/v1/forum/sections/${sectionSlug.value}/topics/${topicSlug.value}?page=${page.value}`),
-  { watch: [page, sectionSlug, topicSlug] },
+  { watch: [page, sectionSlug, topicSlug, userKey] },
 )
 
 const topic = computed(() => data.value?.topic ?? null)
 const posts = computed(() => data.value?.items ?? [])
+const pageOffset = computed(() => {
+  const meta = data.value?.meta
+  return ((meta?.page ?? 1) - 1) * (meta?.per_page ?? 20)
+})
+const firstUnreadIndex = computed(() => {
+  const read = data.value?.topic.read_posts_count
+  if (read === null || read === undefined) return -1
+
+  const index = read - pageOffset.value
+  return index >= 0 && index < posts.value.length ? index : -1
+})
+
+async function markTopicRead() {
+  if (!user.value || !topic.value || !posts.value.length) return
+
+  const read = topic.value.read_posts_count
+  if (read !== null && pageOffset.value + posts.value.length <= read) return
+
+  const lastPost = posts.value[posts.value.length - 1]
+  if (!lastPost) return
+
+  try {
+    await api.post(`/api/v1/forum/topics/${topic.value.id}/read`, {
+      forum_topic_read: { last_post_id: lastPost.id },
+    })
+
+    // Counters on already visited pages must be reloaded on the next visit.
+    clearNuxtData([
+      `forum-sections-${userKey.value}`,
+      `forum-section-${topic.value.section.slug}-${userKey.value}`,
+    ])
+    if (topic.value.project) {
+      clearNuxtData(`project-forum-${topic.value.project.slug}-${userKey.value}`)
+    }
+  }
+  catch {
+    // Failing to save a read marker must not break reading the topic.
+  }
+}
+
+function scrollToRequestedAnchor() {
+  const hash = route.hash
+  if (hash !== '#last' && hash !== '#unread') return
+
+  // Nuxt resets the scroll position after a route change, so wait for it
+  // before jumping to the requested post.
+  window.setTimeout(() => {
+    document.getElementById(hash.slice(1))?.scrollIntoView({
+      block: hash === '#last' ? 'end' : 'start',
+    })
+  }, 300)
+}
+
+onMounted(() => {
+  scrollToRequestedAnchor()
+  markTopicRead()
+})
+
+watch(data, () => {
+  markTopicRead()
+})
 
 if (!data.value && error.value) {
   throw createError({ statusCode: 404, statusMessage: 'Тема не найдена' })
@@ -224,17 +286,25 @@ useSeoMeta({
 
     <template v-else>
       <div class="forum-posts">
-        <ForumPostItem
-          v-for="post in posts"
-          :key="post.id"
-          :post="post"
-          :current-user-id="user?.id"
-          :can-moderate="canModerate"
-          :is-first="page === 1 && post.id === posts[0]?.id"
-          @quote="quote"
-          @updated="onUpdated"
-          @deleted="onDeleted"
-        />
+        <template v-for="(post, index) in posts" :key="post.id">
+          <span
+            v-if="index === firstUnreadIndex"
+            id="unread"
+            class="forum-anchor"
+            aria-hidden="true"
+          />
+          <ForumPostItem
+            :post="post"
+            :current-user-id="user?.id"
+            :can-moderate="canModerate"
+            :is-first="page === 1 && post.id === posts[0]?.id"
+            :unread="firstUnreadIndex >= 0 && index >= firstUnreadIndex"
+            @quote="quote"
+            @updated="onUpdated"
+            @deleted="onDeleted"
+          />
+        </template>
+        <span id="last" class="forum-anchor" aria-hidden="true" />
       </div>
 
       <ForumPagination

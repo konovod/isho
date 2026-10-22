@@ -19,6 +19,7 @@ class DeleteForumPost < Avram::Operation
         topic,
         replies_count: replies,
         last_post_at: remaining.try(&.created_at) || topic.created_at,
+        last_post_user_id: remaining.try(&.user_id),
       )
     end
   end

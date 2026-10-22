@@ -7,6 +7,7 @@ const props = defineProps<{
   currentUserId?: number
   canModerate: boolean
   isFirst?: boolean
+  unread?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -65,7 +66,11 @@ async function save() {
 </script>
 
 <template>
-  <article :id="`post-${post.id}`" class="forum-post">
+  <article
+    :id="`post-${post.id}`"
+    class="forum-post"
+    :class="{ 'is-unread': unread }"
+  >
     <aside class="forum-post-author">
       <span class="avatar">{{ initials }}</span>
       <NuxtLink :to="`/u/${post.author.username}`" class="forum-post-author-name">
@@ -79,6 +84,7 @@ async function save() {
         <span class="muted small">
           {{ dateTime(post.created_at) }}
           <template v-if="post.edited"> · изменено</template>
+          <span v-if="unread" class="forum-post-new">новое</span>
         </span>
 
         <div class="forum-post-actions">

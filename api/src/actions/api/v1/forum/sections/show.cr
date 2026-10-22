@@ -2,6 +2,7 @@ class Api::V1::Forum::Sections::Show < ApiAction
   include Api::Auth::SkipRequireSession
   include Api::V1::Forum::Params
   include Api::V1::Forum::Lookup
+  include Api::V1::Forum::ReadState
 
   get "/api/v1/forum/sections/:section_slug" do
     section = find_forum_section!(params.get(:section_slug))
@@ -14,6 +15,7 @@ class Api::V1::Forum::Sections::Show < ApiAction
       .preload_user
       .preload_section
       .preload_project
+      .preload_last_post_user
 
     query = query.with_published_project if section.slug == "projects"
 
@@ -23,9 +25,11 @@ class Api::V1::Forum::Sections::Show < ApiAction
       .offset((page - 1) * per_page)
       .results
 
+    read_counts = forum_read_counts(topics)
+
     json({
-      section: ForumSectionSerializer.new(section),
-      items:   topics.map { |topic| ForumTopicSerializer.new(topic) },
+      section: ForumSectionSerializer.new(section, current_user?.try(&.id)),
+      items:   topics.map { |topic| ForumTopicSerializer.new(topic, read_counts.try { |counts| counts[topic.id]? }) },
       meta:    pagination_meta(page, per_page, total),
     })
   end

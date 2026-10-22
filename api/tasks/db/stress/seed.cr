@@ -267,6 +267,7 @@ class Db::Stress::Seed < LuckyTask::Task
           slug: slug,
           replies_count: 0,
           last_post_at: started_at,
+          last_post_user_id: users[(index - 1) % users.size].id,
           created_at: started_at,
           updated_at: started_at,
         )
@@ -309,6 +310,7 @@ class Db::Stress::Seed < LuckyTask::Task
     started_at = Db::Stress::Support.topic_started_at(index)
     previous_id = ForumPostQuery.new.for_topic(topic.id).newest_first.first?.try(&.id)
     last_post_at = topic.last_post_at
+    last_post_user_id = topic.last_post_user_id
 
     AppDatabase.transaction do
       (existing...@posts_per_topic).each do |post_index|
@@ -333,6 +335,7 @@ class Db::Stress::Seed < LuckyTask::Task
 
         previous_id = post.id
         last_post_at = created_at
+        last_post_user_id = author.id
         @posts_created += 1
       end
 
@@ -340,6 +343,7 @@ class Db::Stress::Seed < LuckyTask::Task
         topic,
         replies_count: (@posts_per_topic - 1).to_i32,
         last_post_at: last_post_at,
+        last_post_user_id: last_post_user_id,
       )
     end
   end

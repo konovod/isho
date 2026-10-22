@@ -3,6 +3,7 @@ class Api::V1::Forum::Topics::Show < ApiAction
   include Api::V1::Forum::Params
   include Api::V1::Forum::Lookup
   include Api::V1::Forum::Visibility
+  include Api::V1::Forum::ReadState
 
   get "/api/v1/forum/sections/:section_slug/topics/:topic_slug" do
     section = find_forum_section!(params.get(:section_slug))
@@ -21,7 +22,7 @@ class Api::V1::Forum::Topics::Show < ApiAction
       .results
 
     json({
-      topic: ForumTopicSerializer.new(topic),
+      topic: ForumTopicSerializer.new(topic, forum_read_count(topic)),
       items: posts.map { |post| ForumPostSerializer.new(post) },
       meta:  pagination_meta(page, per_page, total),
     })
