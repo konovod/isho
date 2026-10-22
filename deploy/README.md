@@ -12,7 +12,7 @@ Crystal и не нужна сборка: туда уезжают только re
 | PostgreSQL 16 | `postgresql.service`, БД `isho_production`, роль `isho` |
 | Lucky API | `/srv/isho/api`, `isho-api.service`, `127.0.0.1:4000` |
 | Nuxt SSR | `/srv/isho/web`, `isho-web.service`, `127.0.0.1:3000` |
-| Caddy (Ubuntu `caddy` 2.6) | `/etc/caddy/Caddyfile`, `caddy.service`, порты 80/443 |
+| Caddy (официальная сборка 2.11, `/usr/local/bin/caddy`) | `/etc/caddy/Caddyfile`, `caddy.service`, порты 80/443 |
 
 Caddy раздаёт всё с одного origin: `/api/*` и `/media/*` идут в Lucky, остальное — в Nuxt.
 Скриншоты лежат в `/srv/isho/api/public/media` (Latch, файловое хранилище).
@@ -25,22 +25,60 @@ $env:ISHO_SSH_PASSWORD = '<пароль root>'
 ```
 
 Без `-SiteAddress` сайт открывается по `http://<ip>`: Caddy слушает `:80`,
-`COOKIE_SECURE=false`, `APP_ORIGIN=http://<ip>`.
+`COOKIE_SECURE=false`, `APP_ORIGIN=http://<ip>`. `APP_ORIGIN` и `APP_DOMAIN`
+выводятся из `-SiteAddress`, поэтому расхождение между ними — ошибка деплоя:
+API сверяет заголовок `Origin` с `APP_ORIGIN` и берёт из того же значения флаг
+`Secure` у cookie.
 
 Пароль можно не передавать через переменную — скрипт спросит его сам.
 
 ## Домен и HTTPS
 
-Когда A-запись домена указывает на IP сервера:
+Когда A-запись домена указывает на IP сервера, достаточно одного флага:
 
 ```powershell
-.\deploy\deploy.ps1 -SiteAddress https://vm4775508.firstbyte.club
+.\deploy\deploy.ps1 -SiteAddress https://isho.duckdns.org
 ```
 
 Тогда Caddy получает сертификат Let's Encrypt автоматически, а `APP_ORIGIN`,
 `APP_DOMAIN` и `COOKIE_SECURE=true` обновляются в `/etc/isho/api.env`.
 Повторный запуск с `-SkipBuild` переустановит только конфиг и рестартует службы
 (артефакт берётся из `deploy/artifacts/isho-deploy.tar.gz`).
+
+Сертификаты Caddy хранит в `/var/lib/caddy` (файловое хранилище в Caddyfile),
+так что ни рестарт, ни повторный деплой не приводят к новому выпуску: у Let's
+Encrypt на одно имя действует лимит в 5 сертификатов в неделю.
+
+### DuckDNS: бесплатное имя
+
+`isho.duckdns.org` уже указывает на сервер. Если запись надо обновить прямо из
+деплоя (например, сменился IP), возьмите токен на duckdns.org и передайте его:
+
+```powershell
+$env:ISHO_DUCKDNS_TOKEN = '<токен>'
+.\deploy\deploy.ps1 -SiteAddress https://isho.duckdns.org -SkipBuild
+```
+
+Скрипт вызовет API DuckDNS и направит `<имя>.duckdns.org` на `-Server`. Домен
+`duckdns.org` есть в Public Suffix List, поэтому лимит Let's Encrypt (50
+сертификатов в неделю на зарегистрированный домен) считается отдельно для
+`isho.duckdns.org` и ни с кем не делится.
+
+### Без домена: nip.io
+
+`185-180-231-183.nip.io` резолвится в `185.180.231.183` сам, без регистрации:
+
+```powershell
+.\deploy\deploy.ps1 -SiteAddress https://185-180-231-183.nip.io
+```
+
+Для постоянной витрины это плохой вариант: `nip.io` нет в Public Suffix List,
+поэтому для Let's Encrypt зарегистрированный домен — сам `nip.io`, и лимит в 50
+сертификатов в неделю общий для всех его пользователей. Первый выпуск может
+упасть с `too many certificates already issued for "nip.io"` — Caddy повторяет
+попытки сам, но ждать придётся часами (лимит пополняется на один сертификат
+каждые ~3.4 часа). Продление того же имени под этот лимит не попадает, зато
+имя завязано на IP: смена IP — новое имя и новый сертификат.
 
 ## Демо-данные
 

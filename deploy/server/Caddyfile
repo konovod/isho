@@ -1,8 +1,12 @@
 # isho in front of the Lucky API and the Nuxt server.
 #
 # ISHO_SITE_ADDRESS comes from /etc/isho/caddy.env:
-#   :80                                   plain HTTP on any host (no domain yet)
-#   https://vm4775508.firstbyte.club      automatic HTTPS once DNS points here
+#   :80                                  plain HTTP on any host (no domain yet)
+#   https://isho.duckdns.org             automatic HTTPS once DNS points here
+#   https://185-180-231-183.nip.io       same, without owning a domain
+#
+# Certificates are kept in the file storage below, so restarts and redeploys
+# never re-issue them (Let's Encrypt counts every issuance per domain).
 {
 	admin off
 	storage file_system /var/lib/caddy

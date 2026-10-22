@@ -17,6 +17,9 @@
 - Сид: `.\bin\tasks.exe db.seed.sample_data`.
 - Деплой на сервер: `.\deploy\deploy.ps1` — сборка в WSL и установка на Ubuntu
   (см. `deploy/README.md`). На сервере нет Crystal: туда едут только бинарники.
+  Caddy ставится официальной сборкой из GitHub в `/usr/local/bin/caddy` (2.11.x),
+  apt-версия 2.6 не используется. HTTPS включается одним `-SiteAddress https://host`,
+  `APP_ORIGIN`/`APP_DOMAIN` выводятся из него.
 
 ## Архитектурные правила
 

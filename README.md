@@ -150,7 +150,7 @@ docker-compose.yml   PostgreSQL
 $env:ISHO_SSH_PASSWORD = '<пароль root>'
 .\deploy\deploy.ps1                       # собрать и раскатать, http://<ip>
 .\deploy\deploy.ps1 -SampleData           # плюс демо-проекты и demo@isho.local
-.\deploy\deploy.ps1 -SiteAddress https://vm4775508.firstbyte.club   # домен + TLS
+.\deploy\deploy.ps1 -SiteAddress https://isho.duckdns.org   # домен + TLS
 ```
 
 На сервере `bootstrap.sh` ставит PostgreSQL, Node.js 22, Caddy и ImageMagick,

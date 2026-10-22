@@ -91,13 +91,42 @@ ln -sf "$NODE_DIR/bin/node" /usr/local/bin/node
 ln -sf "$NODE_DIR/bin/npm" /usr/local/bin/npm
 
 log "Ensuring Caddy"
-if ! command -v caddy >/dev/null 2>&1; then
-  apt-get install -y -qq --no-install-recommends caddy
+# Ubuntu 24.04 ships Caddy 2.6, which predates ACME profiles, ARI and the
+# modern Let's Encrypt behaviour; install the official static build instead.
+# The unit in deploy/server/caddy.service already starts /usr/local/bin/caddy.
+CADDY_VERSION=${ISHO_CADDY_VERSION:-2.11.7}
+
+caddy_version_ok() {
+  [ -x /usr/local/bin/caddy ] && [ ! -L /usr/local/bin/caddy ] &&
+    /usr/local/bin/caddy version 2>/dev/null | grep -q "^v${CADDY_VERSION} "
+}
+
+if ! caddy_version_ok; then
+  case "$(dpkg --print-architecture)" in
+    arm64) caddy_arch=arm64 ;;
+    *) caddy_arch=amd64 ;;
+  esac
+  caddy_pkg="caddy_${CADDY_VERSION}_linux_${caddy_arch}.tar.gz"
+  if curl -fsSL --retry 5 --retry-all-errors -o /tmp/caddy.tar.gz \
+      "https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}/${caddy_pkg}" &&
+    tar -xzf /tmp/caddy.tar.gz -C /tmp caddy; then
+    # /usr/local/bin/caddy may still be the apt package symlink; install() would
+    # follow it and overwrite /usr/bin/caddy, so remove it first.
+    rm -f /usr/local/bin/caddy
+    install -m 0755 /tmp/caddy /usr/local/bin/caddy
+    rm -f /tmp/caddy /tmp/caddy.tar.gz
+    log "Caddy ${CADDY_VERSION} installed"
+  else
+    echo "warning: cannot download Caddy ${CADDY_VERSION}, keeping the installed one" >&2
+  fi
 fi
-# systemd units point at /usr/local/bin/caddy regardless of the package layout.
-caddy_bin=/usr/bin/caddy
-[ -x "$caddy_bin" ] || caddy_bin=$(command -v caddy)
-ln -sfn "$caddy_bin" /usr/local/bin/caddy
+
+# Fallback for an offline server: whatever the distro provides, at least linked
+# where the unit expects it.
+if [ ! -x /usr/local/bin/caddy ]; then
+  command -v caddy >/dev/null 2>&1 || apt-get install -y -qq --no-install-recommends caddy
+  ln -sfn "$(command -v caddy)" /usr/local/bin/caddy
+fi
 id -u caddy >/dev/null 2>&1 || useradd --system --home /var/lib/caddy --shell /usr/sbin/nologin caddy
 install -d -o caddy -g caddy /var/lib/caddy /etc/caddy
 

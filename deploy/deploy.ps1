@@ -16,7 +16,11 @@
   .\deploy\deploy.ps1
 
 .EXAMPLE
-  .\deploy\deploy.ps1 -SiteAddress https://vm4775508.firstbyte.club
+  .\deploy\deploy.ps1 -SiteAddress https://isho.duckdns.org
+
+.EXAMPLE
+  # No domain: nip.io resolves <dashed-ip>.nip.io to the server (see deploy/README.md)
+  .\deploy\deploy.ps1 -SiteAddress https://185-180-231-183.nip.io
 
 .EXAMPLE
   .\deploy\deploy.ps1 -SampleData   # also seed demo projects and accounts
@@ -33,8 +37,12 @@ param(
   [string]$Password = $env:ISHO_SSH_PASSWORD,
   # Caddy site address: ':80' for plain HTTP on any host, or 'https://host' for TLS.
   [string]$SiteAddress = '',
-  # Origin used by the API for cookies and the Origin check (defaults to http://<server>).
+  # Origin used by the API for cookies and the Origin check (defaults to the
+  # origin of -SiteAddress, or http://<server> when the site is plain HTTP).
   [string]$PublicOrigin = '',
+  # DuckDNS token: before deploying, points <name>.duckdns.org at -Server with
+  # the DuckDNS API (only used with a *.duckdns.org site address).
+  [string]$DuckDnsToken = $env:ISHO_DUCKDNS_TOKEN,
   [ValidateSet('auto', 'true', 'false')]
   [string]$SecureCookies = 'auto',
   # Mail. Without -MailFrom the API prints letters to the journal instead of
@@ -57,7 +65,30 @@ $ErrorActionPreference = 'Stop'
 $artifact = Join-Path $PSScriptRoot 'artifacts\isho-deploy.tar.gz'
 
 if (-not $SiteAddress) { $SiteAddress = ':80' }
-if (-not $PublicOrigin) { $PublicOrigin = "http://$Server" }
+
+# The API compares the request Origin header against APP_ORIGIN and takes the
+# cookie Secure flag from the same value, so an HTTPS site with an HTTP origin
+# breaks every write request and drops Secure. Derive the origin from the site
+# address instead of asking for both.
+$siteOrigin = ''
+if ($SiteAddress -match '^(https?)://([^/]+)') { $siteOrigin = "$($Matches[1])://$($Matches[2])" }
+
+if (-not $PublicOrigin) {
+  $PublicOrigin = $(if ($siteOrigin) { $siteOrigin } else { "http://$Server" })
+}
+elseif ($siteOrigin -and $PublicOrigin.TrimEnd('/') -ne $siteOrigin) {
+  throw "PublicOrigin '$PublicOrigin' does not match SiteAddress '$SiteAddress'. Drop -PublicOrigin to derive it from the site address, or pass '$siteOrigin'."
+}
+else {
+  $PublicOrigin = $PublicOrigin.TrimEnd('/')
+}
+
+$duckDnsName = ''
+if ($DuckDnsToken) {
+  if ($siteOrigin -match '^https?://([a-z0-9-]+)\.duckdns\.org$') { $duckDnsName = $Matches[1] }
+  else { throw 'DuckDnsToken only applies to a <name>.duckdns.org site address.' }
+}
+
 if ($MailFrom) {
   if (-not $SmtpUser) { $SmtpUser = $MailFrom }
 }
@@ -92,6 +123,16 @@ if (-not $Password) {
     [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure))
 }
 if (-not $Password) { throw 'SSH password is required.' }
+
+if ($duckDnsName) {
+  Write-Host "==> Pointing $duckDnsName.duckdns.org at $Server" -ForegroundColor Cyan
+  $updateUrl = "https://www.duckdns.org/update?domains=$duckDnsName&token=$DuckDnsToken&ip=$Server"
+  $answer = (Invoke-WebRequest -UseBasicParsing -Uri $updateUrl -TimeoutSec 30).Content
+  # DuckDNS answers with a bare "OK"/"KO", sometimes as raw bytes.
+  if ($answer -is [byte[]]) { $answer = [Text.Encoding]::UTF8.GetString($answer) }
+  $answer = "$answer".Trim()
+  if ($answer -ne 'OK') { throw "DuckDNS update failed: $answer (check the token at duckdns.org)" }
+}
 
 function ConvertTo-WslPath([string]$Path) {
   $full = (Resolve-Path -LiteralPath $Path).Path
