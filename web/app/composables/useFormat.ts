@@ -1,18 +1,29 @@
+// Creating an Intl formatter is expensive, and forum pages format dozens of
+// dates per render. Keep one formatter per shape for the lifetime of the
+// process (SSR) or browser tab.
+const DATE_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+})
+
+const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
 export function useFormat() {
   function date(value: string | null | undefined): string {
     if (!value) return '—'
-    return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value))
+    return DATE_FORMATTER.format(new Date(value))
   }
 
   function dateTime(value: string | null | undefined): string {
     if (!value) return '—'
-    return new Intl.DateTimeFormat('ru-RU', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(value))
+    return DATE_TIME_FORMATTER.format(new Date(value))
   }
 
   function bytes(value: number | null | undefined): string {

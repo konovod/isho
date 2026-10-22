@@ -119,7 +119,8 @@ switch ($Action) {
     $file = "/root/isho-before-stress-$stamp.sql.gz"
     Write-Host "==> Dumping isho_production to $file" -ForegroundColor Cyan
     $timer = [Diagnostics.Stopwatch]::StartNew()
-    Invoke-Remote "runuser -u postgres -- bash -c 'pg_dump isho_production | gzip > $file'"
+    # The redirect runs as root; only pg_dump itself needs the postgres user.
+    Invoke-Remote "runuser -u postgres -- pg_dump isho_production | gzip > $file"
     $timer.Stop()
     Invoke-Remote "ls -lh $file && sha256sum $file"
     Write-Host ("Dump finished in {0:N1} s" -f $timer.Elapsed.TotalSeconds) -ForegroundColor Green

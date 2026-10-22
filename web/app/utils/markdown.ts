@@ -25,9 +25,37 @@ md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
   return defaultLinkOpen(tokens, idx, options, env, self)
 }
 
+// Forum pages render the same posts over and over. The cache lives for the
+// lifetime of the SSR process (or browser tab); keep it small and bounded so
+// user-generated text cannot grow memory without limit.
+const RENDER_CACHE_MAX_ENTRIES = 300
+const RENDER_CACHE_MAX_SOURCE_LENGTH = 10_000
+const renderCache = new Map<string, string>()
+
 /** Renders trusted Markdown to HTML. Raw HTML stays escaped (html: false). */
 export function renderMarkdown(source?: string | null): string {
-  return source ? md.render(source) : ''
+  if (!source) return ''
+  if (source.length > RENDER_CACHE_MAX_SOURCE_LENGTH) return md.render(source)
+
+  const cached = renderCache.get(source)
+
+  if (cached !== undefined) {
+    // Refresh insertion order so frequently used posts survive eviction.
+    renderCache.delete(source)
+    renderCache.set(source, cached)
+    return cached
+  }
+
+  const html = md.render(source)
+
+  if (renderCache.size >= RENDER_CACHE_MAX_ENTRIES) {
+    const oldest = renderCache.keys().next().value
+
+    if (oldest !== undefined) renderCache.delete(oldest)
+  }
+
+  renderCache.set(source, html)
+  return html
 }
 
 /** Strips Markdown markers so an entry can be previewed as plain text. */

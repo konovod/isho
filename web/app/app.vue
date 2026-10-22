@@ -2,7 +2,7 @@
 const THEME_COLORS = { dark: '#0f1116', light: '#f6f7fb' } as const
 const siteName = SITE_NAME
 
-const { user, fetchMe } = useAuth()
+const { user, loaded, fetchMe } = useAuth()
 const { theme, applyUserTheme } = useTheme()
 
 // The account setting wins over the device cookie as soon as `me` arrives.
@@ -28,7 +28,20 @@ useHead(() => {
   }
 })
 
-await fetchMe()
+// Guests have no session cookie, so /me would only return 401. Skip that
+// round-trip during SSR; the serialized `loaded` flag tells the client there
+// is nothing to fetch either. Signed-in visitors still get a server-rendered
+// header with their name and moderation links.
+if (import.meta.server) {
+  const cookie = useRequestHeaders(['cookie']).cookie ?? ''
+
+  if (/(?:^|;\s*)isho_auth=/.test(cookie)) {
+    await fetchMe()
+  }
+  else {
+    loaded.value = true
+  }
+}
 </script>
 
 <template>
