@@ -81,6 +81,24 @@ function insertCode() {
     wrap('`', '`', 'код')
   }
 }
+
+function insertSpoiler() {
+  const el = textarea.value
+  if (!el) return
+
+  const start = el.selectionStart
+  const end = el.selectionEnd
+  const selected = props.modelValue.slice(start, end)
+  const body = selected || 'Скрытый текст'
+  const before = ':::spoiler\n'
+  const snippet = `${before}${body}\n:::`
+
+  replaceSelection(
+    props.modelValue.slice(0, start) + snippet + props.modelValue.slice(end),
+    start + before.length,
+    start + before.length + body.length,
+  )
+}
 </script>
 
 <template>
@@ -107,6 +125,15 @@ function insertCode() {
         </button>
         <button type="button" class="md-tool" title="Ссылка" @click="wrap('[', '](https://)', 'текст ссылки')">
           ↗
+        </button>
+        <button type="button" class="md-tool" title="Изображение" @click="wrap('![', '](https://)', 'описание')">
+          ▣
+        </button>
+        <button type="button" class="md-tool" title="Видео Rutube" @click="wrap('![Обзор](', ')\n', 'https://rutube.ru/video/')">
+          ▶
+        </button>
+        <button type="button" class="md-tool" title="Спойлер" @click="insertSpoiler()">
+          ▾
         </button>
       </div>
 
@@ -151,9 +178,21 @@ function insertCode() {
 
     <div class="md-editor-foot">
       <span class="hint">
-        Поддерживается Markdown: заголовки, списки, ссылки, код, таблицы.
+        Markdown: заголовки, списки, ссылки, изображения, видео, спойлеры, код.
       </span>
       <span class="hint">{{ modelValue.length }} / {{ maxlength }}</span>
     </div>
+
+    <details class="md-help">
+      <summary>Синтаксис</summary>
+      <div class="md-help-body">
+        <ul>
+          <li><code>![описание](https://example.com/a.png)</code> — изображение</li>
+          <li><code>![Обзор](https://rutube.ru/video/&lt;id&gt;/)</code> — видео Rutube, можно вставить только id</li>
+          <li><code>:::spoiler Заголовок</code> … <code>:::</code> — спойлер, заголовок необязателен</li>
+          <li><code>```js</code> … <code>```</code> — код с подсветкой: js, ts, vue, html, css, json, bash, powershell, python, ruby, crystal, go, rust, c#, sql и другие</li>
+        </ul>
+      </div>
+    </details>
   </div>
 </template>
