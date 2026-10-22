@@ -9,6 +9,6 @@ class Api::V1::Forum::Posts::Update < ApiAction
     require_forum_editor!(post.user_id)
 
     updated = SaveForumPost.update!(post, params)
-    json ForumPostSerializer.new(reload_forum_post(updated))
+    json ForumPostSerializer.new(reload_forum_post(updated), forum_quote_page(updated))
   end
 end

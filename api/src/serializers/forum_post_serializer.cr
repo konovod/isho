@@ -1,5 +1,5 @@
 class ForumPostSerializer < BaseSerializer
-  def initialize(@post : ForumPost)
+  def initialize(@post : ForumPost, @quote_page : Int32? = nil)
   end
 
   def render
@@ -23,6 +23,7 @@ class ForumPostSerializer < BaseSerializer
 
     {
       post_id:         @post.quoted_post_id,
+      page:            @quote_page,
       author_name:     @post.quote_author_name,
       author_username: @post.quote_author_username,
       body:            @post.quote_body,

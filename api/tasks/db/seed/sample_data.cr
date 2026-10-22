@@ -157,6 +157,7 @@ class Db::Seed::SampleData < LuckyTask::Task
       user: user,
       body: "Спасибо, что открыли тему! Буду дополнять её по мере вопросов.",
       quoted_post_id: first_post.try(&.id),
+      quote_text: nil,
     )
   end
 end

@@ -42,6 +42,25 @@ module Api::V1::Forum::Lookup
       .first? || raise Avram::RecordNotFoundError.new(ForumTopic.table_name, topic.id.to_s)
   end
 
+  # Page the quoted post is on, so a quote can link back to the message even
+  # when it is no longer on the page it was quoted from. Posts are appended in
+  # chronological order, but deletions shift the numbering, so the page is
+  # recalculated on read instead of being stored with the snapshot.
+  def forum_quote_page(post : ForumPost) : Int32?
+    quoted_id = post.quoted_post_id
+    return unless quoted_id
+
+    quoted = ForumPostQuery.new.id(quoted_id).first?
+    return unless quoted
+
+    position = ForumPostQuery.new
+      .for_topic(post.topic_id)
+      .created_at.lte(quoted.created_at)
+      .select_count
+
+    ((position - 1) // AppSettings::FORUM_POSTS_PER_PAGE).to_i + 1
+  end
+
   def reload_forum_post(post : ForumPost) : ForumPost
     ForumPostQuery.new
       .id(post.id)

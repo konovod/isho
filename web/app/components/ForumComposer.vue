@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { ForumPost } from '~/types/api'
+import type { ForumPost, ForumQuoteDraft } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 const props = defineProps<{
   topicId: number
-  quote: ForumPost | null
+  quote: ForumQuoteDraft | null
 }>()
 
 const emit = defineEmits<{
@@ -19,12 +19,17 @@ const saving = ref(false)
 const error = ref('')
 
 const quotePreview = computed(() => {
-  const text = markdownToText(props.quote?.body).replace(/\s+/g, ' ').trim()
+  const quote = props.quote
+  if (!quote) return ''
+
+  const source = quote.text || markdownToText(quote.post.body)
+  const text = source.replace(/\s+/g, ' ').trim()
+
   return text.length > 220 ? `${text.slice(0, 220)}…` : text
 })
 
 const quoteAuthor = computed(() => {
-  const post = props.quote
+  const post = props.quote?.post
   if (!post) return ''
   return post.author.display_name || post.author.username
 })
@@ -49,7 +54,8 @@ async function submit() {
     const post = await api.post<ForumPost>(`/api/v1/forum/topics/${props.topicId}/posts`, {
       forum_post: {
         body: body.value.trim(),
-        quoted_post_id: props.quote?.id ?? null,
+        quoted_post_id: props.quote?.post.id ?? null,
+        quote_text: props.quote?.text || null,
       },
     })
 
@@ -79,7 +85,9 @@ defineExpose({ focus })
 
     <div v-if="quote" class="forum-composer-quote">
       <div class="row-between mb-8">
-        <span class="forum-quote-author">Цитата: {{ quoteAuthor }}</span>
+        <span class="forum-quote-author">
+          Цитата: {{ quoteAuthor }}<template v-if="quote?.text"> · фрагмент</template>
+        </span>
         <button type="button" class="btn btn-ghost btn-sm" @click="emit('cancel-quote')">
           Убрать
         </button>

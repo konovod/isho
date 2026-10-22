@@ -41,7 +41,7 @@ describe "Forum read tracking" do
         title: "Тема",
         body: "Первый пост",
       )
-      CreateForumPost.run!(topic: topic, user: replier, body: "Ответ", quoted_post_id: nil)
+      CreateForumPost.run!(topic: topic, user: replier, body: "Ответ", quoted_post_id: nil, quote_text: nil)
 
       body = JSON.parse(AuthHelper.client_for(reader).get("/api/v1/forum/sections/site").body)
       item = body["items"].as_a.first
@@ -75,7 +75,7 @@ describe "Forum read tracking" do
         title: "Тема",
         body: "Первый пост",
       )
-      CreateForumPost.run!(topic: topic, user: replier, body: "Ответ", quoted_post_id: nil)
+      CreateForumPost.run!(topic: topic, user: replier, body: "Ответ", quoted_post_id: nil, quote_text: nil)
 
       item = JSON.parse(ApiClient.new.get("/api/v1/forum/sections/site").body)["items"].as_a.first
 
@@ -99,7 +99,7 @@ describe "Forum read tracking" do
         body: "Первый пост",
       )
       first = ForumPostQuery.new.for_topic(topic.id).chronological.first?.not_nil!
-      reply = CreateForumPost.run!(topic: topic, user: replier, body: "Ответ", quoted_post_id: nil)
+      reply = CreateForumPost.run!(topic: topic, user: replier, body: "Ответ", quoted_post_id: nil, quote_text: nil)
       client = AuthHelper.client_for(reader)
 
       response = client.post("/api/v1/forum/topics/#{topic.id}/read", forum_topic_read: {
@@ -168,7 +168,7 @@ describe "Forum read tracking" do
         title: "Тема",
         body: "Первый пост",
       )
-      reply = CreateForumPost.run!(topic: topic, user: replier, body: "Ответ", quoted_post_id: nil)
+      reply = CreateForumPost.run!(topic: topic, user: replier, body: "Ответ", quoted_post_id: nil, quote_text: nil)
 
       AuthHelper.client_for(admin).delete("/api/v1/forum/posts/#{reply.id}").status_code.should eq 204
 

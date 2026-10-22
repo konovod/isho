@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ForumMeta, ForumPost, ForumTopic } from '~/types/api'
+import type { ForumMeta, ForumPost, ForumQuoteDraft, ForumTopic } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 interface TopicResponse {
@@ -68,7 +68,7 @@ async function markTopicRead() {
 
 function scrollToRequestedAnchor() {
   const hash = route.hash
-  if (hash !== '#last' && hash !== '#unread') return
+  if (hash !== '#last' && hash !== '#unread' && !/^#post-\d+$/.test(hash)) return
 
   // Nuxt resets the scroll position after a route change, so wait for it
   // before jumping to the requested post.
@@ -86,14 +86,20 @@ onMounted(() => {
 
 watch(data, () => {
   markTopicRead()
+  scrollToRequestedAnchor()
 })
+
+// Hash-only navigation (a quote link to a post on the same page) does not
+// load data again, so the anchor needs its own trigger.
+watch(() => route.hash, scrollToRequestedAnchor)
 
 if (!data.value && error.value) {
   throw createError({ statusCode: 404, statusMessage: 'Тема не найдена' })
 }
 
 const composer = ref<{ focus: () => void } | null>(null)
-const quotedPost = ref<ForumPost | null>(null)
+const quoteDraft = ref<ForumQuoteDraft | null>(null)
+const { selection: quoteSelection, clear: clearQuoteSelection } = useQuoteSelection()
 const actionError = ref('')
 
 const editingTitle = ref(false)
@@ -149,13 +155,24 @@ async function deleteTopic() {
   }
 }
 
-function quote(post: ForumPost) {
-  quotedPost.value = post
+function quote(post: ForumPost, text = '') {
+  quoteDraft.value = { post, text: text.trim() }
   composer.value?.focus()
 }
 
+function quoteSelected() {
+  const selected = quoteSelection.value
+  if (!selected) return
+
+  const post = posts.value.find(item => item.id === selected.postId)
+  if (!post) return
+
+  quote(post, selected.text)
+  clearQuoteSelection()
+}
+
 function cancelQuote() {
-  quotedPost.value = null
+  quoteDraft.value = null
 }
 
 function onUpdated(updated: ForumPost) {
@@ -219,6 +236,17 @@ useSeoMeta({
 
 <template>
   <div v-if="topic" class="container">
+    <button
+      v-if="quoteSelection && user"
+      type="button"
+      class="btn btn-primary btn-sm forum-quote-pop"
+      :style="{ top: `${quoteSelection.top}px`, left: `${quoteSelection.left}px` }"
+      @pointerdown.prevent="quoteSelected"
+      @click="quoteSelected"
+    >
+      Цитировать
+    </button>
+
     <div class="row mb-16 forum-breadcrumbs">
       <NuxtLink to="/forum" class="muted small">Форум</NuxtLink>
       <span class="muted small">/</span>
@@ -317,7 +345,7 @@ useSeoMeta({
         v-if="user"
         ref="composer"
         :topic-id="topic.id"
-        :quote="quotedPost"
+        :quote="quoteDraft"
         class="mt-24"
         @posted="onPosted"
         @cancel-quote="cancelQuote"

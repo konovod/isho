@@ -1872,6 +1872,35 @@ p {
   font-size: 14px;
 }
 
+.forum-quote-author a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.forum-quote-author a:hover {
+  color: var(--accent);
+}
+
+.forum-quote-arrow {
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.forum-quote-author a:hover .forum-quote-arrow {
+  color: var(--accent);
+}
+
+.forum-post:target {
+  border-color: var(--accent);
+}
+
+.forum-quote-pop {
+  position: fixed;
+  z-index: 30;
+  box-shadow: var(--shadow);
+}
+
 .forum-composer-quote {
   margin-bottom: 14px;
   padding: 10px 12px;

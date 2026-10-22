@@ -21,9 +21,18 @@ class Api::V1::Forum::Topics::Show < ApiAction
       .offset((page - 1) * per_page)
       .results
 
+    quote_pages = {} of Int64 => Int32?
+    posts.each do |post|
+      quoted_id = post.quoted_post_id
+      next unless quoted_id
+      next if quote_pages.has_key?(quoted_id)
+
+      quote_pages[quoted_id] = forum_quote_page(post)
+    end
+
     json({
       topic: ForumTopicSerializer.new(topic, forum_read_count(topic)),
-      items: posts.map { |post| ForumPostSerializer.new(post) },
+      items: posts.map { |post| ForumPostSerializer.new(post, post.quoted_post_id.try { |id| quote_pages[id]? }) },
       meta:  pagination_meta(page, per_page, total),
     })
   end

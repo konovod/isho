@@ -11,22 +11,63 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  quote: [post: ForumPost]
+  quote: [post: ForumPost, text: string]
   deleted: [post: ForumPost]
   updated: [post: ForumPost]
 }>()
 
 const api = useApi()
+const route = useRoute()
 const { dateTime } = useFormat()
 
+const bodyEl = ref<HTMLElement | null>(null)
 const editing = ref(false)
 const draft = ref('')
 const saving = ref(false)
 const localError = ref('')
+// Set on pointerdown, because the browser drops the selection before `click`.
+let pendingQuote = ''
 
 const authorName = computed(() => props.post.author.display_name || props.post.author.username)
 const initials = computed(() => authorName.value.slice(0, 2))
 const canEdit = computed(() => !!props.currentUserId && (props.post.author.id === props.currentUserId || props.canModerate))
+
+const quoteAuthorName = computed(() => {
+  const quote = props.post.quote
+  return quote?.author_name || quote?.author_username || 'Цитата'
+})
+
+const quoteHref = computed(() => {
+  const quote = props.post.quote
+  if (!quote?.post_id) return null
+
+  const currentPage = Number(route.query.page) || 1
+  const page = quote.page && quote.page !== currentPage ? `?page=${quote.page}` : ''
+
+  return `${route.path}${page}#post-${quote.post_id}`
+})
+
+function selectedInBody(): string {
+  const selection = window.getSelection()
+  const body = bodyEl.value
+
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0 || !body) return ''
+
+  const range = selection.getRangeAt(0)
+  if (!body.contains(range.commonAncestorContainer)) return ''
+
+  return selection.toString().trim().slice(0, FORUM_QUOTE_MAX_CHARS)
+}
+
+function rememberSelection() {
+  pendingQuote = selectedInBody()
+}
+
+function quoteFromClick() {
+  const text = pendingQuote || selectedInBody()
+  pendingQuote = ''
+  emit('quote', props.post, text)
+}
 
 function startEdit() {
   draft.value = props.post.body
@@ -92,7 +133,8 @@ async function save() {
             v-if="currentUserId"
             type="button"
             class="btn btn-ghost btn-sm"
-            @click="emit('quote', post)"
+            @pointerdown="rememberSelection"
+            @click="quoteFromClick"
           >
             Цитировать
           </button>
@@ -117,13 +159,29 @@ async function save() {
 
       <div v-if="post.quote" class="forum-quote">
         <div class="forum-quote-author">
-          {{ post.quote.author_name || post.quote.author_username || 'Цитата' }}
+          <NuxtLink
+            v-if="quoteHref"
+            :to="quoteHref"
+            title="Перейти к сообщению"
+          >
+            {{ quoteAuthorName }}<span class="forum-quote-arrow" aria-hidden="true">↗</span>
+          </NuxtLink>
+          <template v-else>
+            {{ quoteAuthorName }}
+          </template>
         </div>
         <MarkdownBody :source="post.quote.body" />
       </div>
 
       <template v-if="!editing">
-        <MarkdownBody :source="post.body" />
+        <div
+          ref="bodyEl"
+          class="forum-post-body"
+          data-quote-body
+          :data-post-id="post.id"
+        >
+          <MarkdownBody :source="post.body" />
+        </div>
       </template>
 
       <template v-else>

@@ -1,6 +1,10 @@
 class SaveForumPost < ForumPost::SaveOperation
   permit_columns body
 
+  # Optional excerpt the author highlighted; kept on the operation only and
+  # stored into `quote_body` as part of the snapshot.
+  attribute quote_text : String
+
   before_save do
     body.value = body.value.to_s.strip
 
@@ -27,8 +31,11 @@ class SaveForumPost < ForumPost::SaveOperation
       return
     end
 
+    excerpt = quote_text.value.to_s.strip
+    text = excerpt.empty? ? quoted.body : excerpt
+
     quote_author_name.value = quoted.user.name
     quote_author_username.value = quoted.user.username
-    quote_body.value = quoted.body[0, AppSettings::FORUM_QUOTE_MAX_CHARS]
+    quote_body.value = text[0, AppSettings::FORUM_QUOTE_MAX_CHARS]
   end
 end

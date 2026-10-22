@@ -60,6 +60,8 @@ export interface ForumTopic {
 
 export interface ForumPostQuote {
   post_id: number | null
+  /** Page the quoted post is on, when known. */
+  page: number | null
   author_name: string | null
   author_username: string | null
   body: string | null
@@ -73,6 +75,12 @@ export interface ForumPost {
   updated_at: string
   edited: boolean
   quote: ForumPostQuote | null
+}
+
+/** A post the author is about to quote, narrowed to a selected fragment. */
+export interface ForumQuoteDraft {
+  post: ForumPost
+  text: string
 }
 
 export interface ForumMeta {

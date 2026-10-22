@@ -16,8 +16,9 @@ class Api::V1::Forum::Posts::Create < ApiAction
       user: current_user,
       body: fields["body"]? || "",
       quoted_post_id: quote_id,
+      quote_text: fields["quote_text"]?,
     )
 
-    json ForumPostSerializer.new(reload_forum_post(post)), status: 201
+    json ForumPostSerializer.new(reload_forum_post(post), forum_quote_page(post)), status: 201
   end
 end

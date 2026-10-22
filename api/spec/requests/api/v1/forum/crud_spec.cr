@@ -125,6 +125,90 @@ describe Api::V1::Forum do
       forum_topic.last_post_at.should be > topic.last_post_at
     end
 
+    it "stores only the selected fragment of a quote" do
+      user = UserFactory.create
+      topic = ForumTopicFactory.create
+      quoted = ForumPostFactory.create &.topic_id(topic.id).user_id(user.id).body("Первый абзац.\n\nЦитируемый кусок текста.")
+
+      response = AuthHelper.client_for(user).post("/api/v1/forum/topics/#{topic.id}/posts", forum_post: {
+        body:           "Ответ",
+        quoted_post_id: quoted.id.to_s,
+        quote_text:     "  Цитируемый кусок текста.  ",
+      })
+
+      response.status_code.should eq 201
+      body = JSON.parse(response.body)
+      body["quote"]["post_id"].as_i64.should eq quoted.id
+      body["quote"]["body"].as_s.should eq "Цитируемый кусок текста."
+    end
+
+    it "quotes the whole post when the fragment is blank" do
+      user = UserFactory.create
+      topic = ForumTopicFactory.create
+      quoted = ForumPostFactory.create &.topic_id(topic.id).user_id(user.id).body("Весь текст сообщения")
+
+      response = AuthHelper.client_for(user).post("/api/v1/forum/topics/#{topic.id}/posts", forum_post: {
+        body:           "Ответ",
+        quoted_post_id: quoted.id.to_s,
+        quote_text:     "   ",
+      })
+
+      response.status_code.should eq 201
+      JSON.parse(response.body)["quote"]["body"].as_s.should eq "Весь текст сообщения"
+    end
+
+    it "truncates a fragment longer than the quote limit" do
+      user = UserFactory.create
+      topic = ForumTopicFactory.create
+      quoted = ForumPostFactory.create &.topic_id(topic.id).user_id(user.id)
+
+      response = AuthHelper.client_for(user).post("/api/v1/forum/topics/#{topic.id}/posts", forum_post: {
+        body:           "Ответ",
+        quoted_post_id: quoted.id.to_s,
+        quote_text:     "я" * (AppSettings::FORUM_QUOTE_MAX_CHARS + 50),
+      })
+
+      response.status_code.should eq 201
+      JSON.parse(response.body)["quote"]["body"].as_s.size.should eq AppSettings::FORUM_QUOTE_MAX_CHARS
+    end
+
+    it "ignores a fragment without a quoted post" do
+      user = UserFactory.create
+      topic = ForumTopicFactory.create
+
+      response = AuthHelper.client_for(user).post("/api/v1/forum/topics/#{topic.id}/posts", forum_post: {
+        body:       "Ответ",
+        quote_text: "Кусок",
+      })
+
+      response.status_code.should eq 201
+      JSON.parse(response.body)["quote"].as_nil.should be_nil
+    end
+
+    it "reports the page of the quoted post" do
+      author = UserFactory.create
+      section = ForumSectionFactory.create
+      topic = ForumTopicFactory.create &.section_id(section.id)
+      quoted = ForumPostFactory.create &.topic_id(topic.id).user_id(author.id).created_at(Time.utc - 2.hours)
+
+      (AppSettings::FORUM_POSTS_PER_PAGE - 1).times do |index|
+        ForumPostFactory.create &.topic_id(topic.id).created_at(Time.utc - 1.hour + index.seconds)
+      end
+
+      client = AuthHelper.client_for(author)
+      reply = JSON.parse(client.post("/api/v1/forum/topics/#{topic.id}/posts", forum_post: {
+        body:           "Ответ",
+        quoted_post_id: quoted.id.to_s,
+      }).body)
+
+      reply["quote"]["page"].as_i.should eq 1
+
+      second_page = JSON.parse(
+        client.get("/api/v1/forum/sections/#{section.slug}/topics/#{topic.slug}?page=2").body
+      )
+      second_page["items"].as_a.first["quote"]["page"].as_i.should eq 1
+    end
+
     it "rejects a quote from another topic" do
       user = UserFactory.create
       topic = ForumTopicFactory.create

@@ -3,6 +3,7 @@ class CreateForumPost < Avram::Operation
   needs user : User
   needs body : String
   needs quoted_post_id : Int64?
+  needs quote_text : String?
 
   def run
     post = nil
@@ -13,6 +14,7 @@ class CreateForumPost < Avram::Operation
         user_id: user.id,
         body: body,
         quoted_post_id: quoted_post_id,
+        quote_text: quote_text || "",
       )
 
       ForumTopic::SaveOperation.update!(
