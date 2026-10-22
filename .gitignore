@@ -30,3 +30,6 @@ Thumbs.db
 
 # Deployment build output (see deploy/README.md)
 deploy/artifacts/
+
+# Stress-test results (see stress/README.md)
+stress/results/
