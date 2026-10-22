@@ -82,6 +82,11 @@ export interface Tag {
   slug: string
 }
 
+/** Tag from the catalogue endpoint: popularity is counted over published projects. */
+export interface TagSummary extends Tag {
+  projects_count: number
+}
+
 /** Tag chosen in the editor: `slug` is null until the server creates it. */
 export interface TagDraft {
   name: string

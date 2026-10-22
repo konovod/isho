@@ -530,6 +530,72 @@ p {
   background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
+.tag-count {
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tag.active .tag-count {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+
+.tag-reset {
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  color: var(--danger);
+  cursor: pointer;
+}
+
+.tag-reset:hover {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+/* Tag filter strip on the catalogue page */
+
+.tag-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tag-filter-head {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 260px) 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.tag-filter-title {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted-strong);
+}
+
+.tag-filter-input {
+  width: 100%;
+  height: 34px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.tag-filter-count {
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.tag-filter-list {
+  gap: 7px;
+}
+
+.tag-filter-hint {
+  margin: 0;
+}
+
 /* Tag input */
 
 .tag-input {
@@ -1753,6 +1819,38 @@ p {
 
   .search-row {
     flex-direction: column;
+  }
+
+  .tag-filter-head {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+
+  .tag-filter-input {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+
+  .tag-filter-count {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  /* Keep the strip to one line on phones: the chips scroll sideways
+     instead of pushing the catalogue down. */
+  .tag-filter-list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .tag-filter-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tag-filter-list > * {
+    flex: 0 0 auto;
   }
 
   .dash-row {

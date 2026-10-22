@@ -111,7 +111,7 @@ docker-compose.yml   PostgreSQL
 | GET | `/api/v1/projects/:slug/forum/topics` | публично (черновик — владельцу) |
 | POST | `/api/v1/projects/:slug/forum/topics` | вход |
 | GET | `/api/v1/users/:username` | публично |
-| GET | `/api/v1/tags` | публично |
+| GET | `/api/v1/tags` (`q`, `limit`) | публично |
 | GET | `/api/v1/health` | публично |
 
 Тема интерфейса хранится в `users.theme` для аккаунта и в cookie `isho_theme` для

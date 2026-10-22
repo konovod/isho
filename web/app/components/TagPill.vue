@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { Tag } from '~/types/api'
 
-defineProps<{ tag: Tag, active?: boolean }>()
+defineProps<{ tag: Tag, active?: boolean, count?: number }>()
+
+const { plural } = useFormat()
 </script>
 
 <template>
@@ -11,5 +13,12 @@ defineProps<{ tag: Tag, active?: boolean }>()
     :class="{ active }"
   >
     {{ tag.name }}
+    <span
+      v-if="count && count > 0"
+      class="tag-count"
+      :title="`${count} ${plural(count, 'проект', 'проекта', 'проектов')}`"
+    >
+      {{ count }}
+    </span>
   </NuxtLink>
 </template>

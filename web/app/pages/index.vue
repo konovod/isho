@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import type { ProjectList, Tag } from '~/types/api'
+import type { ProjectList, TagSummary } from '~/types/api'
+
+const TAG_LIMIT = 20
+const TAG_SEARCH_DEBOUNCE_MS = 250
 
 const route = useRoute()
 const router = useRouter()
@@ -15,7 +18,35 @@ watch(() => route.query, (query) => {
   tag.value = typeof query.tag === 'string' ? query.tag : ''
 }, { immediate: true })
 
-const { data: tagData } = await useAsyncData('tags', () => api.get<{ items: Tag[] }>('/api/v1/tags'))
+// There can be hundreds of tags, so the strip renders only the popular ones.
+// The search field queries the API, so it finds tags outside that list too.
+const tagSearch = ref('')
+const appliedTagSearch = ref('')
+let tagSearchTimer: ReturnType<typeof setTimeout> | undefined
+
+watch(tagSearch, (value) => {
+  clearTimeout(tagSearchTimer)
+  tagSearchTimer = setTimeout(() => {
+    appliedTagSearch.value = value.trim()
+  }, TAG_SEARCH_DEBOUNCE_MS)
+})
+
+onBeforeUnmount(() => clearTimeout(tagSearchTimer))
+
+const { data: tagData, status: tagStatus } = await useAsyncData(
+  'tags',
+  () => api.get<{ items: TagSummary[], meta: { total: number } }>('/api/v1/tags', {
+    q: appliedTagSearch.value || undefined,
+    limit: TAG_LIMIT,
+  }),
+  { watch: [appliedTagSearch] },
+)
+
+const tags = computed(() => tagData.value?.items ?? [])
+const tagTotal = computed(() => tagData.value?.meta.total ?? 0)
+const tagSearchActive = computed(() => appliedTagSearch.value.length > 0)
+const activeTagVisible = computed(() => tags.value.some(item => item.slug === tag.value))
+
 const projectsKey = computed(() => `projects:${q.value.trim()}:${tag.value}`)
 const { data, pending, error, refresh } = await useAsyncData(
   projectsKey,
@@ -26,11 +57,14 @@ const { data, pending, error, refresh } = await useAsyncData(
   { watch: [q, tag] },
 )
 
-const tags = computed(() => tagData.value?.items ?? [])
-
 function toggleTag(slug: string) {
   tag.value = tag.value === slug ? '' : slug
   router.replace({ query: { ...route.query, tag: tag.value || undefined } })
+}
+
+function clearTag() {
+  tag.value = ''
+  router.replace({ query: { ...route.query, tag: undefined } })
 }
 
 function submitSearch() {
@@ -65,20 +99,50 @@ function submitSearch() {
 
     <section class="section">
       <div class="container">
-        <div class="row-between mb-16">
-          <div class="row">
+        <div class="tag-filter mb-16">
+          <div class="tag-filter-head">
+            <span class="tag-filter-title">Популярные теги</span>
+
+            <input
+              v-model="tagSearch"
+              class="input tag-filter-input"
+              type="search"
+              placeholder="Поиск тега…"
+              aria-label="Поиск тегов"
+            >
+
+            <span class="muted small tag-filter-count">
+              {{ data?.meta.total ?? 0 }} {{ plural(data?.meta.total ?? 0, 'проект', 'проекта', 'проектов') }}
+            </span>
+          </div>
+
+          <div class="row tag-filter-list" aria-live="polite">
+            <button
+              v-if="tag && !activeTagVisible"
+              type="button"
+              class="tag tag-reset"
+              @click="clearTag"
+            >
+              Сбросить тег
+            </button>
+
             <TagPill
               v-for="item in tags"
               :key="item.id"
               :tag="item"
+              :count="item.projects_count"
               :active="tag === item.slug"
               @click.prevent="toggleTag(item.slug)"
             />
+
+            <span v-if="!tags.length && tagStatus !== 'pending'" class="muted small">
+              {{ tagSearchActive ? 'Тегов по запросу не нашлось.' : 'Пока нет тегов.' }}
+            </span>
           </div>
 
-          <span class="muted small">
-            {{ data?.meta.total ?? 0 }} {{ plural(data?.meta.total ?? 0, 'проект', 'проекта', 'проектов') }}
-          </span>
+          <p v-if="tagSearchActive && tagTotal > tags.length" class="hint tag-filter-hint">
+            Найдено {{ tagTotal }} — показаны первые {{ tags.length }}. Уточните запрос.
+          </p>
         </div>
 
         <div v-if="pending" class="empty">
