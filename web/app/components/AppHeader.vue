@@ -2,7 +2,6 @@
 const { user, canModerate, signOut, saveTheme } = useAuth()
 const { toggleTheme } = useTheme()
 const router = useRouter()
-const siteName = SITE_NAME
 
 const initials = computed(() => {
   const name = user.value?.display_name || user.value?.username || '?'
@@ -24,10 +23,11 @@ async function onToggleTheme() {
 <template>
   <header class="site-header">
     <div class="container header-inner">
-      <NuxtLink to="/" class="brand">
-        <span class="brand-mark">◆</span>
-        {{ siteName }}
-      </NuxtLink>
+      <NuxtLink
+        to="/"
+        class="brand"
+        aria-label="И.ШО — на главную"
+      >И<span class="brand-mark" aria-hidden="true">◆</span>ШО?</NuxtLink>
 
       <nav class="nav">
         <NuxtLink to="/" class="nav-link">

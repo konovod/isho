@@ -1,1 +1,1 @@
-export const SITE_NAME = 'И ШО?'
+export const SITE_NAME = 'И.ШО'

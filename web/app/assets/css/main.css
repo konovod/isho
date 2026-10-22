@@ -136,7 +136,6 @@ p {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
   font-size: 20px;
   font-weight: 750;
   letter-spacing: -0.03em;
