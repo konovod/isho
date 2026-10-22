@@ -30,6 +30,8 @@ Thumbs.db
 
 # Deployment build output (see deploy/README.md)
 deploy/artifacts/
+# Local deploy wrapper with real passwords
+deploy/deploy_secret.ps1
 
 # Stress-test results (see stress/README.md)
 stress/results/
