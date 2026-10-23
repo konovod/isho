@@ -1,5 +1,8 @@
 export type Theme = 'light' | 'dark'
 
+/** AI involvement, from the least to the most. */
+export type AiUsage = 'ai_free' | 'partial' | 'significant' | 'full'
+
 export interface ApiUser {
   id: number
   username: string
@@ -11,6 +14,8 @@ export interface ApiUser {
 export interface Me extends ApiUser {
   email: string
   theme: Theme
+  show_nsfw: boolean
+  max_ai_usage: AiUsage
   is_admin: boolean
   email_confirmed: boolean
   ban: ActiveBan | null
@@ -139,6 +144,12 @@ export interface Screenshot {
   thumb_url: string | null
 }
 
+/** An image uploaded from the Markdown editor and inserted by URL. */
+export interface MarkdownImage {
+  id: number
+  url: string
+}
+
 export interface Download {
   id: number
   label: string
@@ -163,6 +174,8 @@ export interface ProjectCard {
   tagline: string | null
   kind: string
   status: string
+  nsfw: boolean
+  ai_usage: AiUsage
   published_at: string | null
   cover_url: string | null
   author: ApiUser

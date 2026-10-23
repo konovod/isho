@@ -5,6 +5,7 @@ const props = defineProps<{ project: ProjectCard }>()
 
 const initials = computed(() => props.project.title.slice(0, 2))
 const author = computed(() => props.project.author.display_name || props.project.author.username)
+const aiUsage = computed(() => aiUsageOption(props.project.ai_usage))
 </script>
 
 <template>
@@ -21,6 +22,10 @@ const author = computed(() => props.project.author.display_name || props.project
       <p v-if="project.tagline" class="muted small">
         {{ project.tagline }}
       </p>
+      <div class="project-badges">
+        <span v-if="project.nsfw" class="badge badge-nsfw" title="Только для взрослых">18+</span>
+        <span class="badge badge-ai" :title="aiUsage.description">AI: {{ aiUsage.label }}</span>
+      </div>
       <div class="project-meta">
         <span>{{ author }}</span>
         <template v-if="project.tags.length">

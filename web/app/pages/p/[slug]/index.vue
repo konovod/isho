@@ -36,6 +36,7 @@ const kindLabel = computed(() => {
   return labels[project.value?.kind ?? ''] ?? project.value?.kind ?? ''
 })
 const initials = computed(() => authorName.value.slice(0, 2))
+const aiUsage = computed(() => aiUsageOption(project.value?.ai_usage))
 
 function onModerated(updated: ProjectDetail) {
   project.value = updated
@@ -65,6 +66,8 @@ useSeoMeta({
               {{ project.status === 'published' ? 'Опубликован' : 'Черновик' }}
             </span>
             <span class="muted small">{{ kindLabel }}</span>
+            <span v-if="project.nsfw" class="badge badge-nsfw">18+</span>
+            <span class="badge badge-ai" :title="aiUsage.description">AI: {{ aiUsage.label }}</span>
           </div>
 
           <h1 class="project-title">
@@ -208,6 +211,18 @@ useSeoMeta({
                 {{ tag.name }}
               </NuxtLink>
             </div>
+          </div>
+
+          <div class="card card-pad">
+            <h3 class="section-title" style="font-size: 14px;">
+              Использование ИИ
+            </h3>
+            <div class="ai-usage-value">
+              {{ aiUsage.label }}
+            </div>
+            <p class="muted small" style="margin-top: 4px;">
+              {{ aiUsage.description }}
+            </p>
           </div>
 
           <div class="card card-pad">

@@ -10,12 +10,11 @@ module Api::V1::Projects::ProjectParams
   end
 
   def project_visible? : Bool
-    return true if project.published?
-
     user = current_user?
-    return false unless user
+    return true if user && project.user_id == user.id
+    return false unless project.published?
 
-    project.user_id == user.id
+    project.content_visible_to?(user)
   end
 
   def reload_project(project : Project) : Project

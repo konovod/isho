@@ -8,6 +8,8 @@ class Project < BaseModel
     column description : String?
     column status : String
     column published_at : Time?
+    column nsfw : Bool
+    column ai_usage : String
     column moderation_note : String?
     column moderated_at : Time?
     belongs_to moderated_by : User?
@@ -25,5 +27,20 @@ class Project < BaseModel
 
   def cover : Screenshot?
     screenshots.find(&.is_cover) || screenshots.first?
+  end
+
+  # Owners and moderators always see the project. Everybody else respects the
+  # viewer's content preferences: visitors never see adult projects and
+  # accounts can limit the AI usage level they want to see.
+  def content_visible_to?(viewer : User?) : Bool
+    return true if viewer && (viewer.id == user_id || viewer.moderator?)
+
+    if nsfw
+      return false unless viewer
+      return false unless viewer.show_nsfw
+    end
+
+    return true unless viewer
+    AppSettings.ai_usage_rank(ai_usage) <= AppSettings.ai_usage_rank(viewer.max_ai_usage)
   end
 end

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <title>Сброс пароля</title>
+  </head>
+  <body style="margin:0;padding:24px;background:#f6f7fb;font-family:Arial,Helvetica,sans-serif;color:#1b1f27;">
+    <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;padding:28px;">
+      <h1 style="margin:0 0 12px;font-size:20px;">Сброс пароля</h1>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.5;">
+        Привет, <%= user.name %>! Кто-то запросил сброс пароля для аккаунта в isho.
+        Чтобы задать новый пароль, нажмите кнопку ниже.
+      </p>
+      <p style="margin:0 0 20px;">
+        <a href="<%= reset_url %>"
+           style="display:inline-block;padding:11px 18px;border-radius:8px;background:#5b7cfa;color:#ffffff;text-decoration:none;font-size:14px;">
+          Задать новый пароль
+        </a>
+      </p>
+      <p style="margin:0 0 12px;font-size:13px;line-height:1.5;color:#5a6273;">
+        Ссылка действует 1 час и работает один раз. Если кнопка не открывается,
+        скопируйте адрес:
+      </p>
+      <p style="margin:0 0 16px;font-size:13px;word-break:break-all;">
+        <a href="<%= reset_url %>" style="color:#5b7cfa;"><%= reset_url %></a>
+      </p>
+      <p style="margin:0;font-size:13px;color:#5a6273;">
+        Если вы не просили сбросить пароль, просто проигнорируйте письмо — пароль
+        останется прежним.
+      </p>
+    </div>
+  </body>
+</html>

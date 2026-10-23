@@ -5,7 +5,7 @@ class Api::V1::Projects::Index < ApiAction
     page = (params.get?(:page).try(&.to_i?) || 1).clamp(1, 10_000)
     per_page = (params.get?(:per_page).try(&.to_i?) || AppSettings::PROJECTS_PER_PAGE).clamp(1, 48)
 
-    query = ProjectQuery.new.published.newest
+    query = ProjectQuery.new.visible_to(current_user?).newest
 
     if term = params.get?(:q).try(&.strip)
       query = query.search(term) unless term.empty?

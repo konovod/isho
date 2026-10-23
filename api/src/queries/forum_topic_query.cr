@@ -29,8 +29,9 @@ class ForumTopicQuery < ForumTopic::BaseQuery
   end
 
   # Project discussions live in the public "projects" section. Draft projects
-  # must not leak there, so only topics of published projects are listed.
-  def with_published_project
-    join_project(ProjectQuery.new.published)
+  # and content hidden by the viewer's preferences must not leak there, so only
+  # topics of visible projects are listed.
+  def with_visible_project(viewer : User?)
+    join_project(ProjectQuery.new.visible_to(viewer))
   end
 end

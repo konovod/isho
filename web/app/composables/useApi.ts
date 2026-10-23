@@ -33,12 +33,18 @@ const fieldNames: Record<string, string> = {
   moderation_note: 'Причина',
   reason: 'Причина',
   days: 'Срок',
+  ai_usage: 'Использование ИИ',
+  max_ai_usage: 'Уровень ИИ',
+  show_nsfw: 'Показ проектов 18+',
+  nsfw: '18+',
 }
 
 const detailMessages: Record<string, string> = {
   'is required': 'обязательное поле',
   'is too long': 'слишком длинное',
   'is too short': 'слишком короткое',
+  'must have at least 6 characters': 'минимум 6 символов',
+  'must not have more than 72 characters': 'максимум 72 символа',
   'is invalid': 'неверное значение',
   'has already been taken': 'уже занято',
   'is not allowed': 'нельзя использовать для регистрации',
@@ -47,6 +53,7 @@ const detailMessages: Record<string, string> = {
   'must be a public https:// link': 'нужна публичная ссылка https://',
   'must not point to a local address': 'нельзя ссылаться на локальный адрес',
   'must be a post in this topic': 'можно цитировать только сообщение из этой темы',
+  'must be ai_free, partial, significant or full': 'нужно выбрать один из уровней',
 }
 
 const codeMessages: Record<string, string> = {

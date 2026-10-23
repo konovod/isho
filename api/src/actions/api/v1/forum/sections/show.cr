@@ -17,7 +17,7 @@ class Api::V1::Forum::Sections::Show < ApiAction
       .preload_project
       .preload_last_post_user
 
-    query = query.with_published_project if section.slug == "projects"
+    query = query.with_visible_project(current_user?) if section.slug == "projects"
 
     total = query.clone.select_count
     topics = query
@@ -28,7 +28,7 @@ class Api::V1::Forum::Sections::Show < ApiAction
     read_counts = forum_read_counts(topics)
 
     json({
-      section: ForumSectionSerializer.new(section, current_user?.try(&.id)),
+      section: ForumSectionSerializer.new(section, current_user?),
       items:   topics.map { |topic| ForumTopicSerializer.new(topic, read_counts.try { |counts| counts[topic.id]? }) },
       meta:    pagination_meta(page, per_page, total),
     })

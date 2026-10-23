@@ -3,9 +3,10 @@ import type { ApiUser, ProjectCard } from '~/types/api'
 
 const route = useRoute()
 const api = useApi()
+const { user } = useAuth()
 
 const { data, error } = await useAsyncData(
-  `profile-${route.params.username}`,
+  () => `profile-${route.params.username}:${user.value?.id ?? 'guest'}`,
   () => api.get<{ user: ApiUser, projects: ProjectCard[] }>(`/api/v1/users/${route.params.username}`),
 )
 

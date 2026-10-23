@@ -8,11 +8,17 @@ class User < BaseModel
     column display_name : String?
     column bio : String?
     column theme : String
+    # Content preferences: adult projects and the highest AI usage level the
+    # user wants to see in catalogues.
+    column show_nsfw : Bool
+    column max_ai_usage : String
     column encrypted_password : String
     column is_admin : Bool
     column email_confirmed_at : Time?
     column email_confirmation_token_hash : String?
     column email_confirmation_sent_at : Time?
+    column password_reset_token_hash : String?
+    column password_reset_sent_at : Time?
     has_many projects : Project
     has_many auth_sessions : AuthSession
     has_many forum_topics : ForumTopic

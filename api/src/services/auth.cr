@@ -36,6 +36,11 @@ module Auth
       AuthSessionQuery.new.token_hash(digest(token)).delete
     end
 
+    # Used when the password changes: every device has to sign in again.
+    def self.destroy_all(user : User) : Nil
+      AuthSessionQuery.new.user_id(user.id).delete
+    end
+
     def self.digest(token : String) : String
       Digest::SHA256.hexdigest(token)
     end

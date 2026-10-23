@@ -39,6 +39,9 @@ async function onToggleTheme() {
         <NuxtLink v-if="user" to="/dashboard" class="nav-link">
           Мои проекты
         </NuxtLink>
+        <NuxtLink v-if="user" to="/settings" class="nav-link">
+          Настройки
+        </NuxtLink>
         <NuxtLink v-if="canModerate" to="/moderation" class="nav-link">
           Модерация
         </NuxtLink>

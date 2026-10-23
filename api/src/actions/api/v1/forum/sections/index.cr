@@ -3,8 +3,7 @@ class Api::V1::Forum::Sections::Index < ApiAction
 
   get "/api/v1/forum/sections" do
     sections = ForumSectionQuery.new.ordered.results
-    user_id = current_user?.try(&.id)
 
-    json({items: sections.map { |section| ForumSectionSerializer.new(section, user_id) }})
+    json({items: sections.map { |section| ForumSectionSerializer.new(section, current_user?) }})
   end
 end

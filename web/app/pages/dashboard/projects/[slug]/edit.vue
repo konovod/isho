@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Devlog, Download, ProjectDetail, Screenshot, Tag, TagDraft } from '~/types/api'
+import type { AiUsage, Devlog, Download, ProjectDetail, Screenshot, Tag, TagDraft } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
@@ -29,7 +29,14 @@ const allTags = computed(() => data.value?.tags ?? [])
 const devlogs = computed(() => data.value?.devlogs ?? [])
 
 const tab = ref<'details' | 'screenshots' | 'devlogs' | 'downloads'>('details')
-const form = reactive({ title: '', tagline: '', description: '', kind: 'game' })
+const form = reactive({
+  title: '',
+  tagline: '',
+  description: '',
+  kind: 'game',
+  nsfw: false,
+  ai_usage: 'ai_free' as AiUsage,
+})
 const selectedTags = ref<TagDraft[]>([])
 const error = ref('')
 const notice = ref('')
@@ -41,6 +48,8 @@ watch(project, (value) => {
   form.tagline = value.tagline ?? ''
   form.description = value.description ?? ''
   form.kind = value.kind
+  form.nsfw = value.nsfw
+  form.ai_usage = value.ai_usage
   selectedTags.value = value.tags.map(tag => ({ name: tag.name, slug: tag.slug }))
 }, { immediate: true })
 
@@ -64,6 +73,8 @@ async function save() {
         tagline: form.tagline.trim() || undefined,
         description: form.description.trim() || undefined,
         kind: form.kind,
+        nsfw: form.nsfw,
+        ai_usage: form.ai_usage,
       },
       tag_names: selectedTags.value.map(tag => tag.name),
     })
@@ -75,7 +86,7 @@ async function save() {
     data.value!.tags = [...mergedTags.values()]
     notice.value = 'Сохранено'
 
-    await Promise.all([refreshNuxtData('tags'), refresh()])
+    await Promise.all([refreshNuxtData(), refresh()])
   }
   catch (err) {
     fail(err)
@@ -340,6 +351,29 @@ async function deleteDownload(id: number) {
             <option value="tool">Инструмент</option>
             <option value="asset">Ассет</option>
           </select>
+        </div>
+
+        <div class="field">
+          <label class="label" for="ai-usage">Использование ИИ</label>
+          <select id="ai-usage" v-model="form.ai_usage" class="select">
+            <option v-for="option in AI_USAGE_OPTIONS" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <span class="hint">{{ aiUsageOption(form.ai_usage).description }}</span>
+        </div>
+
+        <div class="field">
+          <label class="check-row">
+            <input v-model="form.nsfw" type="checkbox" aria-label="Проект для взрослых (18+)">
+            <span>
+              <span class="check-title">Проект для взрослых (18+)</span>
+              <span class="hint">
+                Не показывается гостям. Зарегистрированные пользователи могут скрыть такие
+                проекты в настройках.
+              </span>
+            </span>
+          </label>
         </div>
 
         <div class="field">

@@ -7,7 +7,12 @@ const TAG_SEARCH_DEBOUNCE_MS = 250
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
+const { user } = useAuth()
 const { plural } = useFormat()
+
+// The catalogue depends on the viewer's content preferences, so the cache must
+// not be shared between a visitor and a signed-in account.
+const viewerKey = computed(() => user.value?.id ?? 'guest')
 
 const q = ref('')
 const tag = ref('')
@@ -34,7 +39,7 @@ watch(tagSearch, (value) => {
 onBeforeUnmount(() => clearTimeout(tagSearchTimer))
 
 const { data: tagData, status: tagStatus } = await useAsyncData(
-  'tags',
+  () => `tags:${viewerKey.value}`,
   () => api.get<{ items: TagSummary[], meta: { total: number } }>('/api/v1/tags', {
     q: appliedTagSearch.value || undefined,
     limit: TAG_LIMIT,
@@ -47,7 +52,7 @@ const tagTotal = computed(() => tagData.value?.meta.total ?? 0)
 const tagSearchActive = computed(() => appliedTagSearch.value.length > 0)
 const activeTagVisible = computed(() => tags.value.some(item => item.slug === tag.value))
 
-const projectsKey = computed(() => `projects:${q.value.trim()}:${tag.value}`)
+const projectsKey = computed(() => `projects:${viewerKey.value}:${q.value.trim()}:${tag.value}`)
 const { data, pending, error, refresh } = await useAsyncData(
   projectsKey,
   () => api.get<ProjectList>('/api/v1/projects', {

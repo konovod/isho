@@ -11,7 +11,7 @@ class Api::V1::Tags::Index < ApiAction
       query = query.search(term) unless term.empty?
     end
 
-    counts = published_projects_count_by_tag
+    counts = published_projects_count_by_tag(current_user?)
     ranked = query.results.sort do |left, right|
       by_count = counts.fetch(right.id, 0_i64) <=> counts.fetch(left.id, 0_i64)
       by_count == 0 ? left.name.downcase <=> right.name.downcase : by_count
@@ -26,10 +26,10 @@ class Api::V1::Tags::Index < ApiAction
     })
   end
 
-  private def published_projects_count_by_tag : Hash(Int64, Int64)
+  private def published_projects_count_by_tag(viewer : User?) : Hash(Int64, Int64)
     counts = {} of Int64 => Int64
     ProjectTagQuery.new
-      .with_published_project
+      .with_visible_project(viewer)
       .group(&.tag_id)
       .group_count
       .each { |key, count| counts[key.first.as(Int64)] = count }

@@ -1,6 +1,7 @@
 class ForumSectionSerializer < BaseSerializer
-  # `user_id` enables per-user unread counters; visitors get zeroes.
-  def initialize(@section : ForumSection, @user_id : Int64? = nil)
+  # `user` enables per-user unread counters and applies the viewer's content
+  # preferences to project discussions; visitors get zeroes and fewer topics.
+  def initialize(@section : ForumSection, @user : User? = nil)
   end
 
   def render
@@ -23,7 +24,7 @@ class ForumSectionSerializer < BaseSerializer
 
   private def topics_query : ForumTopicQuery
     query = ForumTopicQuery.new.section_id(@section.id)
-    @section.slug == "projects" ? query.with_published_project : query
+    @section.slug == "projects" ? query.with_visible_project(@user) : query
   end
 
   private def topics_count : Int64
@@ -35,9 +36,9 @@ class ForumSectionSerializer < BaseSerializer
   end
 
   private def unread_topics_count : Int64
-    user_id = @user_id
-    return 0_i64 unless user_id
+    user = @user
+    return 0_i64 unless user
 
-    topics_query.unread_for(user_id).select_count
+    topics_query.unread_for(user.id).select_count
   end
 end

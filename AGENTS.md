@@ -32,8 +32,17 @@
   Cookie `isho_session` принадлежит Lucky и не используется для авторизации.
 - **Ошибки:** единый формат `{"error":{"code","message","details"}}`; 422 — валидация.
 - **JSON:** сериализаторы в `api/src/serializers`, никаких ad-hoc хешей в экшенах.
-- **Медиа:** только через `ScreenshotUploader` (Latch). Локальный диск сейчас, S3 потом.
-  URL всегда с прямыми слэшами, даже на Windows.
+- **Медиа:** скриншоты — только через `ScreenshotUploader`, картинки в Markdown — через
+  `MarkdownImageUploader` (оба Latch). Локальный диск сейчас, S3 потом. URL всегда с прямыми
+  слэшами, даже на Windows. Редактор `MarkdownEditor` загружает картинки в
+  `POST /api/v1/markdown_images` (multipart `image_file`, PNG/JPEG/WebP/GIF до 10 МБ),
+  вставляет в текст `![alt](/media/...)`, поддерживает вставку из буфера и drag & drop;
+  сами картинки привязаны к автору (`markdown_images`) и не привязаны к проекту или посту.
+- **Контент-фильтры:** у проекта есть `nsfw` (18+) и `ai_usage`
+  (`ai_free|partial|significant|full`, от меньшего к большему). Гости не видят 18+;
+  пользователь хранит `users.show_nsfw` и `users.max_ai_usage` и меняет их на
+  `/settings` (`PATCH /api/v1/me/preferences`). Скрытие действует в каталоге, профилях,
+  счётчиках тегов, форуме и по прямым ссылкам (404); владелец и админ видят всё.
 - **Параметры:** JSON-запросы вложены в ключ модели (`project`, `user`, `download`),
   массивы (`tag_names`, `ids`) — на верхнем уровне. `tag_names` — имена тегов, новые
   создаются автоматически (`tag_slugs` поддерживается для старых клиентов). Скриншоты —
@@ -99,6 +108,16 @@
   Транспорт: `MAIL_ADAPTER=dev|smtp|sendgrid` (`MAIL_FROM`, `SMTP_*`); в тестах всегда
   dev-адаптер. `EMAIL_CONFIRMATION=off` отключает требование, а `tasks.exe db.confirm_email
   <email>` подтверждает вручную. Письма собирает `EmailConfirmationEmail`.
+- **Пароли:** длина 6–72 символа (72 — ограничение BCrypt), требований к составу нет.
+  Проверка одна на регистрацию и сброс — `PasswordValidations`.
+- **Сброс пароля:** `POST /api/v1/password_resets` (`user.email`) всегда отвечает
+  `{sent: true}` и не раскрывает, существует ли аккаунт; письмо уходит не чаще раза в
+  5 минут. Токен (`users.password_reset_token_hash`, SHA-256) живёт 1 час. Страница
+  `/reset_password?token=...` отправляет `user.password`/`password_confirmation` на
+  `POST /api/v1/password_resets/:token`: пароль, очистка токена и подтверждение почты
+  пишутся одной операцией `ResetPassword`, затем закрываются все сессии пользователя
+  (`Auth::Session.destroy_all`) и открывается новая. Письма собирает
+  `PasswordResetEmail`, сервис — `PasswordReset`.
 - **UI:** русский язык, светлая и тёмная темы, стили в `web/app/assets/css/main.css`.
   Палитра — токены через `light-dark()`; выбор хранится в cookie `isho_theme` и в
   `users.theme`, атрибут `data-theme` на `<html>` Nuxt ставит на SSR.

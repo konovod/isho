@@ -6,7 +6,7 @@ class Api::V1::Profiles::Show < ApiAction
            raise Avram::RecordNotFoundError.new(User.table_name, params.get(:username).to_s)
 
     projects = ProjectQuery.new
-      .published
+      .visible_to(current_user?)
       .for_user(user.id)
       .newest
       .preload_user

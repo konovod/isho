@@ -6,6 +6,11 @@ export interface ResendConfirmationResult {
   already_confirmed?: boolean
 }
 
+/** The reset request answers the same way for every address. */
+export interface PasswordResetRequestResult {
+  sent: boolean
+}
+
 export function useAuth() {
   const user = useState<Me | null>('auth.user', () => null)
   const loaded = useState<boolean>('auth.loaded', () => false)
@@ -34,6 +39,9 @@ export function useAuth() {
   async function signIn(login: string, password: string): Promise<Me> {
     user.value = await api.post<Me>('/api/v1/sign_ins', { user: { login, password } })
     loaded.value = true
+    // Catalogues are filtered per viewer, so cached pages from the visitor
+    // session must not be reused by the account.
+    clearNuxtData()
     return user.value
   }
 
@@ -46,11 +54,28 @@ export function useAuth() {
   }): Promise<Me> {
     user.value = await api.post<Me>('/api/v1/sign_ups', { user: payload })
     loaded.value = true
+    clearNuxtData()
     return user.value
   }
 
   async function resendEmailConfirmation(): Promise<ResendConfirmationResult> {
     return await api.post<ResendConfirmationResult>('/api/v1/email_confirmations/resend')
+  }
+
+  async function requestPasswordReset(email: string): Promise<PasswordResetRequestResult> {
+    return await api.post<PasswordResetRequestResult>('/api/v1/password_resets', { user: { email } })
+  }
+
+  // The API closes every session opened with the old password and starts a new
+  // one, so the browser is signed in as soon as the call succeeds.
+  async function resetPassword(token: string, password: string, passwordConfirmation: string): Promise<Me> {
+    user.value = await api.post<Me>(
+      `/api/v1/password_resets/${encodeURIComponent(token)}`,
+      { user: { password, password_confirmation: passwordConfirmation } },
+    )
+    loaded.value = true
+    clearNuxtData()
+    return user.value
   }
 
   async function signOut(): Promise<void> {
@@ -62,6 +87,8 @@ export function useAuth() {
     }
     user.value = null
     loaded.value = true
+    // Do not leave pages filtered for the account in the client cache.
+    clearNuxtData()
   }
 
   async function saveTheme(next: Theme): Promise<void> {
@@ -73,5 +100,5 @@ export function useAuth() {
     }
   }
 
-  return { user, loaded, canModerate, emailConfirmed, banned, fetchMe, signIn, signUp, resendEmailConfirmation, signOut, saveTheme }
+  return { user, loaded, canModerate, emailConfirmed, banned, fetchMe, signIn, signUp, resendEmailConfirmation, requestPasswordReset, resetPassword, signOut, saveTheme }
 }

@@ -42,6 +42,32 @@ describe Api::V1::SignUps::Create do
     UserQuery.new.username("confirm_user").first?.not_nil!.email_confirmed?.should be_true
   end
 
+  it "accepts a short password without digits or symbols" do
+    response = ApiClient.exec(Api::V1::SignUps::Create, user: {
+      email:                 "short@example.com",
+      username:              "short_user",
+      password:              "abcdef",
+      password_confirmation: "abcdef",
+    })
+
+    response.status_code.should eq 201
+    UserQuery.new.username("short_user").first?.should_not be_nil
+  end
+
+  it "rejects a password shorter than six characters" do
+    response = ApiClient.exec(Api::V1::SignUps::Create, user: {
+      email:                 "tiny@example.com",
+      username:              "tiny_user",
+      password:              "abcde",
+      password_confirmation: "abcde",
+    })
+
+    response.status_code.should eq 422
+    details = JSON.parse(response.body)["error"]["details"]
+    details["password"].as_a.map(&.as_s).should contain "must have at least 6 characters"
+    UserQuery.new.username("tiny_user").first?.should be_nil
+  end
+
   it "rejects a mismatched password confirmation" do
     response = ApiClient.exec(Api::V1::SignUps::Create, user: {
       email:                 "bad@example.com",

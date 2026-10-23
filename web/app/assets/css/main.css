@@ -330,6 +330,33 @@ p {
   color: var(--muted-strong);
 }
 
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.check-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  flex: none;
+}
+
+.check-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted-strong);
+  margin-bottom: 2px;
+}
+
+.settings-card {
+  max-width: 640px;
+}
+
 .input,
 .textarea,
 .select {
@@ -503,6 +530,13 @@ p {
   font-size: 16px;
   font-weight: 650;
   letter-spacing: -0.01em;
+}
+
+.project-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 .project-meta {
@@ -764,6 +798,22 @@ p {
   background: var(--bg-soft);
   color: var(--muted);
   border: 1px solid var(--border);
+}
+
+.badge-nsfw {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger-text);
+}
+
+.badge-ai {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.ai-usage-value {
+  font-weight: 650;
 }
 
 /* Page furniture */
@@ -1227,6 +1277,16 @@ p {
   color: var(--text);
 }
 
+.md-tool:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.md-tool:disabled:hover {
+  background: transparent;
+  color: var(--muted-strong);
+}
+
 .md-editor-tabs {
   display: flex;
   gap: 2px;
@@ -1273,6 +1333,14 @@ p {
   padding: 7px 12px;
   border-top: 1px solid var(--border);
   background: var(--bg-soft);
+}
+
+.md-editor-error {
+  padding: 7px 12px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger-text);
+  font-size: 12px;
 }
 
 .md-help {

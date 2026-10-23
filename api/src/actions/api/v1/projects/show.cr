@@ -3,9 +3,7 @@ class Api::V1::Projects::Show < ApiAction
   include Api::V1::Projects::ProjectParams
 
   get "/api/v1/projects/:slug" do
-    visible = project.published? || (current_user? && project.user_id == current_user?.try(&.id))
-
-    unless visible
+    unless project_visible?
       raise Avram::RecordNotFoundError.new(Project.table_name, params.get(:slug).to_s)
     end
 

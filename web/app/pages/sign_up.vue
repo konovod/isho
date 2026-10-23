@@ -121,13 +121,13 @@ async function goToDashboard() {
 
         <div class="field">
           <label class="label" for="password">Пароль</label>
-          <input id="password" v-model="password" class="input" type="password" autocomplete="new-password" minlength="10" required>
-          <span class="hint">Минимум 10 символов.</span>
+          <input id="password" v-model="password" class="input" type="password" autocomplete="new-password" minlength="6" maxlength="72" required>
+          <span class="hint">Минимум 6 символов, состав любой.</span>
         </div>
 
         <div class="field">
           <label class="label" for="password_confirmation">Пароль ещё раз</label>
-          <input id="password_confirmation" v-model="passwordConfirmation" class="input" type="password" autocomplete="new-password" minlength="10" required>
+          <input id="password_confirmation" v-model="passwordConfirmation" class="input" type="password" autocomplete="new-password" minlength="6" maxlength="72" required>
         </div>
 
         <button class="btn btn-primary w-full" type="submit" :disabled="pending">

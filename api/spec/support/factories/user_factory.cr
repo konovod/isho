@@ -5,6 +5,8 @@ class UserFactory < Avram::Factory
     display_name "Test User"
     encrypted_password Authentic.generate_encrypted_password("password1234")
     theme "dark"
+    show_nsfw true
+    max_ai_usage "full"
     is_admin false
     email_confirmed_at Time.utc
   end

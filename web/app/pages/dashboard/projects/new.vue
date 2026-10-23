@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProjectDetail, Tag, TagDraft } from '~/types/api'
+import type { AiUsage, ProjectDetail, Tag, TagDraft } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
@@ -20,6 +20,8 @@ const form = reactive({
   tagline: '',
   description: '',
   kind: 'game',
+  nsfw: false,
+  ai_usage: 'ai_free' as AiUsage,
 })
 
 const error = ref('')
@@ -36,11 +38,13 @@ async function submit() {
         tagline: form.tagline.trim() || undefined,
         description: form.description.trim() || undefined,
         kind: form.kind,
+        nsfw: form.nsfw,
+        ai_usage: form.ai_usage,
       },
       tag_names: selectedTags.value.map(tag => tag.name),
     })
 
-    await refreshNuxtData('tags')
+    await refreshNuxtData()
     await router.push(`/dashboard/projects/${project.slug}/edit`)
   }
   catch (err) {
@@ -84,6 +88,29 @@ async function submit() {
             <option value="tool">Инструмент</option>
             <option value="asset">Ассет</option>
           </select>
+        </div>
+
+        <div class="field">
+          <label class="label" for="ai-usage">Использование ИИ</label>
+          <select id="ai-usage" v-model="form.ai_usage" class="select">
+            <option v-for="option in AI_USAGE_OPTIONS" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <span class="hint">{{ aiUsageOption(form.ai_usage).description }}</span>
+        </div>
+
+        <div class="field">
+          <label class="check-row">
+            <input v-model="form.nsfw" type="checkbox" aria-label="Проект для взрослых (18+)">
+            <span>
+              <span class="check-title">Проект для взрослых (18+)</span>
+              <span class="hint">
+                Не показывается гостям. Зарегистрированные пользователи могут скрыть такие
+                проекты в настройках.
+              </span>
+            </span>
+          </label>
         </div>
 
         <div class="field">

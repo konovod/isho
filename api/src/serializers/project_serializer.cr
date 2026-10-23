@@ -10,6 +10,8 @@ class ProjectSerializer < BaseSerializer
       tagline:      @project.tagline,
       kind:         @project.kind,
       status:       @project.status,
+      nsfw:         @project.nsfw,
+      ai_usage:     @project.ai_usage,
       published_at: @project.published_at,
       cover_url:    cover_url,
       author:       UserSerializer.new(@project.user),

@@ -5,6 +5,8 @@ class ProjectFactory < Avram::Factory
     slug "test-project-#{number}"
     kind "game"
     status "draft"
+    nsfw false
+    ai_usage "ai_free"
     user_id UserFactory.create.id
   end
 end

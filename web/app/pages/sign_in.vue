@@ -68,6 +68,12 @@ async function submit() {
       </form>
 
       <p class="auth-switch">
+        <NuxtLink to="/forgot_password">
+          Забыли пароль?
+        </NuxtLink>
+      </p>
+
+      <p class="auth-switch">
         Нет аккаунта?
         <NuxtLink to="/sign_up">
           Зарегистрироваться

@@ -6,6 +6,7 @@ class DeleteUserAccount < Avram::Operation
 
   def run
     delete_screenshot_files
+    delete_markdown_image_files
     DeleteUserContent.run!(user: user)
 
     AppDatabase.transaction do
@@ -28,6 +29,13 @@ class DeleteUserAccount < Avram::Operation
       project.screenshots.each do |screenshot|
         screenshot.image.try(&.delete)
       end
+    end
+  end
+
+  # The database cascades the rows, but Latch stores files outside it.
+  private def delete_markdown_image_files
+    MarkdownImageQuery.new.user_id(user.id).results.each do |image|
+      image.image.try(&.delete)
     end
   end
 

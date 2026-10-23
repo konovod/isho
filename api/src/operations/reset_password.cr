@@ -1,4 +1,6 @@
 class ResetPassword < User::SaveOperation
+  param_key :user
+
   # Change password validations in src/operations/mixins/password_validations.cr
   include PasswordValidations
 
