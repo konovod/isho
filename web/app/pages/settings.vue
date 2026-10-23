@@ -22,6 +22,7 @@ const usedProjects = computed(() => storage.value?.projects.filter(project => pr
 const form = reactive({
   show_nsfw: user.value?.show_nsfw ?? true,
   max_ai_usage: (user.value?.max_ai_usage ?? 'full') as AiUsage,
+  ai_flair_enabled: user.value?.ai?.flair_enabled ?? true,
 })
 
 const aiLimitOptions: Array<{ value: AiUsage, label: string, hint: string }> = [
@@ -63,6 +64,7 @@ async function save() {
       user: {
         show_nsfw: form.show_nsfw,
         max_ai_usage: form.max_ai_usage,
+        ai_flair_enabled: form.ai_flair_enabled,
       },
     })
 
@@ -115,6 +117,21 @@ async function save() {
           </option>
         </select>
         <span class="hint">{{ aiLimitHint }}</span>
+      </div>
+
+      <div class="field">
+        <label class="check-row">
+          <input v-model="form.ai_flair_enabled" type="checkbox">
+          <span>
+            <span class="check-title">ИИ-флеир на форуме</span>
+            <span class="hint">
+              Короткая характеристика под ником, которую ИИ собирает из последних сообщений.
+            </span>
+          </span>
+        </label>
+        <p v-if="user?.ai?.flair" class="muted small">
+          Сейчас: <span class="forum-flair"><span aria-hidden="true">✦</span> {{ user.ai.flair }}</span>
+        </p>
       </div>
 
       <button class="btn btn-primary" type="submit" :disabled="saving">

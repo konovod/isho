@@ -22,6 +22,7 @@ class SignUpUser < User::SaveOperation
     theme.value = "dark" if theme.value.to_s.strip.empty?
     show_nsfw.value = true if show_nsfw.value.nil?
     max_ai_usage.value = "full" if max_ai_usage.value.to_s.strip.empty?
+    ai_flair_enabled.value = true if ai_flair_enabled.value.nil?
 
     name = display_name.value.to_s.strip
     display_name.value = name.empty? ? nil : name

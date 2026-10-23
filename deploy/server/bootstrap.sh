@@ -189,6 +189,13 @@ else
   set_env_if_missing "$ENV_DIR/api.env" EMAIL_CONFIRMATION off
 fi
 
+# AI on the forum. Without a key every AI feature stays off and the worker
+# idles; passing -AiApiKey (or ISHO_AI_API_KEY) on a later deploy rotates it.
+set_env_if_missing "$ENV_DIR/api.env" AI_MODEL "${ISHO_AI_MODEL:-deepseek-chat}"
+if [ -n "${ISHO_AI_API_KEY:-}" ]; then
+  set_env "$ENV_DIR/api.env" AI_API_KEY "$ISHO_AI_API_KEY"
+fi
+
 chown root:isho "$ENV_DIR/api.env"
 chmod 0640 "$ENV_DIR/api.env"
 
@@ -229,6 +236,7 @@ install -m 0644 "$RELEASE/server/isho-api.service" /etc/systemd/system/isho-api.
 install -m 0644 "$RELEASE/server/isho-web.service" /etc/systemd/system/isho-web.service
 install -m 0644 "$RELEASE/server/isho-storage.service" /etc/systemd/system/isho-storage.service
 install -m 0644 "$RELEASE/server/isho-storage.timer" /etc/systemd/system/isho-storage.timer
+install -m 0644 "$RELEASE/server/isho-ai.service" /etc/systemd/system/isho-ai.service
 install -m 0644 "$RELEASE/server/caddy.service" /etc/systemd/system/caddy.service
 chown -R isho:isho "$ISHO_HOME"
 chown -R caddy:caddy /var/lib/caddy
@@ -250,10 +258,11 @@ caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null
 
 log "Restarting services"
 systemctl daemon-reload
-systemctl enable isho-api isho-web caddy isho-storage.timer >/dev/null
+systemctl enable isho-api isho-web caddy isho-storage.timer isho-ai >/dev/null
 systemctl restart isho-api
 systemctl restart isho-web
 systemctl restart caddy
+systemctl restart isho-ai
 systemctl start isho-storage.timer
 
 wait_for() {
@@ -275,5 +284,6 @@ wait_for http://127.0.0.1:3000/ "Nuxt"
 wait_for "http://127.0.0.1/" "Caddy"
 
 log "Deployed"
-printf 'public origin: %s\ncaddy site:    %s\nsecure cookies: %s\nmail adapter:  %s\n' \
-  "$PUBLIC_ORIGIN" "$SITE_ADDRESS" "$COOKIE_SECURE" "$(sed -nE 's|^MAIL_ADAPTER=(.*)$|\1|p' "$ENV_DIR/api.env" | tail -1)"
+printf 'public origin: %s\ncaddy site:    %s\nsecure cookies: %s\nmail adapter:  %s\nai model:      %s\n' \
+  "$PUBLIC_ORIGIN" "$SITE_ADDRESS" "$COOKIE_SECURE" "$(sed -nE 's|^MAIL_ADAPTER=(.*)$|\1|p' "$ENV_DIR/api.env" | tail -1)" \
+  "$(sed -nE 's|^AI_MODEL=(.*)$|\1|p' "$ENV_DIR/api.env" | tail -1)"

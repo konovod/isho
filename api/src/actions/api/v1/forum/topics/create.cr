@@ -18,6 +18,19 @@ class Api::V1::Forum::Topics::Create < ApiAction
       body: fields["body"]? || "",
     )
 
-    json ForumTopicSerializer.new(reload_forum_topic(topic)), status: 201
+    # The answer is generated later by the worker: the author must not wait
+    # for the model, and a retried request must not create a second topic.
+    answer = nil
+    if fields["request_ai_answer"]? == "true"
+      begin
+        answer = Ai::ForumAnswer.enqueue(topic, current_user, section)
+      rescue
+        # The topic is already saved. A failed enqueue must not turn a created
+        # topic into a 500 and invite a retry that duplicates it.
+        answer = nil
+      end
+    end
+
+    json ForumTopicSerializer.new(reload_forum_topic(topic), ai_answer: answer), status: 201
   end
 end

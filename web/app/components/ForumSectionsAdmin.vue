@@ -42,6 +42,7 @@ const editForm = reactive({
   description: '',
   group_title: '',
   position: 0,
+  ai_answers_enabled: true,
 })
 
 function resetForm() {
@@ -114,6 +115,7 @@ function startEdit(section: AdminForumSection) {
   editForm.description = section.description ?? ''
   editForm.group_title = section.group_title ?? ''
   editForm.position = section.position
+  editForm.ai_answers_enabled = section.ai_answers_enabled
 }
 
 function cancelEdit() {
@@ -133,6 +135,7 @@ async function saveEdit(section: AdminForumSection) {
     description: editForm.description.trim(),
     group_title: editForm.group_title.trim(),
     position: Number(editForm.position),
+    ai_answers_enabled: section.slug === 'projects' ? false : editForm.ai_answers_enabled,
   }
 
   // The API rejects a slug change for "projects" and for a section with
@@ -349,6 +352,9 @@ async function remove(section: AdminForumSection) {
               {{ section.group_title || 'без группы' }} · позиция {{ section.position }} ·
               {{ section.topics_count }} {{ plural(section.topics_count, 'тема', 'темы', 'тем') }} ·
               {{ section.posts_count }} {{ plural(section.posts_count, 'сообщение', 'сообщения', 'сообщений') }}
+              <template v-if="!section.ai_answers_enabled">
+                · ИИ-ответы выключены
+              </template>
             </div>
           </div>
 
@@ -453,6 +459,24 @@ async function remove(section: AdminForumSection) {
               maxlength="200"
               rows="2"
             />
+          </div>
+
+          <div class="field">
+            <label class="check-row">
+              <input
+                v-model="editForm.ai_answers_enabled"
+                type="checkbox"
+                :disabled="section.slug === 'projects'"
+              >
+              <span>
+                <span class="check-title">Ответ от ИИ в новых темах</span>
+                <span class="hint">
+                  {{ section.slug === 'projects'
+                    ? 'В обсуждениях проектов ИИ не отвечает.'
+                    : 'Автор темы может попросить модель ответить первым сообщением под спойлером.' }}
+                </span>
+              </span>
+            </label>
           </div>
 
           <div class="row">

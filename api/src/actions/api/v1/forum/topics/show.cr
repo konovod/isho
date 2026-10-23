@@ -31,7 +31,7 @@ class Api::V1::Forum::Topics::Show < ApiAction
     end
 
     json({
-      topic: ForumTopicSerializer.new(topic, forum_read_count(topic)),
+      topic: ForumTopicSerializer.new(topic, forum_read_count(topic), page == 1 ? ForumAiAnswerQuery.new.for_topic(topic.id).first? : nil),
       items: posts.map { |post| ForumPostSerializer.new(post, post.quoted_post_id.try { |id| quote_pages[id]? }) },
       meta:  pagination_meta(page, per_page, total),
     })

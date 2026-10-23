@@ -1,7 +1,12 @@
 class ForumTopicSerializer < BaseSerializer
   # `read_count` is the current user's read marker. It is nil for visitors,
-  # who have nothing to compare against.
-  def initialize(@topic : ForumTopic, @read_count : Int32? = nil)
+  # who have nothing to compare against. `ai_answer` is passed only on the
+  # first page of the topic.
+  def initialize(
+    @topic : ForumTopic,
+    @read_count : Int32? = nil,
+    @ai_answer : ForumAiAnswer? = nil,
+  )
   end
 
   def render
@@ -21,6 +26,7 @@ class ForumTopicSerializer < BaseSerializer
       read_posts_count:  @read_count,
       unread_count:      unread_count,
       first_unread_page: first_unread_page,
+      ai_answer:         @ai_answer.try { |answer| ForumAiAnswerSerializer.new(answer) },
     }
   end
 

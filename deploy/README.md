@@ -131,6 +131,42 @@ sudo -u isho -H bash -c 'set -a; . /etc/isho/api.env; set +a; cd /srv/isho/api &
 journalctl -u isho-api -f          # письма в режиме dev видны здесь
 ```
 
+## ИИ на форуме
+
+Ответ на новую тему, подсказка раздела и флеир автора работают через DeepSeek.
+Ключ передаётся при деплое и остаётся только в `/etc/isho/api.env`:
+
+```powershell
+$env:ISHO_AI_API_KEY = 'sk-...'
+.\deploy\deploy.ps1 -SiteAddress https://example.com
+```
+
+Повторный деплой с ключом заменяет его (`-AiApiKey` или `ISHO_AI_API_KEY`), а без
+ключа оставляет прежний. Пока ключа нет, все ИИ-функции выключены: галочка в форме
+не показывается, воркер ничего не делает. `AI_ENABLED=off` выключает их при живом
+ключе. Модель и потолок трат настраиваются там же:
+
+```bash
+AI_MODEL=deepseek-chat
+AI_DAILY_JOBS=200
+AI_DAILY_INPUT_TOKENS=1500000
+AI_DAILY_OUTPUT_TOKENS=300000
+```
+
+Задачи разбирает отдельный сервис `isho-ai` (юнит `deploy/server/isho-ai.service`).
+Он сам обновляет флеиры активных авторов и чистит старые записи. Наблюдение и чистка:
+
+```bash
+sudo -u isho -H bash -c 'set -a; . /etc/isho/api.env; set +a; cd /srv/isho/api && ./bin/tasks ai.stats'
+sudo -u isho -H bash -c 'set -a; . /etc/isho/api.env; set +a; cd /srv/isho/api && ./bin/tasks ai.clear_flair <email или ник>'
+journalctl -u isho-ai -f
+```
+
+Пределы: 3 ответа в сутки на аккаунт (и не раньше 3 дней и 5 сообщений), 10 подсказок
+раздела в час и 30 в сутки, флеир не чаще раза в 24 часа. Общий дневной потолок
+считается по всем аккаунтам; после него воркер спит до полуночи UTC. Лимит трат лучше
+продублировать в кабинете DeepSeek — это последний рубеж.
+
 ## Сборки и место на диске
 
 Авторы выкладывают файлы для скачивания и веб-сборки (ZIP с `index.html`). Файлы

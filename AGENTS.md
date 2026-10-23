@@ -19,7 +19,8 @@
   (см. `deploy/README.md`). На сервере нет Crystal: туда едут только бинарники.
   Caddy ставится официальной сборкой из GitHub в `/usr/local/bin/caddy` (2.11.x),
   apt-версия 2.6 не используется. HTTPS включается одним `-SiteAddress https://host`,
-  `APP_ORIGIN`/`APP_DOMAIN` выводятся из него.
+  `APP_ORIGIN`/`APP_DOMAIN` выводятся из него. Ключ DeepSeek передаётся
+  `-AiApiKey` или `$env:ISHO_AI_API_KEY` и остаётся в `/etc/isho/api.env`.
 
 ## Архитектурные правила
 
@@ -98,6 +99,25 @@
   отмечает прочтение через `POST /api/v1/forum/topics/:id/read` последним сообщением
   просмотренной страницы. Автор последнего ответа денормализован в
   `forum_topics.last_post_user_id` и обновляется операциями создания/удаления сообщений.
+- **ИИ на форуме:** `Ai::Client` (`api/src/services/ai/`) ходит в DeepSeek через
+  OpenAI-совместимый `/chat/completions` на stdlib `HTTP::Client`; без `AI_API_KEY`
+  всё выключено, `AI_ENABLED=off` — аварийный выключатель. Долгие вызовы не держат
+  запрос: ответ на тему и флеир — задачи в `ai_jobs`, их по одной разбирает
+  `bin/tasks ai.worker` (сервис `isho-ai.service`, unit в `deploy/server`), а
+  `bin/tasks ai.stats` показывает расход и ошибки. Лимиты: 3 ответа ИИ в сутки на
+  аккаунт (плюс возраст 3 дня и 5 сообщений), 10 подсказок раздела в час и 30 в сутки,
+  флеир не чаще 24 часов; общий потолок — `AI_DAILY_JOBS`/`AI_DAILY_INPUT_TOKENS`/
+  `AI_DAILY_OUTPUT_TOKENS`, после него воркер спит. Ответ ИИ лежит не в
+  `forum_posts`, а в `forum_ai_answers` (одна на тему), иначе поехали бы
+  `replies_count`, `last_post_at` и непрочитанное; показывается под спойлером после
+  первого поста, `GET /api/v1/forum/topics/:id/ai_answer` — для опроса, удаляет
+  только админ. Подсказка раздела (`POST /api/v1/forum/topic_suggestions`) —
+  единственный синхронный вызов, с таймаутом и без блокировки создания темы.
+  Флеир (`users.ai_flair`, до 64 символов) собирается из 100 последних сообщений,
+  скрывается галочкой `users.ai_flair_enabled`, чистится `tasks ai.clear_flair <кто>`.
+  Раздел можно выключить в админке (`forum_sections.ai_answers_enabled`), у `projects`
+  всегда выключено. Спеки используют `AiFakeBackend` из `spec/support/ai_fake.cr` и
+  никогда не ходят в сеть.
 - **Модерация:** `users.is_admin` сейчас единственная роль модератора (`User#moderator?`).
   Авторы редактируют свои сообщения и название темы, удалять сообщения/темы может только
   админ. Первое сообщение темы отдельно не удаляется — только тема целиком. Уведомлений

@@ -37,6 +37,7 @@ module Db::Seed::ForumSections
         description: attrs[:description],
         group_title: attrs[:group],
         position: attrs[:position],
+        ai_answers_enabled: attrs[:slug] != "projects",
       )
     end
   end

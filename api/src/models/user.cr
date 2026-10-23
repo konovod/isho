@@ -14,6 +14,10 @@ class User < BaseModel
     column max_ai_usage : String
     column encrypted_password : String
     column is_admin : Bool
+    # Short AI-made characteristic from the user's latest forum posts.
+    column ai_flair : String?
+    column ai_flair_at : Time?
+    column ai_flair_enabled : Bool
     column email_confirmed_at : Time?
     column email_confirmation_token_hash : String?
     column email_confirmation_sent_at : Time?
@@ -51,5 +55,13 @@ class User < BaseModel
 
   def banned? : Bool
     !active_ban.nil?
+  end
+
+  # Hidden as soon as the author turns the preference off; the stored text
+  # stays so turning it back on does not spend a new request.
+  def visible_ai_flair : String?
+    return nil unless ai_flair_enabled
+    flair = ai_flair.to_s.strip
+    flair.empty? ? nil : flair
   end
 end

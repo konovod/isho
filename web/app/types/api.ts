@@ -8,7 +8,18 @@ export interface ApiUser {
   username: string
   display_name: string | null
   bio: string | null
+  /** Short AI-made characteristic, shown under the nickname on the forum. */
+  ai_flair?: string | null
   created_at: string
+}
+
+/** Limits of the forum AI features for the signed-in user. */
+export interface MeAi {
+  enabled: boolean
+  answers_left: number
+  answers_per_day: number
+  flair: string | null
+  flair_enabled: boolean
 }
 
 export interface Me extends ApiUser {
@@ -19,6 +30,7 @@ export interface Me extends ApiUser {
   is_admin: boolean
   email_confirmed: boolean
   ban: ActiveBan | null
+  ai: MeAi
 }
 
 /** Active moderation ban shown to the user and in the admin list. */
@@ -61,6 +73,7 @@ export interface ForumSection {
   description: string | null
   group_title: string | null
   position: number
+  ai_answers_enabled: boolean
   topics_count: number
   posts_count: number
   unread_topics_count: number
@@ -74,6 +87,7 @@ export interface AdminForumSection {
   description: string | null
   group_title: string | null
   position: number
+  ai_answers_enabled: boolean
   topics_count: number
   posts_count: number
 }
@@ -96,6 +110,24 @@ export interface ForumTopic {
   read_posts_count: number | null
   unread_count: number
   first_unread_page: number
+  /** Only returned on the first page of the topic. */
+  ai_answer: ForumAiAnswer | null
+}
+
+/** The model's opening answer to a topic; it is not a forum post. */
+export interface ForumAiAnswer {
+  id: number
+  status: 'queued' | 'ready' | 'failed' | 'skipped'
+  body: string | null
+  model: string | null
+  created_at: string
+}
+
+/** A section the model thinks fits a new topic better than the current one. */
+export interface TopicSuggestion {
+  section: ForumSectionRef
+  confidence: number
+  reason: string
 }
 
 export interface ForumPostQuote {

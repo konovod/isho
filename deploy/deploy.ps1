@@ -29,6 +29,11 @@
   # Confirmation letters from a mail.ru mailbox (see deploy/README.md)
   $env:ISHO_SMTP_PASSWORD = 'app-password'
   .\deploy\deploy.ps1 -SiteAddress https://example.com -MailFrom isho2026@mail.ru
+
+.EXAMPLE
+  # Forum AI through DeepSeek. The key is written to /etc/isho/api.env.
+  $env:ISHO_AI_API_KEY = 'sk-...'
+  .\deploy\deploy.ps1 -SiteAddress https://example.com
 #>
 [CmdletBinding()]
 param(
@@ -57,6 +62,10 @@ param(
   [string]$SmtpTls = 'ssl',
   [string]$SmtpUser = '',
   [string]$SmtpPassword = $env:ISHO_SMTP_PASSWORD,
+  # DeepSeek key for the forum AI features. Without it every AI feature stays
+  # off and the worker idles; the key lives only in /etc/isho/api.env.
+  [string]$AiApiKey = $env:ISHO_AI_API_KEY,
+  [string]$AiModel = 'deepseek-chat',
   [switch]$SampleData,
   [switch]$SkipBuild
 )
@@ -95,7 +104,7 @@ if ($MailFrom) {
 else {
   $MailAdapter = 'dev'
 }
-foreach ($value in @($SiteAddress, $PublicOrigin, $SshUser, $Server, $MailFrom, $MailAdapter, $SmtpHost, $SmtpPort, $SmtpTls, $SmtpUser, $SmtpPassword)) {
+foreach ($value in @($SiteAddress, $PublicOrigin, $SshUser, $Server, $MailFrom, $MailAdapter, $SmtpHost, $SmtpPort, $SmtpTls, $SmtpUser, $SmtpPassword, $AiApiKey, $AiModel)) {
   if ($value -match "'") { throw "Values passed to the server must not contain single quotes: $value" }
 }
 
@@ -174,6 +183,7 @@ ISHO_SITE_ADDRESS='$SiteAddress' ISHO_PUBLIC_ORIGIN='$PublicOrigin' ISHO_COOKIE_
 ISHO_MAIL_ADAPTER='$MailAdapter' ISHO_MAIL_FROM='$(ConvertTo-RemoteLiteral $MailFrom)' \
 ISHO_SMTP_HOST='$(ConvertTo-RemoteLiteral $SmtpHost)' ISHO_SMTP_PORT='$SmtpPort' ISHO_SMTP_TLS='$SmtpTls' \
 ISHO_SMTP_USER='$(ConvertTo-RemoteLiteral $SmtpUser)' ISHO_SMTP_PASSWORD='$(ConvertTo-RemoteLiteral $SmtpPassword)' \
+ISHO_AI_API_KEY='$(ConvertTo-RemoteLiteral $AiApiKey)' ISHO_AI_MODEL='$(ConvertTo-RemoteLiteral $AiModel)' \
 bash /opt/isho-release/server/bootstrap.sh /opt/isho-release
 "@
 # plink passes the command verbatim; CRLF would become part of the last argument.

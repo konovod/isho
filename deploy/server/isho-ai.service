@@ -1,0 +1,29 @@
+[Unit]
+Description=isho AI worker (DeepSeek jobs for the forum)
+Documentation=https://github.com/luckyframework/lucky
+After=network-online.target postgresql.service isho-api.service
+Wants=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=isho
+Group=isho
+WorkingDirectory=/srv/isho/api
+EnvironmentFile=/etc/isho/api.env
+# The worker polls ai_jobs, generates forum answers and refreshes user flair.
+# Without AI_API_KEY it idles instead of exiting, so systemd does not restart it
+# in a loop.
+ExecStart=/srv/isho/api/bin/tasks ai.worker
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/srv/isho/api
+
+[Install]
+WantedBy=multi-user.target

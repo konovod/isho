@@ -1,5 +1,5 @@
 class SavePreferences < User::SaveOperation
-  permit_columns show_nsfw, max_ai_usage
+  permit_columns show_nsfw, max_ai_usage, ai_flair_enabled
 
   before_save do
     normalize

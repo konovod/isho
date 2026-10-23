@@ -30,7 +30,16 @@ useSeoMeta({
         <span class="avatar" style="width: 56px; height: 56px; font-size: 18px;">{{ initials }}</span>
         <div>
           <h1>{{ name }}</h1>
-          <p>@{{ data.user.username }}</p>
+          <p>
+            @{{ data.user.username }}
+            <span
+              v-if="data.user.ai_flair"
+              class="forum-flair"
+              title="Сгенерировано ИИ из последних сообщений автора"
+            >
+              <span aria-hidden="true">✦</span> {{ data.user.ai_flair }}
+            </span>
+          </p>
         </div>
       </div>
     </div>

@@ -6,5 +6,6 @@ class ForumSectionFactory < Avram::Factory
     description "A test forum section"
     group_title "Тесты"
     position 0
+    ai_answers_enabled true
   end
 end

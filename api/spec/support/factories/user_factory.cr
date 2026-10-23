@@ -8,6 +8,7 @@ class UserFactory < Avram::Factory
     show_nsfw true
     max_ai_usage "full"
     is_admin false
+    ai_flair_enabled true
     email_confirmed_at Time.utc
   end
 

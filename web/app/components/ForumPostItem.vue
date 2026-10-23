@@ -118,6 +118,13 @@ async function save() {
         {{ authorName }}
       </NuxtLink>
       <span class="muted small">@{{ post.author.username }}</span>
+      <span
+        v-if="post.author.ai_flair"
+        class="forum-flair"
+        title="Сгенерировано ИИ из последних сообщений автора"
+      >
+        <span aria-hidden="true">✦</span> {{ post.author.ai_flair }}
+      </span>
     </aside>
 
     <div class="forum-post-main">

@@ -8,13 +8,16 @@ class ForumSectionSerializer < BaseSerializer
     topics = topics_count
 
     {
-      id:           @section.id,
-      slug:         @section.slug,
-      title:        @section.title,
-      description:  @section.description,
-      group_title:  @section.group_title,
-      position:     @section.position,
-      topics_count: topics,
+      id:          @section.id,
+      slug:        @section.slug,
+      title:       @section.title,
+      description: @section.description,
+      group_title: @section.group_title,
+      position:    @section.position,
+      # The new-topic form hides the "answer from AI" checkbox when a section
+      # (or the whole server) has it off.
+      ai_answers_enabled: @section.ai_answers_enabled,
+      topics_count:       topics,
       # Every topic has an opening post, so replies_count + 1 is its post
       # count. This avoids joining the whole forum_posts table per section.
       posts_count:         topics + replies_count,

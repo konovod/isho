@@ -6,7 +6,7 @@
 # missing from a PATCH keep their value. An empty optional string arrives as nil
 # and clears the column.
 class SaveForumSection < ForumSection::SaveOperation
-  permit_columns title, slug, description, group_title, position
+  permit_columns title, slug, description, group_title, position, ai_answers_enabled
 
   MAX_TITLE_LENGTH       =  80
   MAX_DESCRIPTION_LENGTH = 200
@@ -32,6 +32,9 @@ class SaveForumSection < ForumSection::SaveOperation
     description.value = blank_to_nil(description.value)
     group_title.value = blank_to_nil(group_title.value)
     position.value = record.try(&.position) || next_position if position.value.nil?
+    ai_answers_enabled.value = true if ai_answers_enabled.value.nil?
+    # Project discussions never get an AI opening answer.
+    ai_answers_enabled.value = false if slug.value == "projects"
   end
 
   # A new section gets a slug from its title, an edited one keeps the stored

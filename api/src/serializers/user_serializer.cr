@@ -8,7 +8,9 @@ class UserSerializer < BaseSerializer
       username:     @user.username,
       display_name: @user.display_name,
       bio:          @user.bio,
-      created_at:   @user.created_at,
+      # Shown under the nickname on the forum, never in the catalogue.
+      ai_flair:   @user.visible_ai_flair,
+      created_at: @user.created_at,
     }
   end
 end

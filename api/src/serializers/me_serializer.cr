@@ -18,6 +18,19 @@ class MeSerializer < BaseSerializer
       email_confirmed: @user.email_confirmed?,
       created_at:      @user.created_at,
       ban:             ban ? ActiveBanSerializer.new(ban) : nil,
+      ai:              ai,
+    }
+  end
+
+  # Limits and preferences of the forum AI features, used by the composer to
+  # show the remaining answers and by the settings page.
+  private def ai
+    {
+      enabled:         Ai.enabled?,
+      answers_left:    Ai::Quota.left(@user, "forum_answer", AppSettings::AI_FORUM_ANSWERS_PER_DAY),
+      answers_per_day: AppSettings::AI_FORUM_ANSWERS_PER_DAY,
+      flair:           @user.visible_ai_flair,
+      flair_enabled:   @user.ai_flair_enabled,
     }
   end
 end
