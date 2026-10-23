@@ -16,4 +16,10 @@ struct ScreenshotUploader
   def generate_location(uploaded_file, metadata, **options) : String
     super.gsub('\\', '/')
   end
+
+  # See MediaFileExtension: without an extension the variants would be stored
+  # inside the file instead of beside it.
+  protected def file_extension(uploaded_file, metadata) : String?
+    super || MediaFileExtension.for_content_type(uploaded_file.content_type)
+  end
 end

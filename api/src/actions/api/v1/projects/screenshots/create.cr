@@ -2,7 +2,7 @@ class Api::V1::Projects::Screenshots::Create < ApiAction
   include Api::V1::Projects::RequireOwner
 
   post "/api/v1/projects/:slug/screenshots" do
-    file = params.get_file?("image_file")
+    file = multipart? ? params.get_file?("image_file") : nil
 
     unless file
       return json(ErrorSerializer.new(
@@ -54,5 +54,12 @@ class Api::V1::Projects::Screenshots::Create < ApiAction
     # Latch promotes the file after commit, so reload to get final URLs.
     screenshot = ScreenshotQuery.new.id(created.id).first? || created
     json ScreenshotSerializer.new(screenshot), status: 201
+  end
+
+  # Lucky parses form data lazily and its file lookup raises for a JSON body,
+  # so a plain request without a file should simply fail validation.
+  private def multipart? : Bool
+    context.request.headers["Content-Type"]?
+      .try(&.downcase.starts_with?("multipart/form-data")) || false
   end
 end

@@ -151,7 +151,7 @@ module AppSettings
 
   def self.ai_model : String
     value = ENV["AI_MODEL"]?.try(&.strip)
-    value.nil? || value.empty? ? "deepseek-chat" : value
+    value.nil? || value.empty? ? "deepseek-flash" : value
   end
 
   def self.ai_daily_jobs : Int32
