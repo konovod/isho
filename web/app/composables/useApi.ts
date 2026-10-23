@@ -37,6 +37,10 @@ const fieldNames: Record<string, string> = {
   max_ai_usage: 'Уровень ИИ',
   show_nsfw: 'Показ проектов 18+',
   nsfw: '18+',
+  total_bytes: 'Размер файла',
+  filename: 'Имя файла',
+  kind: 'Тип сборки',
+  entry: 'Стартовый файл',
 }
 
 const detailMessages: Record<string, string> = {
@@ -65,6 +69,24 @@ const codeMessages: Record<string, string> = {
   user_banned: 'Аккаунт забанен — публикация недоступна до окончания срока.',
   cannot_ban_self: 'Нельзя забанить свой аккаунт.',
   cannot_ban_admin: 'Нельзя забанить администратора.',
+  build_limit_reached: 'У проекта уже предельное число сборок — удалите одну.',
+  project_storage_quota_exceeded: 'Не хватает места в лимите проекта: 300 МБ на сборки.',
+  storage_quota_exceeded: 'Не хватает места в лимите аккаунта: 1 ГБ на сборки, скриншоты и картинки.',
+  storage_full: 'На сервере закончилось место для загрузок. Попробуйте позже.',
+  upload_incomplete: 'Файл загружен не полностью. Повторите загрузку.',
+  invalid_chunk: 'Кусок файла пришёл не по порядку. Загрузка начнётся заново.',
+  upload_complete: 'Файл уже загружен.',
+  upload_interrupted: 'Связь прервалась во время загрузки. Повторите попытку.',
+  upload_cancelled: 'Загрузка отменена.',
+  invalid_upload: 'Загрузка повреждена. Начните заново.',
+  file_too_large: 'Файл слишком большой: до 300 МБ на сборку.',
+  invalid_archive: 'Архив повреждён или содержит недопустимые пути.',
+  archive_too_many_files: 'В архиве слишком много файлов.',
+  archive_too_large: 'Архив распаковывается в больший размер, чем заявлен.',
+  empty_archive: 'Архив пустой.',
+  index_html_missing: 'В архиве нет index.html — добавьте его или укажите стартовый файл.',
+  index_html_ambiguous: 'В архиве несколько index.html — укажите стартовый файл вручную.',
+  entry_not_found: 'Указанный стартовый файл не найден в архиве.',
 }
 
 function translateDetail(message: string): string {

@@ -37,6 +37,7 @@ const kindLabel = computed(() => {
 })
 const initials = computed(() => authorName.value.slice(0, 2))
 const aiUsage = computed(() => aiUsageOption(project.value?.ai_usage))
+const playableBuild = computed(() => project.value?.builds.find(build => build.kind === 'web' && build.play_url) ?? null)
 
 function onModerated(updated: ProjectDetail) {
   project.value = updated
@@ -79,8 +80,15 @@ useSeoMeta({
           </p>
         </div>
 
-        <div v-if="isOwner" class="row" style="margin-left: auto;">
-          <NuxtLink :to="`/dashboard/projects/${project.slug}/edit`" class="btn btn-ghost btn-sm">
+        <div class="row" style="margin-left: auto;">
+          <NuxtLink
+            v-if="playableBuild"
+            :to="`/p/${project.slug}/play/${playableBuild.id}`"
+            class="btn btn-primary btn-sm"
+          >
+            Играть
+          </NuxtLink>
+          <NuxtLink v-if="isOwner" :to="`/dashboard/projects/${project.slug}/edit`" class="btn btn-ghost btn-sm">
             Редактировать
           </NuxtLink>
         </div>
@@ -175,7 +183,7 @@ useSeoMeta({
             </div>
           </section>
 
-          <DownloadList class="mt-24" :downloads="project.downloads" />
+          <DownloadList class="mt-24" :downloads="project.downloads" :builds="project.builds" :slug="project.slug" />
         </div>
 
         <aside class="project-sidebar">

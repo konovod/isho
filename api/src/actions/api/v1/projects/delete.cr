@@ -6,6 +6,10 @@ class Api::V1::Projects::Delete < ApiAction
       screenshot.image.try(&.delete)
     end
 
+    project.builds.each do |build|
+      BuildStorage.delete_files(build)
+    end
+
     Project::DeleteOperation.delete!(project)
     head 204
   end

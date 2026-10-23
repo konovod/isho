@@ -23,6 +23,7 @@ class ProjectSerializer < BaseSerializer
         description: @project.description,
         screenshots: screenshots,
         downloads:   downloads,
+        builds:      builds,
       })
 
       @moderation ? detailed.merge(moderation) : detailed
@@ -55,6 +56,12 @@ class ProjectSerializer < BaseSerializer
     return [] of DownloadSerializer unless @project.downloads_preloaded?
 
     @project.downloads.map { |download| DownloadSerializer.new(download) }
+  end
+
+  private def builds : Array(BuildSerializer)
+    return [] of BuildSerializer unless @project.builds_preloaded?
+
+    @project.builds.sort_by(&.id).map { |build| BuildSerializer.new(build) }
   end
 
   private def cover_url : String?

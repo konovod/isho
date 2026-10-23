@@ -5,7 +5,7 @@ class DeleteUserAccount < Avram::Operation
   needs user : User
 
   def run
-    delete_screenshot_files
+    delete_project_files
     delete_markdown_image_files
     DeleteUserContent.run!(user: user)
 
@@ -24,10 +24,14 @@ class DeleteUserAccount < Avram::Operation
     BlockEmail.create!(email: user.email, username: user.username)
   end
 
-  private def delete_screenshot_files
-    ProjectQuery.new.for_user(user.id).preload_screenshots.results.each do |project|
+  private def delete_project_files
+    ProjectQuery.new.for_user(user.id).preload_screenshots.preload_builds.results.each do |project|
       project.screenshots.each do |screenshot|
         screenshot.image.try(&.delete)
+      end
+
+      project.builds.each do |build|
+        BuildStorage.delete_files(build)
       end
     end
   end

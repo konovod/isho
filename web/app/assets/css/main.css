@@ -1494,6 +1494,81 @@ p {
   font-size: 14px;
 }
 
+/* Storage limits and uploads */
+
+.quota {
+  display: grid;
+  gap: 6px;
+}
+
+.quota-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.quota-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+
+.quota-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+.upload-zone {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  margin-bottom: 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+}
+
+.upload-progress {
+  display: grid;
+  gap: 8px;
+}
+
+.upload-progress .btn {
+  justify-self: start;
+}
+
+.play-page {
+  padding-top: 20px;
+  padding-bottom: 28px;
+}
+
+.play-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.play-hint {
+  margin: 8px 0 12px;
+}
+
+.play-frame {
+  width: 100%;
+  height: calc(100vh - 190px);
+  min-height: 420px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #000;
+}
+
 /* Dashboard */
 
 .dash-list {

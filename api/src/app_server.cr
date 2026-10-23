@@ -5,12 +5,12 @@ class AppServer < Lucky::BaseAppServer
     [
       Lucky::RequestIdHandler.new,
       Lucky::ForceSSLHandler.new,
-      Lucky::HttpMethodOverrideHandler.new,
       Lucky::LogHandler.new,
       Lucky::ErrorHandler.new(action: Errors::Show),
       Lucky::RemoteIpHandler.new,
-      Lucky::MaximumRequestSizeHandler.new,
+      RequestSizeLimitHandler.new,
       Lucky::RouteHandler.new,
+      MediaHeadersHandler.new,
       Lucky::StaticFileHandler.new("./public", fallthrough: true, directory_listing: false),
       Lucky::RouteNotFoundHandler.new,
     ] of HTTP::Handler

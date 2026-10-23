@@ -13,6 +13,7 @@ Crystal и не нужна сборка: туда уезжают только re
 | Lucky API | `/srv/isho/api`, `isho-api.service`, `127.0.0.1:4000` |
 | Nuxt SSR | `/srv/isho/web`, `isho-web.service`, `127.0.0.1:3000` |
 | Caddy (официальная сборка 2.11, `/usr/local/bin/caddy`) | `/etc/caddy/Caddyfile`, `caddy.service`, порты 80/443 |
+| Сборки | `/srv/isho/api/public/media/build` и `/media/web`, `isho-storage.timer` |
 
 Caddy раздаёт всё с одного origin: `/api/*` и `/media/*` идут в Lucky, остальное — в Nuxt.
 Скриншоты лежат в `/srv/isho/api/public/media` (Latch, файловое хранилище).
@@ -129,6 +130,40 @@ Unisender Go) — меняются только `SMTP_*` и `MAIL_FROM`.
 sudo -u isho -H bash -c 'set -a; . /etc/isho/api.env; set +a; cd /srv/isho/api && ./bin/tasks db.confirm_email <email>'
 journalctl -u isho-api -f          # письма в режиме dev видны здесь
 ```
+
+## Сборки и место на диске
+
+Авторы выкладывают файлы для скачивания и веб-сборки (ZIP с `index.html`). Файлы
+приезжают кусками по 8 МБ в `POST /api/v1/projects/:slug/uploads`, готовый файл
+уезжает в `/srv/isho/api/public/media/build`, а распакованная игра — в
+`/srv/isho/api/public/media/web/<uuid>`. Скачивание отдаёт Lucky с поддержкой
+`Range`, поэтому большие архивы докачиваются.
+
+Лимиты по умолчанию: 300 МБ на сборки проекта, 1 ГБ на аккаунт (сборки,
+скриншоты и картинки в Markdown) и 12 ГБ на сервер. Загрузки не трогают
+последние 2 ГБ диска: это резерв для ОС, Postgres, логов и свопа. Значения
+можно поменять в `/etc/isho/api.env` — они читаются на каждом запросе, без
+пересборки:
+
+```bash
+STORAGE_PROJECT_LIMIT_BYTES=300000000
+STORAGE_ACCOUNT_LIMIT_BYTES=1000000000
+STORAGE_SERVER_LIMIT_BYTES=12000000000
+STORAGE_RESERVE_BYTES=2000000000
+```
+
+`isho-storage.timer` раз в сутки запускает `tasks storage.cleanup --yes` и пишет
+отчёт в journal. Вручную:
+
+```bash
+sudo -u isho -H bash -c 'set -a; . /etc/isho/api.env; set +a; cd /srv/isho/api && ./bin/tasks storage.stats'
+sudo -u isho -H bash -c 'set -a; . /etc/isho/api.env; set +a; cd /srv/isho/api && ./bin/tasks storage.cleanup'
+```
+
+Веб-сборки отдаются с `Content-Security-Policy: sandbox` без `allow-same-origin`:
+игра не может читать куки и обращаться к API от имени посетителя. Плата за это —
+только относительные пути и отсутствие `localStorage` и `SharedArrayBuffer`.
+Файлы для скачивания отдаются с `Content-Disposition: attachment`.
 
 ## Полезное на сервере
 

@@ -227,6 +227,8 @@ cp -a "$RELEASE/web/.output" "$ISHO_HOME/web/.output"
 install -m 0644 "$RELEASE/server/Caddyfile" /etc/caddy/Caddyfile
 install -m 0644 "$RELEASE/server/isho-api.service" /etc/systemd/system/isho-api.service
 install -m 0644 "$RELEASE/server/isho-web.service" /etc/systemd/system/isho-web.service
+install -m 0644 "$RELEASE/server/isho-storage.service" /etc/systemd/system/isho-storage.service
+install -m 0644 "$RELEASE/server/isho-storage.timer" /etc/systemd/system/isho-storage.timer
 install -m 0644 "$RELEASE/server/caddy.service" /etc/systemd/system/caddy.service
 chown -R isho:isho "$ISHO_HOME"
 chown -R caddy:caddy /var/lib/caddy
@@ -248,10 +250,11 @@ caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null
 
 log "Restarting services"
 systemctl daemon-reload
-systemctl enable isho-api isho-web caddy >/dev/null
+systemctl enable isho-api isho-web caddy isho-storage.timer >/dev/null
 systemctl restart isho-api
 systemctl restart isho-web
 systemctl restart caddy
+systemctl start isho-storage.timer
 
 wait_for() {
   local url=$1 name=$2

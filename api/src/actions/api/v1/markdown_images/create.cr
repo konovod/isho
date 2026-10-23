@@ -22,6 +22,14 @@ class Api::V1::MarkdownImages::Create < ApiAction
       ), status: 422)
     end
 
+    bytes = file.tempfile.size.to_i64
+    unless StorageUsage.fits_account?(current_user.id, bytes) && StorageUsage.fits_server?(bytes)
+      return json(ErrorSerializer.new(
+        code: "storage_quota_exceeded",
+        message: "The storage limit is used up",
+      ), status: 422)
+    end
+
     unless AppSettings::MARKDOWN_IMAGE_TYPES.includes?(file.content_type.to_s.downcase)
       return json(ErrorSerializer.new(
         code: "invalid_file_type",

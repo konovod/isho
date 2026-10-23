@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AiUsage, Devlog, Download, ProjectDetail, Screenshot, Tag, TagDraft } from '~/types/api'
+import type { AiUsage, Build, Devlog, Download, ProjectDetail, Screenshot, StorageUsage, Tag, TagDraft } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
@@ -28,7 +28,7 @@ const project = computed(() => data.value?.project ?? null)
 const allTags = computed(() => data.value?.tags ?? [])
 const devlogs = computed(() => data.value?.devlogs ?? [])
 
-const tab = ref<'details' | 'screenshots' | 'devlogs' | 'downloads'>('details')
+const tab = ref<'details' | 'screenshots' | 'devlogs' | 'builds' | 'downloads'>('details')
 const form = reactive({
   title: '',
   tagline: '',
@@ -254,6 +254,101 @@ async function deleteDownload(id: number) {
     fail(err)
   }
 }
+
+/* Builds */
+
+const { data: storage, refresh: refreshStorage } = await useAsyncData(
+  `storage-${slug}`,
+  () => api.get<StorageUsage>('/api/v1/me/storage'),
+)
+
+const {
+  uploading: uploadingBuild,
+  progress: buildProgress,
+  uploaded: buildUploaded,
+  total: buildTotal,
+  upload: uploadBuild,
+  cancel: cancelBuildUpload,
+} = useBuildUpload(slug)
+
+const buildForm = reactive({
+  kind: 'file' as 'file' | 'web',
+  label: '',
+  platform: 'windows',
+  version: '',
+  entry: '',
+})
+const buildFile = ref<File | null>(null)
+const buildInput = ref<HTMLInputElement | null>(null)
+
+const projectBytes = computed(() => {
+  return storage.value?.projects.find(item => item.slug === slug)?.used_bytes ?? 0
+})
+
+function chooseBuildFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  buildFile.value = input.files?.[0] ?? null
+}
+
+function onBuildDrop(event: DragEvent) {
+  const file = event.dataTransfer?.files?.[0]
+  if (file) buildFile.value = file
+}
+
+async function addBuild() {
+  if (!buildFile.value || !project.value) return
+  clearMessages()
+
+  if (buildForm.kind === 'web' && !buildFile.value.name.toLowerCase().endsWith('.zip')) {
+    error.value = 'Веб-сборка — это ZIP-архив с index.html'
+    return
+  }
+
+  try {
+    const build = await uploadBuild(buildFile.value, {
+      kind: buildForm.kind,
+      label: buildForm.label.trim() || undefined,
+      platform: buildForm.platform || undefined,
+      version: buildForm.version.trim() || undefined,
+      entry: buildForm.entry.trim() || undefined,
+    })
+
+    data.value!.project.builds.push(build)
+    buildFile.value = null
+    buildForm.label = ''
+    buildForm.version = ''
+    buildForm.entry = ''
+    if (buildInput.value) buildInput.value.value = ''
+    notice.value = build.kind === 'web' ? 'Веб-сборка загружена' : 'Файл загружен'
+
+    await Promise.all([refreshStorage(), refresh()])
+  }
+  catch (err) {
+    if (isUploadCancelled(err)) {
+      notice.value = 'Загрузка отменена'
+      return
+    }
+    fail(err)
+  }
+}
+
+function isUploadCancelled(err: unknown): boolean {
+  return err instanceof Error && (err as any).code === 'upload_cancelled'
+}
+
+async function removeBuild(id: number) {
+  if (!confirm('Удалить сборку вместе с файлом?')) return
+  clearMessages()
+
+  try {
+    await api.del(`/api/v1/projects/${slug}/builds/${id}`)
+    data.value!.project.builds = data.value!.project.builds.filter(item => item.id !== id)
+    await refreshStorage()
+  }
+  catch (err) {
+    fail(err)
+  }
+}
 </script>
 
 <template>
@@ -327,6 +422,9 @@ async function deleteDownload(id: number) {
         </button>
         <button class="editor-tab" :class="{ active: tab === 'screenshots' }" @click="tab = 'screenshots'">
           Скриншоты ({{ project.screenshots.length }})
+        </button>
+        <button class="editor-tab" :class="{ active: tab === 'builds' }" @click="tab = 'builds'">
+          Сборки ({{ project.builds.length }})
         </button>
         <button class="editor-tab" :class="{ active: tab === 'downloads' }" @click="tab = 'downloads'">
           Ссылки ({{ project.downloads.length }})
@@ -464,7 +562,145 @@ async function deleteDownload(id: number) {
         </div>
       </div>
 
-      <div v-else class="card card-pad">
+      <div v-else-if="tab === 'builds'" class="card card-pad">
+        <h2 class="section-title">
+          Сборки
+        </h2>
+        <p class="muted small mb-16">
+          Файл для скачивания или ZIP с HTML5-игрой: index.html в корне архива или в единственной
+          папке. Игра открывается в песочнице браузера, поэтому используйте относительные пути.
+          Лимиты: 300 МБ на сборки проекта и 1 ГБ на аккаунт.
+        </p>
+
+        <div class="quota mb-24">
+          <div class="quota-row">
+            <span>Проект</span>
+            <span>{{ formatBytes(projectBytes) }} из {{ formatBytes(storage?.project_limit_bytes) }}</span>
+          </div>
+          <div class="quota-bar">
+            <div class="quota-fill" :style="{ width: quotaPercent(projectBytes, storage?.project_limit_bytes) }" />
+          </div>
+          <div class="quota-row">
+            <span>Аккаунт</span>
+            <span>{{ formatBytes(storage?.used_bytes) }} из {{ formatBytes(storage?.limit_bytes) }}</span>
+          </div>
+          <div class="quota-bar">
+            <div class="quota-fill" :style="{ width: quotaPercent(storage?.used_bytes, storage?.limit_bytes) }" />
+          </div>
+        </div>
+
+        <div v-if="project.builds.length" class="mb-24">
+          <div v-for="item in project.builds" :key="item.id" class="download-row">
+            <div>
+              <div class="download-label">
+                {{ item.label }}
+              </div>
+              <div class="row small muted" style="margin-top: 2px;">
+                <span class="badge" :class="item.kind === 'web' ? 'badge-published' : 'badge-external'">
+                  {{ item.kind === 'web' ? 'веб-сборка' : 'файл' }}
+                </span>
+                <span>{{ [item.platform, item.version, formatBytes(item.size_bytes)].filter(Boolean).join(' · ') }}</span>
+              </div>
+            </div>
+
+            <div class="row">
+              <a
+                v-if="item.kind === 'web' && item.play_url"
+                :href="`/p/${slug}/play/${item.id}`"
+                class="btn btn-ghost btn-sm"
+                target="_blank"
+                rel="noopener"
+              >
+                Играть
+              </a>
+              <a v-if="item.kind === 'file' && item.url" :href="item.url" class="btn btn-ghost btn-sm">
+                Скачать
+              </a>
+              <button class="btn btn-danger btn-sm" @click="removeBuild(item.id)">
+                Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="uploadingBuild" class="upload-progress">
+          <div class="quota-row">
+            <span>{{ buildFile?.name }}</span>
+            <span>{{ formatBytes(buildUploaded) }} из {{ formatBytes(buildTotal) }} · {{ buildProgress }}%</span>
+          </div>
+          <div class="quota-bar">
+            <div class="quota-fill" :style="{ width: `${buildProgress}%` }" />
+          </div>
+          <button class="btn btn-ghost btn-sm mt-8" @click="cancelBuildUpload">
+            Отменить загрузку
+          </button>
+        </div>
+
+        <template v-else>
+          <div class="upload-zone" @dragover.prevent @drop.prevent="onBuildDrop">
+            <input ref="buildInput" type="file" hidden @change="chooseBuildFile">
+            <div v-if="buildFile" class="row-between">
+              <span>
+                <strong>{{ buildFile.name }}</strong>
+                <span class="muted small"> · {{ formatBytes(buildFile.size) }}</span>
+              </span>
+              <button class="btn btn-ghost btn-sm" type="button" @click="buildFile = null">
+                Убрать
+              </button>
+            </div>
+            <div v-else class="muted small">
+              Перетащите файл сюда или
+              <button class="btn btn-ghost btn-sm" type="button" @click="buildInput?.click()">
+                выберите на диске
+              </button>
+            </div>
+          </div>
+
+          <div class="row" style="align-items: flex-end;">
+            <div class="field" style="margin-bottom: 0; min-width: 220px;">
+              <label class="label" for="build-kind">Тип</label>
+              <select id="build-kind" v-model="buildForm.kind" class="select">
+                <option value="file">Файл для скачивания</option>
+                <option value="web">Веб-сборка (ZIP)</option>
+              </select>
+            </div>
+
+            <div class="field" style="margin-bottom: 0; min-width: 180px;">
+              <label class="label" for="build-label">Название</label>
+              <input id="build-label" v-model="buildForm.label" class="input" maxlength="80" placeholder="Скачать">
+            </div>
+
+            <div class="field" style="margin-bottom: 0; min-width: 130px;">
+              <label class="label" for="build-platform">Платформа</label>
+              <select id="build-platform" v-model="buildForm.platform" class="select">
+                <option value="windows">Windows</option>
+                <option value="macos">macOS</option>
+                <option value="linux">Linux</option>
+                <option value="web">Web</option>
+                <option value="android">Android</option>
+                <option value="other">Другое</option>
+              </select>
+            </div>
+
+            <div class="field" style="margin-bottom: 0; min-width: 100px;">
+              <label class="label" for="build-version">Версия</label>
+              <input id="build-version" v-model="buildForm.version" class="input" maxlength="40" placeholder="1.0">
+            </div>
+
+            <button class="btn btn-primary" :disabled="!buildFile" @click="addBuild">
+              Загрузить
+            </button>
+          </div>
+
+          <div v-if="buildForm.kind === 'web'" class="field mt-16" style="margin-bottom: 0;">
+            <label class="label" for="build-entry">Стартовый файл <span class="muted">(необязательно)</span></label>
+            <input id="build-entry" v-model="buildForm.entry" class="input" maxlength="200" placeholder="index.html">
+            <span class="hint">Можно указать другой файл, если игра начинается не с index.html.</span>
+          </div>
+        </template>
+      </div>
+
+      <div v-else-if="tab === 'downloads'" class="card card-pad">
         <h2 class="section-title">
           Ссылки на сборки
         </h2>

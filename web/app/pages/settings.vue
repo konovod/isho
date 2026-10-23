@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AiUsage, Me } from '~/types/api'
+import type { AiUsage, Me, StorageUsage } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
@@ -11,6 +11,13 @@ useSeoMeta({
 
 const api = useApi()
 const { user } = useAuth()
+
+const { data: storage } = await useAsyncData(
+  'me-storage',
+  () => api.get<StorageUsage>('/api/v1/me/storage'),
+)
+
+const usedProjects = computed(() => storage.value?.projects.filter(project => project.used_bytes > 0) ?? [])
 
 const form = reactive({
   show_nsfw: user.value?.show_nsfw ?? true,
@@ -114,5 +121,37 @@ async function save() {
         {{ saving ? 'Сохраняем…' : 'Сохранить' }}
       </button>
     </form>
+
+    <div v-if="storage" class="card card-pad settings-card mt-24">
+      <h2 class="section-title">
+        Хранилище
+      </h2>
+      <p class="muted small mb-16">
+        Сборки, скриншоты и картинки в тексте. Файлы хранятся на сервере рядом с сайтом.
+      </p>
+
+      <div class="quota mb-16">
+        <div class="quota-row">
+          <span>Аккаунт</span>
+          <span>{{ formatBytes(storage.used_bytes) }} из {{ formatBytes(storage.limit_bytes) }}</span>
+        </div>
+        <div class="quota-bar">
+          <div class="quota-fill" :style="{ width: quotaPercent(storage.used_bytes, storage.limit_bytes) }" />
+        </div>
+      </div>
+
+      <div v-if="usedProjects.length" class="quota">
+        <div class="quota-row small">
+          <span>По проектам</span>
+          <span>сборки, до {{ formatBytes(storage.project_limit_bytes) }} на проект</span>
+        </div>
+        <div v-for="project in usedProjects" :key="project.slug" class="quota-row small">
+          <NuxtLink :to="`/p/${project.slug}`">
+            {{ project.title }}
+          </NuxtLink>
+          <span class="muted">{{ formatBytes(project.used_bytes) }}</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

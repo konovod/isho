@@ -1,0 +1,12 @@
+[Unit]
+Description=isho storage cleanup and usage report
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=oneshot
+User=isho
+Group=isho
+WorkingDirectory=/srv/isho/api
+ExecStart=/bin/bash -c 'set -a; . /etc/isho/api.env; set +a; ./bin/tasks storage.cleanup --yes && ./bin/tasks storage.stats'
+Nice=10

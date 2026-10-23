@@ -158,6 +158,42 @@ export interface Download {
   version: string | null
 }
 
+/** A file or a browser build hosted by isho. */
+export interface Build {
+  id: number
+  kind: 'file' | 'web'
+  label: string
+  platform: string | null
+  version: string | null
+  size_bytes: number
+  /** Download URL for `kind: 'file'`, null for browser builds. */
+  url: string | null
+  /** Entry URL for `kind: 'web'`, null for downloadable files. */
+  play_url: string | null
+  entry_path: string | null
+  created_at: string
+}
+
+export interface StorageProjectUsage {
+  slug: string
+  title: string
+  used_bytes: number
+}
+
+export interface StorageUsage {
+  used_bytes: number
+  builds_bytes: number
+  sessions_bytes: number
+  images_bytes: number
+  limit_bytes: number
+  project_limit_bytes: number
+  server_used_bytes: number
+  server_limit_bytes: number
+  server_free_bytes: number | null
+  server_reserve_bytes: number
+  projects: StorageProjectUsage[]
+}
+
 export interface Devlog {
   id: number
   slug: string
@@ -186,6 +222,7 @@ export interface ProjectDetail extends ProjectCard {
   description: string | null
   screenshots: Screenshot[]
   downloads: Download[]
+  builds: Build[]
   moderation_note: string | null
   moderated_at: string | null
 }

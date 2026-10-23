@@ -38,6 +38,22 @@
   `POST /api/v1/markdown_images` (multipart `image_file`, PNG/JPEG/WebP/GIF до 10 МБ),
   вставляет в текст `![alt](/media/...)`, поддерживает вставку из буфера и drag & drop;
   сами картинки привязаны к автору (`markdown_images`) и не привязаны к проекту или посту.
+- **Сборки и хранилище:** `builds` хранит выложенное автором: `kind file` — файл через
+  `BuildUploader` в `media/build/<uuid>/files/<имя>`, `kind web` — распакованный ZIP в
+  `media/web/<uuid>/` с точкой входа `entry_path`. Внешние ссылки остаются в `downloads`.
+  Загрузка кусками по 8 МБ (`POST /api/v1/projects/:slug/uploads`, `PUT
+  .../uploads/:token/chunks/:index`, `.../finish`, `GET` для докачки и `DELETE` для
+  отмены): Lucky читает тело запроса в память, поэтому один запрос на 300 МБ сервер не
+  переживёт. `upload_sessions` держит незавершённую загрузку и резервирует её байты в
+  квотах, так что параллельные загрузки не проскакивают мимо лимита. Лимиты: 300 МБ на
+  сборки проекта, 1 ГБ на аккаунт (сборки + скриншоты + картинки Markdown) и 12 ГБ на
+  сервер, плюс резерв 2 ГБ свободного диска; всё настраивается переменными
+  `STORAGE_*_BYTES`. Квоты считает `StorageUsage` (размеры картинок — из метаданных
+  Latch). Веб-сборки отдаются с CSP `sandbox` без `allow-same-origin` и `X-Content-Type-
+  Options: nosniff`, файлы — с `Content-Disposition: attachment`; это делает
+  `MediaHeadersHandler`. Архив проверяется `WebBuildArchive` (zip-slip, лимит файлов,
+  распакованный объём, `index.html`). Остатки подметают `tasks storage.stats` и
+  `tasks storage.cleanup` (таймер `isho-storage.timer`).
 - **Контент-фильтры:** у проекта есть `nsfw` (18+) и `ai_usage`
   (`ai_free|partial|significant|full`, от меньшего к большему). Гости не видят 18+;
   пользователь хранит `users.show_nsfw` и `users.max_ai_usage` и меняет их на
@@ -156,6 +172,6 @@ npm run build
 ## Следующие шаги (не реализовано)
 
 Платежи (YooKassa/CloudPayments/T-Bank), S3, расширенная модерация (роли, уведомления,
-закрепление и закрытие тем), ассеты, джемы, загрузка самих сборок, e-mail.
+закрепление и закрытие тем), ассеты, джемы, e-mail.
 
 

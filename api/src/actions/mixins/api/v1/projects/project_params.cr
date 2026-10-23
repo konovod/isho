@@ -5,6 +5,7 @@ module Api::V1::Projects::ProjectParams
       .preload_user
       .preload_screenshots
       .preload_downloads
+      .preload_builds
       .preload_tags
       .first? || raise Avram::RecordNotFoundError.new(Project.table_name, params.get(:slug).to_s)
   end
@@ -23,6 +24,7 @@ module Api::V1::Projects::ProjectParams
       .preload_user
       .preload_screenshots
       .preload_downloads
+      .preload_builds
       .preload_tags
       .first? || raise Avram::RecordNotFoundError.new(Project.table_name, project.id.to_s)
   end

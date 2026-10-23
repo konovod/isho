@@ -6,6 +6,7 @@ class Api::V1::MyProjects::Index < ApiAction
       .preload_user
       .preload_screenshots
       .preload_downloads
+      .preload_builds
       .preload_tags
       .results
 

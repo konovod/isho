@@ -65,6 +65,8 @@ const projects = computed(() => data.value?.items ?? [])
             {{ plural(project.screenshots.length, 'скриншот', 'скриншота', 'скриншотов') }}
             · {{ project.downloads.length }}
             {{ plural(project.downloads.length, 'ссылка', 'ссылки', 'ссылок') }}
+            · {{ project.builds.length }}
+            {{ plural(project.builds.length, 'сборка', 'сборки', 'сборок') }}
           </div>
         </div>
 

@@ -6,11 +6,23 @@ module AppSettings
   MAX_SCREENSHOTS       =             20
   MAX_DOWNLOADS         =             20
   MAX_EXTERNAL_URL_SIZE =           2048
-  FORUM_TOPICS_PER_PAGE =             25
-  FORUM_POSTS_PER_PAGE  =             20
-  FORUM_POST_MAX_CHARS  =         20_000
-  FORUM_QUOTE_MAX_CHARS =          2_000
-  FORUM_TOPIC_TITLE_MAX =            160
+
+  # Hosted builds. Uploads are chunked because Lucky reads a whole request
+  # body into memory, so one 300 MB POST would not survive the prototype
+  # server (709 MB RAM next to Nuxt).
+  UPLOAD_CHUNK_BYTES      =   8_000_000_i64
+  BUILD_MAX_BYTES         = 300_000_000_i64
+  MAX_BUILDS              =              10
+  UPLOAD_SESSION_TTL      = 2.hours
+  STORAGE_DEFAULT_PROJECT =    300_000_000_i64
+  STORAGE_DEFAULT_ACCOUNT =  1_000_000_000_i64
+  STORAGE_DEFAULT_SERVER  = 12_000_000_000_i64
+  STORAGE_DEFAULT_RESERVE =  2_000_000_000_i64
+  FORUM_TOPICS_PER_PAGE   =                 25
+  FORUM_POSTS_PER_PAGE    =                 20
+  FORUM_POST_MAX_CHARS    =             20_000
+  FORUM_QUOTE_MAX_CHARS   =              2_000
+  FORUM_TOPIC_TITLE_MAX   =                160
   # Inline images in project descriptions, devlogs and forum posts. GIFs are
   # allowed as-is: ImageMagick keeps their frames and delays when resizing.
   MARKDOWN_IMAGE_MAX_BYTES = 10_000_000_i64
@@ -49,6 +61,34 @@ module AppSettings
 
   def self.email_confirmation_required? : Bool
     ENV["EMAIL_CONFIRMATION"]?.try(&.strip.downcase) != "off"
+  end
+
+  # Storage limits are read on demand so a deployment can tune them in
+  # /etc/isho/api.env without a rebuild.
+  def self.project_storage_limit : Int64
+    env_bytes("STORAGE_PROJECT_LIMIT_BYTES", STORAGE_DEFAULT_PROJECT)
+  end
+
+  def self.account_storage_limit : Int64
+    env_bytes("STORAGE_ACCOUNT_LIMIT_BYTES", STORAGE_DEFAULT_ACCOUNT)
+  end
+
+  def self.server_storage_limit : Int64
+    env_bytes("STORAGE_SERVER_LIMIT_BYTES", STORAGE_DEFAULT_SERVER)
+  end
+
+  # Disk space that uploads are never allowed to consume: the OS, Postgres and
+  # logs need room to breathe even when every quota is used up.
+  def self.storage_reserve : Int64
+    env_bytes("STORAGE_RESERVE_BYTES", STORAGE_DEFAULT_RESERVE)
+  end
+
+  private def self.env_bytes(name : String, default : Int64) : Int64
+    value = ENV[name]?.try(&.strip)
+    return default if value.nil? || value.empty?
+
+    parsed = value.to_i64?
+    parsed && parsed.positive? ? parsed : default
   end
 
   def self.mail_from : String
