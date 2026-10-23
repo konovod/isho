@@ -41,6 +41,9 @@ const fieldNames: Record<string, string> = {
   filename: 'Имя файла',
   kind: 'Тип сборки',
   entry: 'Стартовый файл',
+  slug: 'Адрес раздела',
+  group_title: 'Группа',
+  position: 'Позиция',
 }
 
 const detailMessages: Record<string, string> = {
@@ -58,6 +61,7 @@ const detailMessages: Record<string, string> = {
   'must not point to a local address': 'нельзя ссылаться на локальный адрес',
   'must be a post in this topic': 'можно цитировать только сообщение из этой темы',
   'must be ai_free, partial, significant or full': 'нужно выбрать один из уровней',
+  'can not be changed for a section with topics': 'нельзя менять у раздела с темами',
 }
 
 const codeMessages: Record<string, string> = {
@@ -87,6 +91,8 @@ const codeMessages: Record<string, string> = {
   index_html_missing: 'В архиве нет index.html — добавьте его или укажите стартовый файл.',
   index_html_ambiguous: 'В архиве несколько index.html — укажите стартовый файл вручную.',
   entry_not_found: 'Указанный стартовый файл не найден в архиве.',
+  protected_section: 'Раздел обсуждений проектов удалить нельзя.',
+  section_not_empty: 'В разделе есть темы — удалить можно только пустой раздел.',
 }
 
 function translateDetail(message: string): string {

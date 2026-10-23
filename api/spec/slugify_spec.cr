@@ -12,4 +12,10 @@ describe Slugify do
   it "falls back when nothing is left" do
     Slugify.call("!!!").should eq "project"
   end
+
+  it "adds a suffix when a section slug is already taken" do
+    ForumSectionFactory.create &.slug("dzhemy")
+
+    Slugify.unique_forum_section_slug("Джемы").should eq "dzhemy-2"
+  end
 end

@@ -24,25 +24,20 @@ module Db::Seed::ForumSections
      description: "Помощь новичкам и ответы на общие вопросы."},
   ]
 
+  # Default sections for a new database. Once a site has any sections, the
+  # moderation panel owns them: existing rows are not overwritten and a section
+  # deleted there is not brought back by the next deploy.
   def self.ensure_all : Nil
+    return if ForumSectionQuery.new.first?
+
     SECTIONS.each do |attrs|
-      if section = ForumSectionQuery.new.by_slug(attrs[:slug]).first?
-        ForumSection::SaveOperation.update!(
-          section,
-          title: attrs[:title],
-          description: attrs[:description],
-          group_title: attrs[:group],
-          position: attrs[:position],
-        )
-      else
-        ForumSection::SaveOperation.create!(
-          title: attrs[:title],
-          slug: attrs[:slug],
-          description: attrs[:description],
-          group_title: attrs[:group],
-          position: attrs[:position],
-        )
-      end
+      ForumSection::SaveOperation.create!(
+        title: attrs[:title],
+        slug: attrs[:slug],
+        description: attrs[:description],
+        group_title: attrs[:group],
+        position: attrs[:position],
+      )
     end
   end
 end

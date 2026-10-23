@@ -6,14 +6,14 @@ definePageMeta({ middleware: ['auth', 'admin'] })
 
 useSeoMeta({
   title: `Модерация — ${SITE_NAME}`,
-  description: 'Удаление пользователей, чёрный список почт и снятие проектов с публикации.',
+  description: 'Удаление пользователей, чёрный список почт, снятие проектов с публикации и разделы форума.',
 })
 
 const api = useApi()
 const { user } = useAuth()
 const { date, plural } = useFormat()
 
-const tab = ref<'users' | 'projects' | 'blocked'>('users')
+const tab = ref<'users' | 'projects' | 'forum' | 'blocked'>('users')
 const notice = ref('')
 const actionError = ref('')
 
@@ -154,7 +154,7 @@ async function onProjectModerated(_project: ProjectCard) {
     <div class="page-head">
       <div>
         <h1>Модерация</h1>
-        <p>Удаление пользователей, чёрный список почт и снятие проектов с публикации.</p>
+        <p>Удаление пользователей, чёрный список почт, снятие проектов с публикации и разделы форума.</p>
       </div>
     </div>
 
@@ -174,6 +174,9 @@ async function onProjectModerated(_project: ProjectCard) {
       </button>
       <button class="editor-tab" :class="{ active: tab === 'blocked' }" @click="tab = 'blocked'">
         Чёрный список
+      </button>
+      <button class="editor-tab" :class="{ active: tab === 'forum' }" @click="tab = 'forum'">
+        Форум
       </button>
     </div>
 
@@ -304,6 +307,10 @@ async function onProjectModerated(_project: ProjectCard) {
       <p v-if="projectsTotal > projects.length" class="muted small mt-16">
         Показаны первые {{ projects.length }} из {{ projectsTotal }}.
       </p>
+    </section>
+
+    <section v-else-if="tab === 'forum'">
+      <ForumSectionsAdmin />
     </section>
 
     <section v-else>

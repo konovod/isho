@@ -52,6 +52,19 @@ module Slugify
     candidate
   end
 
+  def self.unique_forum_section_slug(title : String) : String
+    base = call(title, "section")
+    candidate = base
+    suffix = 2
+
+    while ForumSectionQuery.new.by_slug(candidate).first?
+      candidate = "#{base}-#{suffix}"
+      suffix += 1
+    end
+
+    candidate
+  end
+
   def self.unique_forum_topic_slug(section_id : Int64, title : String) : String
     base = call(title, "topic")
     candidate = base

@@ -2237,6 +2237,39 @@ p {
   font-weight: 650;
 }
 
+/* Forum sections admin */
+
+.forum-sections-admin {
+  max-width: 900px;
+}
+
+.forum-section-form {
+  margin-bottom: 18px;
+}
+
+.forum-section-form-title {
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+  gap: 16px;
+}
+
+@media (max-width: 700px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+.forum-sections-admin code {
+  font-size: 12px;
+}
+
 /* Utilities */
 
 .row {

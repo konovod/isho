@@ -66,6 +66,19 @@ export interface ForumSection {
   unread_topics_count: number
 }
 
+/** A section as the moderation panel sees it: counts include every topic. */
+export interface AdminForumSection {
+  id: number
+  slug: string
+  title: string
+  description: string | null
+  group_title: string | null
+  position: number
+  topics_count: number
+  posts_count: number
+}
+
+
 export interface ForumTopic {
   id: number
   slug: string
