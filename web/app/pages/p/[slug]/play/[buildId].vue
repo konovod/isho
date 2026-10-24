@@ -41,6 +41,17 @@ useSeoMeta({
 
 <template>
   <div v-if="project && build" class="container play-page">
+    <div v-if="project.status !== 'published'" class="notice notice-warn">
+      <div class="notice-body">
+        <div class="notice-title">
+          Черновик
+        </div>
+        <div class="notice-text">
+          Проект не опубликован: страница и игра видны только вам.
+        </div>
+      </div>
+    </div>
+
     <div class="play-head">
       <div class="row">
         <NuxtLink :to="`/p/${project.slug}`" class="btn btn-ghost btn-sm">

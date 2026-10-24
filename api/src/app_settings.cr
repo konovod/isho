@@ -1,5 +1,8 @@
 module AppSettings
-  SESSION_TTL           = 30.days
+  SESSION_TTL = 30.days
+  # An admin sees another account for a short while and then lands back in
+  # their own session; the admin cookie itself is never replaced.
+  IMPERSONATION_TTL     = 1.hour
   SCREENSHOT_MAX_BYTES  = 10_000_000_i64
   SCREENSHOTS_PER_PAGE  =             24
   PROJECTS_PER_PAGE     =             24

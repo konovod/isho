@@ -240,9 +240,13 @@ useSeoMeta({
           </div>
 
           <div class="card card-pad">
-            <div class="row-between small muted">
+            <div v-if="project.status === 'published'" class="row-between small muted">
               <span>Опубликован</span>
               <span>{{ date(project.published_at) }}</span>
+            </div>
+            <div v-else class="row-between small muted">
+              <span>Черновик</span>
+              <span>виден только вам</span>
             </div>
           </div>
         </aside>

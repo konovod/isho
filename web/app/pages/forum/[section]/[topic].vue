@@ -126,7 +126,9 @@ onUnmounted(() => {
 })
 
 async function markTopicRead() {
-  if (!user.value || !topic.value || !posts.value.length) return
+  // Read markers are a write: the impersonation view must not change the
+  // target account's unread state.
+  if (!user.value || user.value.impersonation || !topic.value || !posts.value.length) return
 
   const read = topic.value.read_posts_count
   if (read !== null && pageOffset.value + posts.value.length <= read) return

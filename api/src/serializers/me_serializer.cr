@@ -1,5 +1,5 @@
 class MeSerializer < BaseSerializer
-  def initialize(@user : User)
+  def initialize(@user : User, @impersonation : Auth::Impersonation? = nil)
   end
 
   def render
@@ -19,6 +19,20 @@ class MeSerializer < BaseSerializer
       created_at:      @user.created_at,
       ban:             ban ? ActiveBanSerializer.new(ban) : nil,
       ai:              ai,
+      impersonation:   impersonation,
+    }
+  end
+
+  # Present while an admin views the site as this account. The client shows a
+  # banner with the way back; the account itself has no admin powers here.
+  private def impersonation
+    imp = @impersonation
+    return nil unless imp
+
+    {
+      admin:      UserSerializer.new(imp.admin),
+      started_at: imp.session.created_at,
+      expires_at: imp.session.expires_at,
     }
   end
 

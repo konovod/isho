@@ -18,6 +18,7 @@ export function useAuth() {
   // Visitors and accounts created before confirmation existed are not nagged.
   const emailConfirmed = computed(() => user.value?.email_confirmed !== false)
   const banned = computed(() => !!user.value?.ban)
+  const impersonating = computed(() => !!user.value?.impersonation)
   const api = useApi()
 
   async function fetchMe(force = false): Promise<Me | null> {
@@ -91,7 +92,38 @@ export function useAuth() {
     clearNuxtData()
   }
 
+  // Admins open a short, read-only view of another account. The response is
+  // that account's `me`; the banner and the "back" call come from the API.
+  async function impersonate(username: string): Promise<Me> {
+    user.value = await api.post<Me>(`/api/v1/admin/users/${encodeURIComponent(username)}/impersonate`)
+    loaded.value = true
+    clearNuxtData()
+    return user.value
+  }
+
+  async function stopImpersonation(): Promise<Me | null> {
+    try {
+      const admin = await api.del<Me | undefined>('/api/v1/impersonation')
+      if (admin) {
+        user.value = admin
+        loaded.value = true
+      }
+      else {
+        await fetchMe(true)
+      }
+    }
+    catch {
+      await fetchMe(true)
+    }
+    clearNuxtData()
+    return user.value
+  }
+
   async function saveTheme(next: Theme): Promise<void> {
+    // While impersonating, the theme switch stays local: the target account
+    // must not get its settings changed.
+    if (user.value?.impersonation) return
+
     try {
       user.value = await api.patch<Me>('/api/v1/me/theme', { user: { theme: next } })
     }
@@ -100,5 +132,5 @@ export function useAuth() {
     }
   }
 
-  return { user, loaded, canModerate, emailConfirmed, banned, fetchMe, signIn, signUp, resendEmailConfirmation, requestPasswordReset, resetPassword, signOut, saveTheme }
+  return { user, loaded, canModerate, emailConfirmed, banned, impersonating, fetchMe, signIn, signUp, resendEmailConfirmation, requestPasswordReset, resetPassword, signOut, impersonate, stopImpersonation, saveTheme }
 }

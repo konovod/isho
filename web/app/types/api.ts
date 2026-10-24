@@ -22,6 +22,13 @@ export interface MeAi {
   flair_enabled: boolean
 }
 
+/** Set while an admin views the site as another account. */
+export interface Impersonation {
+  admin: ApiUser
+  started_at: string
+  expires_at: string
+}
+
 export interface Me extends ApiUser {
   email: string
   theme: Theme
@@ -31,6 +38,7 @@ export interface Me extends ApiUser {
   email_confirmed: boolean
   ban: ActiveBan | null
   ai: MeAi
+  impersonation: Impersonation | null
 }
 
 /** Active moderation ban shown to the user and in the admin list. */

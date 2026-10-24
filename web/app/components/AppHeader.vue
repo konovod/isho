@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { user, canModerate, signOut, saveTheme } = useAuth()
+const { user, canModerate, impersonating, signOut, stopImpersonation, saveTheme } = useAuth()
 const { toggleTheme } = useTheme()
 const router = useRouter()
 
@@ -11,6 +11,11 @@ const initials = computed(() => {
 async function logout() {
   await signOut()
   router.push('/')
+}
+
+async function backToAdmin() {
+  await stopImpersonation()
+  window.location.href = '/moderation'
 }
 
 async function onToggleTheme() {
@@ -86,7 +91,10 @@ async function onToggleTheme() {
             <span class="avatar">{{ initials }}</span>
             <span class="user-chip-name">{{ user.display_name || user.username }}</span>
           </NuxtLink>
-          <button class="btn btn-ghost btn-sm" @click="logout">
+          <button v-if="impersonating" class="btn btn-ghost btn-sm" @click="backToAdmin">
+            Вернуться
+          </button>
+          <button v-else class="btn btn-ghost btn-sm" @click="logout">
             Выйти
           </button>
         </template>

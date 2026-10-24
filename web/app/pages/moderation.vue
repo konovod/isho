@@ -10,7 +10,7 @@ useSeoMeta({
 })
 
 const api = useApi()
-const { user } = useAuth()
+const { user, impersonate } = useAuth()
 const { date, plural } = useFormat()
 
 const tab = ref<'users' | 'projects' | 'forum' | 'blocked'>('users')
@@ -134,6 +134,26 @@ async function unblockEmail(item: AdminBlockedEmail) {
   }
 }
 
+// Read-only view of another account. The confirmation makes it clear that the
+// admin leaves the moderation tools for a while.
+async function impersonateUser(item: AdminUser) {
+  if (item.id === user.value?.id || item.is_admin) return
+
+  if (!confirm(`Войти от имени @${item.username}? Вы увидите сайт так, как его видит этот пользователь. Изменения будут недоступны.`)) return
+
+  notice.value = ''
+  actionError.value = ''
+
+  try {
+    await impersonate(item.username)
+    // A full reload drops lists and pages built for the admin.
+    window.location.href = '/'
+  }
+  catch (err) {
+    actionError.value = formatApiError(err)
+  }
+}
+
 async function onUserChanged(updated: AdminUser) {
   notice.value = updated.ban
     ? `Пользователь @${updated.username} забанен до ${date(updated.ban.banned_until)}`
@@ -228,6 +248,15 @@ async function onProjectModerated(_project: ProjectCard) {
             <NuxtLink :to="`/u/${item.username}`" class="btn btn-ghost btn-sm">
               Профиль
             </NuxtLink>
+            <button
+              class="btn btn-ghost btn-sm"
+              type="button"
+              :disabled="item.id === user?.id || item.is_admin"
+              :title="item.is_admin ? 'Нельзя войти от имени администратора' : (item.id === user?.id ? 'Это ваш аккаунт' : undefined)"
+              @click="impersonateUser(item)"
+            >
+              Войти от имени
+            </button>
             <button
               class="btn btn-danger btn-sm"
               type="button"

@@ -8,6 +8,14 @@ abstract class ApiAction < Lucky::Action
 
   before ensure_same_origin
 
+  # Impersonation is a read-only view: it must not change the target account.
+  # The few actions that only end the view opt out with `allow_impersonation_writes?`.
+  def self.allow_impersonation_writes? : Bool
+    false
+  end
+
+  before ensure_impersonation_is_read_only
+
   # Cookie-based sessions are protected by SameSite=Lax. The Origin check
   # covers older browsers and any request that manages to attach a cookie.
   private def ensure_same_origin
@@ -20,6 +28,19 @@ abstract class ApiAction < Lucky::Action
     end
 
     continue
+  end
+
+  private def ensure_impersonation_is_read_only
+    if impersonation &&
+       !%w[GET HEAD OPTIONS].includes?(context.request.method) &&
+       !self.class.allow_impersonation_writes?
+      json ErrorSerializer.new(
+        code: "impersonation_read_only",
+        message: "В режиме просмотра изменения недоступны",
+      ), status: 403
+    else
+      continue
+    end
   end
 
   private def allowed_origins : Array(String)

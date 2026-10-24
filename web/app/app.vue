@@ -35,7 +35,7 @@ useHead(() => {
 if (import.meta.server) {
   const cookie = useRequestHeaders(['cookie']).cookie ?? ''
 
-  if (/(?:^|;\s*)isho_auth=/.test(cookie)) {
+  if (/(?:^|;\s*)(?:__Host-)?isho_auth=/.test(cookie)) {
     await fetchMe()
   }
   else {
@@ -49,6 +49,7 @@ if (import.meta.server) {
     <AppHeader />
 
     <main class="main">
+      <ImpersonationBanner />
       <EmailConfirmationBanner />
       <BanBanner />
       <NuxtPage />
