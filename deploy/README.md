@@ -198,28 +198,32 @@ sudo -u isho -H bash -c 'set -a; . /etc/isho/api.env; set +a; cd /srv/isho/api &
 sudo -u isho -H bash -c 'set -a; . /etc/isho/api.env; set +a; cd /srv/isho/api && ./bin/tasks storage.cleanup'
 ```
 
-Веб-сборки отдаются с отдельного origin — `-MediaAddress https://games.<домен>`
+Веб-сборки отдаются с отдельного origin — `-MediaAddress https://isho-games.example.com`
 (или `MEDIA_ORIGIN` в `/etc/isho/api.env`). Caddy отдаёт на этом хосте только
 `/media/web/*`, всё остальное — 404, поэтому cookie сайта туда не попадают.
 Игре в песочнице нужен собственный origin (Cache Storage, IndexedDB и
 `localStorage` в opaque origin недоступны — без них Unity не кеширует сборку и не
 сохраняет `PlayerPrefs`), поэтому `allow-same-origin` добавляется только на
 медиа-хосте. Без `-MediaAddress` игра работает по-старому, но без кеша и сейвов.
-Сжатые файлы Unity (`*.br`, `*.gz`) уходят с `Content-Encoding` и типом
-исходного файла — иначе `nosniff` не даёт запустить framework.
+Медиа-хост берут **отдельным именем**, а не поддоменом сайта: поддомен делит
+registrable domain с сайтом, может ставить cookie на родителя, а cookie сайта
+для него same-site. Сжатые файлы Unity (`*.br`, `*.gz`) уходят с `Content-Encoding`
+и типом исходного файла — иначе `nosniff` не даёт запустить framework.
 Файлы для скачивания отдаются с `Content-Disposition: attachment`.
 
 Включить отдельный origin на уже работающем сервере:
 
 ```powershell
 .\deploy\deploy.ps1 -SiteAddress https://isho.duckdns.org `
-  -MediaAddress https://games.isho.duckdns.org -SkipBuild
+  -MediaAddress https://isho-games.duckdns.org -SkipBuild
 ```
 
-`games.isho.duckdns.org` резолвится тем же wildcard-правилом DuckDNS, отдельная
-запись не нужна; для своего домена достаточно CNAME `games` на сайт. Сертификат
-Caddy выпустит сам, адрес запоминается в `/etc/isho/caddy.env`, а `MEDIA_ORIGIN` —
-в `/etc/isho/api.env`, так что следующий деплой без флага ничего не сломает.
+`isho-games.duckdns.org` — вторая бесплатная запись в DuckDNS на тот же IP
+(поддомен `games.isho.duckdns.org` тоже резолвится wildcard-правилом, но он общий
+registrable domain с сайтом). Для своего домена достаточно CNAME
+`isho-games` на сайт. Сертификат Caddy выпустит сам, адрес запоминается в
+`/etc/isho/caddy.env`, а `MEDIA_ORIGIN` — в `/etc/isho/api.env`, так что следующий
+деплой без флага ничего не сломает.
 
 ## Полезное на сервере
 

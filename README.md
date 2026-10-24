@@ -176,12 +176,13 @@ Caddy отдаёт `/api/*` и `/media/*` в Lucky, всё остальное �
 `Latch::Storage::FileSystem` на S3-хранилище в `api/config/latch.cr` и раздавать
 медиа через CDN.
 
-Браузерные сборки живут на отдельном origin (`-MediaAddress https://games.<домен>`,
+Браузерные сборки живут на отдельном origin (`-MediaAddress https://isho-games.duckdns.org`,
 Caddy отдаёт там только `/media/web/*`): игра в песочнице сохраняет свой origin и
 поэтому может пользоваться Cache Storage, IndexedDB и localStorage, которых
-opaque origin не даёт, — а cookie сайта на этот хост не отправляются. Сжатые файлы
-Unity (`.br`, `.gz`) уходят с `Content-Encoding` и типом исходного файла, иначе
-`nosniff` не даёт загрузить framework.
+opaque origin не даёт, — а cookie сайта на этот хост не отправляются. Это отдельное
+имя, а не поддомен сайта: поддомен делит registrable domain и может ставить cookie
+на родителя. Сжатые файлы Unity (`.br`, `.gz`) уходят с `Content-Encoding` и типом
+исходного файла, иначе `nosniff` не даёт загрузить framework.
 
 ## Ограничения прототипа
 

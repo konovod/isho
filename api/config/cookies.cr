@@ -7,7 +7,7 @@ end
 Lucky::CookieJar.configure do |settings|
   settings.on_set = ->(cookie : HTTP::Cookie) {
     # Set COOKIE_SECURE=true in production, behind HTTPS.
-    cookie.secure(ENV["COOKIE_SECURE"]? == "true")
+    cookie.secure(AppSettings.secure_cookies?)
 
     # By default, don't allow reading cookies with JavaScript
     cookie.http_only(true)

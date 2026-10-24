@@ -7,6 +7,6 @@ class ApiClient < Lucky::BaseHTTPClient
   end
 
   def with_cookie(token : String) : self
-    headers("Cookie": "isho_auth=#{token}")
+    headers("Cookie": "#{Api::Auth::Helpers.cookie_name}=#{token}")
   end
 end

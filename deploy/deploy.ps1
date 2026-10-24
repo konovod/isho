@@ -25,7 +25,7 @@
 .EXAMPLE
   # Games on their own origin, so Unity keeps Cache Storage and PlayerPrefs
   # (see deploy/README.md). Caddy serves /media/web there and nothing else.
-  .\deploy\deploy.ps1 -SiteAddress https://isho.duckdns.org -MediaAddress https://games.isho.duckdns.org
+  .\deploy\deploy.ps1 -SiteAddress https://isho.duckdns.org -MediaAddress https://isho-games.duckdns.org
 
 .EXAMPLE
   .\deploy\deploy.ps1 -SampleData   # also seed demo projects and accounts
@@ -51,10 +51,12 @@ param(
   # origin of -SiteAddress, or http://<server> when the site is plain HTTP).
   [string]$PublicOrigin = '',
   # Separate origin for browser builds, for example
-  # https://games.isho.duckdns.org. A sandboxed game keeps Cache Storage,
+  # https://isho-games.duckdns.org. A sandboxed game keeps Cache Storage,
   # IndexedDB and localStorage only while it has its own origin, which is safe
   # away from the site's cookies: Caddy serves /media/web there and closes
-  # everything else. Omitted means the old same-origin layout.
+  # everything else. Use a separate name rather than a subdomain of the site -
+  # a subdomain can still set a parent-domain cookie. Omitted means the old
+  # same-origin layout.
   [string]$MediaAddress = '',
   # DuckDNS token: before deploying, points <name>.duckdns.org at -Server with
   # the DuckDNS API (only used with a *.duckdns.org site address).
@@ -120,6 +122,15 @@ if ($MediaAddress) {
   $mediaOrigin = $MediaAddress
   if ($siteOrigin -and $mediaOrigin -eq $siteOrigin) {
     throw 'MediaAddress must differ from SiteAddress.'
+  }
+
+  # A subdomain of the site shares its registrable domain: a game there can
+  # still set a parent-domain cookie, and the site's cookies are same-site for
+  # it. A separate name (isho-games.duckdns.org) avoids both.
+  $siteHost = $siteOrigin -replace '^https?://', ''
+  $mediaHost = $mediaOrigin -replace '^https?://', ''
+  if ($siteHost -and $mediaHost -and ($mediaHost -eq $siteHost -or $mediaHost.EndsWith(".$siteHost") -or $siteHost.EndsWith(".$mediaHost"))) {
+    Write-Warning "MediaAddress '$mediaHost' is a subdomain of '$siteHost': a game can still set a parent-domain cookie for the site. Use a separate name such as isho-games.duckdns.org."
   }
 }
 

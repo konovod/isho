@@ -65,4 +65,32 @@ describe Api::V1::SignIns::Create do
     unknown_login.status_code.should eq 422
     wrong_password.body.should eq unknown_login.body
   end
+
+  it "binds the session cookie to the host when cookies are Secure" do
+    user = UserFactory.create
+
+    with_secure_cookies do
+      response = ApiClient.exec(Api::V1::SignIns::Create, user: {
+        login:    user.email,
+        password: "password1234",
+      })
+
+      response.status_code.should eq 200
+      cookie = response.headers["Set-Cookie"]
+      cookie.should contain "__Host-isho_auth="
+      cookie.downcase.should contain "secure"
+      cookie.downcase.should contain "httponly"
+      cookie.downcase.should_not contain "domain="
+    end
+  end
+end
+
+private def with_secure_cookies(&)
+  previous = ENV["COOKIE_SECURE"]?
+  ENV["COOKIE_SECURE"] = "true"
+  begin
+    yield
+  ensure
+    previous ? (ENV["COOKIE_SECURE"] = previous) : ENV.delete("COOKIE_SECURE")
+  end
 end

@@ -147,6 +147,13 @@ module AppSettings
     media_origin.try { |origin| URI.parse(origin).host }
   end
 
+  # Cookies are Secure only behind HTTPS; the same flag decides whether the
+  # session cookie can carry the `__Host-` prefix, which browsers refuse
+  # without it.
+  def self.secure_cookies? : Bool
+    ENV["COOKIE_SECURE"]? == "true"
+  end
+
   # The key is the switch: no key means no AI anywhere, so a fresh checkout and
   # a deployment without secrets behave exactly as before.
   def self.ai_enabled? : Bool

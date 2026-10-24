@@ -3,6 +3,10 @@
 # and localStorage (build cache, PlayerPrefs), while this host has no session
 # cookie and nothing else of the site. Only /media/web is reachable here.
 #
+# Give it a name of its own (isho-games.example.com), not a subdomain of the
+# site: a subdomain shares the registrable domain and could still set a
+# parent-domain cookie, while the site's cookies are same-site for it.
+#
 # Appended to /etc/caddy/Caddyfile by bootstrap.sh when ISHO_MEDIA_SITE_ADDRESS
 # is set, and never when it equals the site address.
 {$ISHO_MEDIA_SITE_ADDRESS} {

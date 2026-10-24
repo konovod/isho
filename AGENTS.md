@@ -29,7 +29,8 @@
 - **Авторизация:** `ApiAction` по умолчанию требует сессию. Публичные экшены включают
   `Api::Auth::SkipRequireSession`. Владение проектом проверяет `RequireOwner` и отдаёт 404,
   чтобы не раскрывать черновики.
-- **Сессии:** cookie `isho_auth` (сырой токен), в БД — `auth_sessions.token_hash` (SHA-256).
+- **Сессии:** cookie `isho_auth` (сырой токен, в проде `__Host-isho_auth` — браузер
+  запрещает подсунуть его с `Domain`), в БД — `auth_sessions.token_hash` (SHA-256).
   Cookie `isho_session` принадлежит Lucky и не используется для авторизации.
 - **Ошибки:** единый формат `{"error":{"code","message","details"}}`; 422 — валидация.
 - **JSON:** сериализаторы в `api/src/serializers`, никаких ad-hoc хешей в экшенах.
@@ -54,8 +55,10 @@
   файлы — с `Content-Disposition: attachment`; это делает `MediaHeadersHandler`.
   Играм нужны Cache Storage, IndexedDB и localStorage (кеш сборки Unity, `PlayerPrefs`),
   а в opaque origin их нет, поэтому на отдельном media-origin (`MEDIA_ORIGIN`,
-  задаётся деплою через `-MediaAddress`, например `https://games.<домен>`) к sandbox
-  добавляется `allow-same-origin`: там нет cookie сайта. На основном origin флага нет никогда.
+  задаётся деплою через `-MediaAddress`, например `https://isho-games.duckdns.org`)
+  к sandbox добавляется `allow-same-origin`: там нет cookie сайта. На основном origin
+  флага нет никогда. Медиа-хост берут **отдельным именем**, а не поддоменом сайта:
+  поддомен делит registrable domain и может ставить cookie на родителя (cookie tossing).
   Сжатые файлы Unity (`*.js.br`, `*.wasm.br`, `*.data.br`, `*.gz`) отдаёт
   `WebBuildAssetsHandler` — с `Content-Encoding` и типом исходного файла, иначе
   загрузчик получает `application/octet-stream` и `nosniff` не даёт запустить
