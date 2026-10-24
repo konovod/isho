@@ -10,8 +10,8 @@ export interface AiUsageOption {
 export const AI_USAGE_OPTIONS: AiUsageOption[] = [
   {
     value: 'ai_free',
-    label: 'AI-free',
-    description: 'Без ИИ.',
+    label: 'Без ИИ',
+    description: 'Проект сделан без ИИ.',
   },
   {
     value: 'partial',
@@ -26,7 +26,7 @@ export const AI_USAGE_OPTIONS: AiUsageOption[] = [
   {
     value: 'full',
     label: 'Полное',
-    description: 'Сделано агентом за день и/или меньше чем за 10 промтов.',
+    description: 'Сделано агентом за день и/или меньше чем за 10 запросов.',
   },
 ]
 

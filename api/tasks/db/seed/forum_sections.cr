@@ -1,7 +1,7 @@
 module Db::Seed::ForumSections
   SECTIONS = [
     {slug: "site", title: "Форум и сайт", group: "Сообщество", position: 10,
-     description: "Обсуждение работы сайта, идеи и баги."},
+     description: "Обсуждение работы сайта, идеи и ошибки."},
     {slug: "offtopic", title: "Оффтоп", group: "Сообщество", position: 20,
      description: "Свободные темы и разговоры не о разработке."},
     {slug: "engines", title: "Движки и технологии", group: "Разработка", position: 30,

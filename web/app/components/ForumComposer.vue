@@ -80,7 +80,7 @@ defineExpose({ focus })
       <h2 class="section-title" style="margin-bottom: 0;">
         Ответить
       </h2>
-      <span class="muted small">Markdown, как в девлогах</span>
+      <span class="muted small">Markdown, как в дневниках</span>
     </div>
 
     <div v-if="quote" class="forum-composer-quote">

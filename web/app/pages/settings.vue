@@ -43,7 +43,7 @@ const aiLimitOptions: Array<{ value: AiUsage, label: string, hint: string }> = [
   },
   {
     value: 'ai_free',
-    label: 'Только AI-free',
+    label: 'Только без ИИ',
     hint: 'Показывать только проекты без ИИ.',
   },
 ]
@@ -123,7 +123,7 @@ async function save() {
         <label class="check-row">
           <input v-model="form.ai_flair_enabled" type="checkbox">
           <span>
-            <span class="check-title">ИИ-флеир на форуме</span>
+            <span class="check-title">ИИ-метка на форуме</span>
             <span class="hint">
               Короткая характеристика под ником, которую ИИ собирает из последних сообщений.
             </span>

@@ -301,14 +301,14 @@ describe "AI on the forum" do
 
     it "hides a disabled flair from other users" do
       user = UserFactory.create &.ai_flair_enabled(false)
-      SaveUserAiFlair.update!(user, ai_flair: "Скрытый флаир", ai_flair_at: Time.utc)
+      SaveUserAiFlair.update!(user, ai_flair: "Скрытая метка", ai_flair_at: Time.utc)
 
       body = JSON.parse(ApiClient.new.get("/api/v1/users/#{user.username}").body)
       body["user"]["ai_flair"].raw.should be_nil
 
       SavePreferences.update!(user, ai_flair_enabled: true)
       body = JSON.parse(ApiClient.new.get("/api/v1/users/#{user.username}").body)
-      body["user"]["ai_flair"].as_s.should eq "Скрытый флаир"
+      body["user"]["ai_flair"].as_s.should eq "Скрытая метка"
     end
 
     it "saves the preference from the settings form" do

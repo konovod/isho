@@ -100,7 +100,7 @@ async function goToDashboard() {
         </div>
 
         <div class="field">
-          <label class="label" for="username">Никнейм</label>
+          <label class="label" for="username">Имя пользователя</label>
           <input
             id="username"
             v-model="username"

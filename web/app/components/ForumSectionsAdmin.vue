@@ -254,7 +254,7 @@ async function remove(section: AdminForumSection) {
             v-model="form.title"
             class="input"
             maxlength="80"
-            placeholder="Например: Джемы и конкурсы"
+            placeholder="Например: Конкурсы и соревнования"
           >
         </div>
 

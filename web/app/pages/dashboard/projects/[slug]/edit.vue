@@ -418,7 +418,7 @@ async function removeBuild(id: number) {
           Детали
         </button>
         <button class="editor-tab" :class="{ active: tab === 'devlogs' }" @click="tab = 'devlogs'">
-          Девлоги ({{ devlogs.length }})
+          Дневник ({{ devlogs.length }})
         </button>
         <button class="editor-tab" :class="{ active: tab === 'screenshots' }" @click="tab = 'screenshots'">
           Скриншоты ({{ project.screenshots.length }})

@@ -68,7 +68,7 @@ useSeoMeta({
             </span>
             <span class="muted small">{{ kindLabel }}</span>
             <span v-if="project.nsfw" class="badge badge-nsfw">18+</span>
-            <span class="badge badge-ai" :title="aiUsage.description">AI: {{ aiUsage.label }}</span>
+            <span class="badge badge-ai" :title="aiUsage.description">ИИ: {{ aiUsage.label }}</span>
           </div>
 
           <h1 class="project-title">
@@ -128,7 +128,7 @@ useSeoMeta({
 
           <section v-if="devlogs.length" class="section" style="padding-top: 0;">
             <h2 class="section-title">
-              Девлоги
+              Дневник
             </h2>
 
             <div class="devlog-feed">

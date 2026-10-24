@@ -46,7 +46,7 @@ useSeoMeta({
           <NuxtLink :to="`/p/${project.slug}`" class="muted small">
             ← {{ project.title }}
           </NuxtLink>
-          <span class="badge badge-external">девлог</span>
+          <span class="badge badge-external">запись</span>
         </div>
 
         <h1>{{ devlog.title }}</h1>

@@ -103,7 +103,7 @@ async function remove(devlog: Devlog) {
     <div class="row-between mb-16">
       <div>
         <h2 class="section-title" style="margin-bottom: 4px;">
-          Девлоги
+          Дневник
         </h2>
         <p class="muted small">
           {{ devlogs.length }}
