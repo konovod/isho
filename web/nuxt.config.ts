@@ -17,6 +17,13 @@ export default defineNuxtConfig({
       '/media': { target: 'http://127.0.0.1:4000/media', changeOrigin: true },
     },
   },
+  experimental: {
+    // Nuxt 4.6 resolves the entry chunk through an inline import map (`#entry`)
+    // by default. Browsers without import map support (Firefox < 108, Pale Moon)
+    // and clients that strip inline scripts cannot load any page chunk, so the
+    // entry is imported by its hashed relative path instead.
+    entryImportMap: false,
+  },
   vite: {
     optimizeDeps: {
       // Pre-bundle the Markdown renderer so dev does not reload on first use.
