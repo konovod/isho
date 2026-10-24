@@ -14,6 +14,11 @@ class ForumSectionSerializer < BaseSerializer
       description: @section.description,
       group_title: @section.group_title,
       position:    @section.position,
+      parent_id:   @section.parent_id,
+      parent:      parent,
+      # Depth is only 0 or 1: the forum intentionally has two levels.
+      depth:          @section.parent_id ? 1 : 0,
+      children_count: children_count,
       # The new-topic form hides the "answer from AI" checkbox when a section
       # (or the whole server) has it off.
       ai_answers_enabled: @section.ai_answers_enabled,
@@ -23,6 +28,20 @@ class ForumSectionSerializer < BaseSerializer
       posts_count:         topics + replies_count,
       unread_topics_count: unread_topics_count,
     }
+  end
+
+  private def parent
+    return nil unless @section.parent_id
+    return nil unless @section.parent_preloaded?
+
+    value = @section.parent
+    return nil unless value
+
+    {id: value.id, slug: value.slug, title: value.title}
+  end
+
+  private def children_count : Int64
+    ForumSectionQuery.new.children_of(@section.id).select_count
   end
 
   private def topics_query : ForumTopicQuery

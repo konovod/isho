@@ -367,6 +367,12 @@ useHead(() => ({
 
     <div class="row mb-16 forum-breadcrumbs">
       <NuxtLink to="/forum" class="muted small">Форум</NuxtLink>
+      <template v-if="topic.section.parent">
+        <span class="muted small">/</span>
+        <NuxtLink :to="`/forum/${topic.section.parent.slug}`" class="muted small">
+          {{ topic.section.parent.title }}
+        </NuxtLink>
+      </template>
       <span class="muted small">/</span>
       <NuxtLink :to="`/forum/${topic.section.slug}`" class="muted small">
         {{ topic.section.title }}

@@ -32,9 +32,25 @@ class ForumTopicSerializer < BaseSerializer
 
   private def section
     {
-      id:    @topic.section.id,
-      slug:  @topic.section.slug,
-      title: @topic.section.title,
+      id:     @topic.section.id,
+      slug:   @topic.section.slug,
+      title:  @topic.section.title,
+      parent: parent_section,
+    }
+  end
+
+  private def parent_section
+    section = @topic.section
+    return nil unless section.parent_id
+    return nil unless section.parent_preloaded?
+
+    value = section.parent
+    return nil unless value
+
+    {
+      id:    value.id,
+      slug:  value.slug,
+      title: value.title,
     }
   end
 

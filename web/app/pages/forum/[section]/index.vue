@@ -3,6 +3,7 @@ import type { ForumMeta, ForumSection, ForumTopic } from '~/types/api'
 
 interface SectionResponse {
   section: ForumSection
+  children: ForumSection[]
   items: ForumTopic[]
   meta: ForumMeta
 }
@@ -22,6 +23,7 @@ const { data, pending, error } = await useAsyncData(
 )
 
 const section = computed(() => data.value?.section ?? null)
+const children = computed(() => data.value?.children ?? [])
 const topics = computed(() => data.value?.items ?? [])
 
 if (!data.value && error.value) {
@@ -45,10 +47,16 @@ useHead(() => ({
 
 <template>
   <div v-if="section" class="container">
-    <div class="row mb-16">
+    <div class="row mb-16 forum-breadcrumbs">
       <NuxtLink to="/forum" class="muted small">
         ← Форум
       </NuxtLink>
+      <template v-if="section.parent">
+        <span class="muted small">/</span>
+        <NuxtLink :to="`/forum/${section.parent.slug}`" class="muted small">
+          {{ section.parent.title }}
+        </NuxtLink>
+      </template>
     </div>
 
     <div class="page-head">
@@ -81,12 +89,28 @@ useHead(() => ({
       </div>
     </div>
 
+    <section v-if="children.length" class="section forum-subsections">
+      <h2 class="section-title">
+        Подразделы
+      </h2>
+
+      <div class="card forum-group-card">
+        <ForumSectionRow
+          v-for="child in children"
+          :key="child.id"
+          :section="child"
+        />
+      </div>
+    </section>
+
     <div v-if="pending" class="empty">
       Загружаем темы…
     </div>
 
     <div v-else-if="!topics.length" class="empty">
-      Пока нет тем. Начните обсуждение первым.
+      {{ children.length
+        ? 'В этом разделе пока нет общих тем — выберите подраздел.'
+        : 'Пока нет тем. Начните обсуждение первым.' }}
     </div>
 
     <template v-else>

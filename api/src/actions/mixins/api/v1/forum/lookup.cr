@@ -1,13 +1,13 @@
 module Api::V1::Forum::Lookup
   def find_forum_section!(slug : String) : ForumSection
-    ForumSectionQuery.new.by_slug(slug).first? || raise Avram::RecordNotFoundError.new(ForumSection.table_name, slug)
+    ForumSectionQuery.new.by_slug(slug).preload_parent.first? || raise Avram::RecordNotFoundError.new(ForumSection.table_name, slug)
   end
 
   def find_forum_topic!(id : String) : ForumTopic
     ForumTopicQuery.new
       .id(id)
       .preload_user
-      .preload_section
+      .preload_section(ForumSectionQuery.new.preload_parent)
       .preload_project
       .preload_last_post_user
       .first? || raise Avram::RecordNotFoundError.new(ForumTopic.table_name, id)
@@ -18,7 +18,7 @@ module Api::V1::Forum::Lookup
       .for_section(section.id)
       .by_slug(slug)
       .preload_user
-      .preload_section
+      .preload_section(ForumSectionQuery.new.preload_parent)
       .preload_project
       .preload_last_post_user
       .first? || raise Avram::RecordNotFoundError.new(ForumTopic.table_name, slug)
@@ -36,7 +36,7 @@ module Api::V1::Forum::Lookup
     ForumTopicQuery.new
       .id(topic.id)
       .preload_user
-      .preload_section
+      .preload_section(ForumSectionQuery.new.preload_parent)
       .preload_project
       .preload_last_post_user
       .first? || raise Avram::RecordNotFoundError.new(ForumTopic.table_name, topic.id.to_s)

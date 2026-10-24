@@ -44,6 +44,7 @@ const fieldNames: Record<string, string> = {
   slug: 'Адрес раздела',
   group_title: 'Группа',
   position: 'Позиция',
+  parent_id: 'Родительский раздел',
 }
 
 const detailMessages: Record<string, string> = {
@@ -62,6 +63,12 @@ const detailMessages: Record<string, string> = {
   'must be a post in this topic': 'можно цитировать только сообщение из этой темы',
   'must be ai_free, partial, significant or full': 'нужно выбрать один из уровней',
   'can not be changed for a section with topics': 'нельзя менять у раздела с темами',
+  'can not be changed for a section with topics or subsections': 'нельзя менять у раздела с темами или подразделами',
+  'does not exist': 'такого раздела нет',
+  'can not point to itself': 'раздел не может быть родителем сам себе',
+  'must be a root section': 'родителем может быть только корневой раздел',
+  'can not be added to a section with subsections': 'раздел с подразделами нельзя сделать подразделом',
+  'can not be changed for a protected section': 'этот раздел всегда корневой',
 }
 
 const codeMessages: Record<string, string> = {
@@ -95,7 +102,8 @@ const codeMessages: Record<string, string> = {
   index_html_missing: 'В архиве нет index.html — добавьте его или укажите стартовый файл.',
   index_html_ambiguous: 'В архиве несколько index.html — укажите стартовый файл вручную.',
   entry_not_found: 'Указанный стартовый файл не найден в архиве.',
-  protected_section: 'Раздел обсуждений проектов удалить нельзя.',
+  protected_section: 'Этот раздел удалить нельзя.',
+  section_has_children: 'В разделе есть подразделы — сначала удалите или перенесите их.',
   section_not_empty: 'В разделе есть темы — удалить можно только пустой раздел.',
 }
 

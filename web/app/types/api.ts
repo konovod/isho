@@ -66,6 +66,8 @@ export interface ForumSectionRef {
   id: number
   slug: string
   title: string
+  /** Parent category, when this section is a subsection. */
+  parent?: ForumSectionRef | null
 }
 
 export interface ForumProjectRef {
@@ -81,6 +83,10 @@ export interface ForumSection {
   description: string | null
   group_title: string | null
   position: number
+  parent_id: number | null
+  parent: ForumSectionRef | null
+  depth: number
+  children_count: number
   ai_answers_enabled: boolean
   topics_count: number
   posts_count: number
@@ -95,6 +101,10 @@ export interface AdminForumSection {
   description: string | null
   group_title: string | null
   position: number
+  parent_id: number | null
+  parent: ForumSectionRef | null
+  depth: number
+  children_count: number
   ai_answers_enabled: boolean
   topics_count: number
   posts_count: number

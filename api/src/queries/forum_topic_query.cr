@@ -7,6 +7,10 @@ class ForumTopicQuery < ForumTopic::BaseQuery
     section_id(section_id)
   end
 
+  def for_sections(section_ids : Array(Int64))
+    section_id.in(section_ids)
+  end
+
   def for_project(project_id : Int64)
     project_id(project_id)
   end

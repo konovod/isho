@@ -5,12 +5,26 @@ const props = defineProps<{
   sections: ForumSection[]
 }>()
 
-const { plural } = useFormat()
+const roots = computed(() => props.sections.filter(section => section.parent_id === null))
+
+const childrenByParent = computed(() => {
+  const map = new Map<number, ForumSection[]>()
+
+  for (const section of props.sections) {
+    if (section.parent_id === null) continue
+
+    const list = map.get(section.parent_id) ?? []
+    list.push(section)
+    map.set(section.parent_id, list)
+  }
+
+  return map
+})
 
 const groups = computed(() => {
   const map = new Map<string, ForumSection[]>()
 
-  for (const section of props.sections) {
+  for (const section of roots.value) {
     const key = section.group_title || 'Разделы'
     const list = map.get(key) ?? []
     list.push(section)
@@ -19,6 +33,10 @@ const groups = computed(() => {
 
   return Array.from(map, ([title, items]) => ({ title, items }))
 })
+
+function childrenOf(section: ForumSection): ForumSection[] {
+  return childrenByParent.value.get(section.id) ?? []
+}
 </script>
 
 <template>
@@ -27,34 +45,18 @@ const groups = computed(() => {
       <h2 class="forum-group-title">{{ group.title }}</h2>
 
       <div class="card forum-group-card">
-        <NuxtLink
-          v-for="section in group.items"
-          :key="section.id"
-          :to="`/forum/${section.slug}`"
-          class="forum-section-row"
-        >
-          <div class="forum-section-info">
-            <h3>
-              {{ section.title }}
-              <span
-                v-if="section.unread_topics_count > 0"
-                class="forum-unread-badge"
-                :title="`Непрочитанных тем: ${section.unread_topics_count}`"
-                :aria-label="`Непрочитанных тем: ${section.unread_topics_count}`"
-              >
-                {{ section.unread_topics_count }}
-              </span>
-            </h3>
-            <p v-if="section.description" class="muted small">{{ section.description }}</p>
-            <p class="muted small">
-              {{ section.topics_count }}
-              {{ plural(section.topics_count, 'тема', 'темы', 'тем') }}
-              · {{ section.posts_count }}
-              {{ plural(section.posts_count, 'сообщение', 'сообщения', 'сообщений') }}
-            </p>
+        <template v-for="section in group.items" :key="section.id">
+          <ForumSectionRow :section="section" />
+
+          <div v-if="childrenOf(section).length" class="forum-section-children">
+            <ForumSectionRow
+              v-for="child in childrenOf(section)"
+              :key="child.id"
+              :section="child"
+              child
+            />
           </div>
-          <span class="forum-section-arrow">→</span>
-        </NuxtLink>
+        </template>
       </div>
     </section>
   </div>

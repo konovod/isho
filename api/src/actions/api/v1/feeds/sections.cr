@@ -3,15 +3,18 @@ class Api::V1::Feeds::Sections < Api::V1::FeedAction
 
   get "/api/v1/feeds/forum/:section_slug" do
     section = find_forum_section!(params.get(:section_slug))
+    children = ForumSectionQuery.new.children_of(section.id).results
+    section_ids = [section.id] + children.map(&.id)
 
     query = ForumTopicQuery.new
-      .for_section(section.id)
+      .for_sections(section_ids)
       .created_at.desc_order
       .id.desc_order
     query = query.with_visible_project(nil) if section.slug == "projects"
 
     topics = query
       .preload_user
+      .preload_section
       .limit(ITEMS_LIMIT)
       .results
 
@@ -24,7 +27,7 @@ class Api::V1::Feeds::Sections < Api::V1::FeedAction
 
       RssFeed::Item.new(
         title: topic.title,
-        link: absolute_url("/forum/#{section.slug}/#{topic.slug}"),
+        link: absolute_url("/forum/#{topic.section.slug}/#{topic.slug}"),
         guid: "isho:forum_topic:#{topic.id}",
         published_at: topic.created_at,
         creator: topic.user.name,

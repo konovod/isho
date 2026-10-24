@@ -5,11 +5,15 @@ class Api::V1::Admin::Forum::Sections::Update < ApiAction
     section = find_forum_section!
     updated = SaveForumSection.update!(section, params)
 
-    json AdminForumSectionSerializer.new(updated)
+    json AdminForumSectionSerializer.new(reload_section(updated))
   end
 
   private def find_forum_section! : ForumSection
-    ForumSectionQuery.new.id(params.get(:id)).first? ||
+    ForumSectionQuery.new.id(params.get(:id)).preload_parent.first? ||
       raise Avram::RecordNotFoundError.new(ForumSection.table_name, params.get(:id).to_s)
+  end
+
+  private def reload_section(section : ForumSection) : ForumSection
+    ForumSectionQuery.new.id(section.id).preload_parent.first? || section
   end
 end

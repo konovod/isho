@@ -16,7 +16,7 @@ class Api::V1::Projects::Forum::Topics::Index < ApiAction
       .for_project(project.id)
       .newest_activity
       .preload_user
-      .preload_section
+      .preload_section(ForumSectionQuery.new.preload_parent)
       .preload_project
       .preload_last_post_user
 

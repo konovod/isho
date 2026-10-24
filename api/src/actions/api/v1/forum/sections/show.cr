@@ -13,7 +13,7 @@ class Api::V1::Forum::Sections::Show < ApiAction
       .for_section(section.id)
       .newest_activity
       .preload_user
-      .preload_section
+      .preload_section(ForumSectionQuery.new.preload_parent)
       .preload_project
       .preload_last_post_user
 
@@ -26,11 +26,13 @@ class Api::V1::Forum::Sections::Show < ApiAction
       .results
 
     read_counts = forum_read_counts(topics)
+    children = ForumSectionQuery.new.children_of(section.id).ordered.preload_parent.results
 
     json({
-      section: ForumSectionSerializer.new(section, current_user?),
-      items:   topics.map { |topic| ForumTopicSerializer.new(topic, read_counts.try { |counts| counts[topic.id]? }) },
-      meta:    pagination_meta(page, per_page, total),
+      section:  ForumSectionSerializer.new(section, current_user?),
+      children: children.map { |child| ForumSectionSerializer.new(child, current_user?) },
+      items:    topics.map { |topic| ForumTopicSerializer.new(topic, read_counts.try { |counts| counts[topic.id]? }) },
+      meta:     pagination_meta(page, per_page, total),
     })
   end
 end
