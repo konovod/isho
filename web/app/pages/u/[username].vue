@@ -21,6 +21,15 @@ useSeoMeta({
   title: () => `${name.value} — ${SITE_NAME}`,
   description: () => data.value?.user.bio || `Проекты пользователя ${name.value}`,
 })
+
+const feedUrl = computed(() => `/api/v1/feeds/users/${data.value?.user.username}.rss`)
+const feedTitle = computed(() => `${SITE_NAME} — проекты ${name.value}`)
+
+useHead(() => ({
+  link: data.value
+    ? [{ rel: 'alternate', type: 'application/rss+xml', title: feedTitle.value, href: feedUrl.value }]
+    : [],
+}))
 </script>
 
 <template>
@@ -42,6 +51,8 @@ useSeoMeta({
           </p>
         </div>
       </div>
+
+      <RssLink :href="feedUrl" :title="feedTitle" />
     </div>
 
     <p v-if="data.user.bio" class="muted mb-24" style="max-width: 640px;">

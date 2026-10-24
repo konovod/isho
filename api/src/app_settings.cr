@@ -1,4 +1,5 @@
 module AppSettings
+  SITE_NAME   = "И.ШО"
   SESSION_TTL = 30.days
   # An admin sees another account for a short while and then lands back in
   # their own session; the admin cookie itself is never replaced.

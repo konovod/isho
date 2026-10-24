@@ -32,6 +32,15 @@ useSeoMeta({
   title: () => `${section.value?.title || 'Форум'} — ${SITE_NAME}`,
   description: () => section.value?.description || `Форум ${SITE_NAME}`,
 })
+
+const feedUrl = computed(() => `/api/v1/feeds/forum/${section.value?.slug}.rss`)
+const feedTitle = computed(() => `${SITE_NAME} — новые темы в разделе «${section.value?.title || ''}»`)
+
+useHead(() => ({
+  link: section.value
+    ? [{ rel: 'alternate', type: 'application/rss+xml', title: feedTitle.value, href: feedUrl.value }]
+    : [],
+}))
 </script>
 
 <template>
@@ -50,22 +59,26 @@ useSeoMeta({
         </p>
       </div>
 
-      <NuxtLink
-        v-if="user && section.slug !== 'projects'"
-        :to="`/forum/${section.slug}/new`"
-        class="btn btn-primary"
-      >
-        + Новая тема
-      </NuxtLink>
-      <span
-        v-else-if="section.slug === 'projects'"
-        class="muted small"
-      >
-        Темы создаются на страницах проектов
-      </span>
-      <NuxtLink v-else to="/sign_in" class="btn btn-ghost">
-        Войти, чтобы создать тему
-      </NuxtLink>
+      <div class="row">
+        <RssLink :href="feedUrl" :title="feedTitle" />
+
+        <NuxtLink
+          v-if="user && section.slug !== 'projects'"
+          :to="`/forum/${section.slug}/new`"
+          class="btn btn-primary"
+        >
+          + Новая тема
+        </NuxtLink>
+        <span
+          v-else-if="section.slug === 'projects'"
+          class="muted small"
+        >
+          Темы создаются на страницах проектов
+        </span>
+        <NuxtLink v-else to="/sign_in" class="btn btn-ghost">
+          Войти, чтобы создать тему
+        </NuxtLink>
+      </div>
     </div>
 
     <div v-if="pending" class="empty">

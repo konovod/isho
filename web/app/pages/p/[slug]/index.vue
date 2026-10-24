@@ -38,6 +38,9 @@ const kindLabel = computed(() => {
 const initials = computed(() => authorName.value.slice(0, 2))
 const aiUsage = computed(() => aiUsageOption(project.value?.ai_usage))
 const playableBuild = computed(() => project.value?.builds.find(build => build.kind === 'web' && build.play_url) ?? null)
+const canFeed = computed(() => !!project.value && project.value.status === 'published' && !project.value.nsfw)
+const feedUrl = computed(() => `/api/v1/feeds/projects/${project.value?.slug}/devlogs.rss`)
+const feedTitle = computed(() => `${SITE_NAME} — дневник «${project.value?.title || ''}»`)
 
 function onModerated(updated: ProjectDetail) {
   project.value = updated
@@ -51,6 +54,12 @@ useSeoMeta({
   ogDescription: () => project.value?.tagline || '',
   ogImage: () => project.value?.cover_url || undefined,
 })
+
+useHead(() => ({
+  link: canFeed.value
+    ? [{ rel: 'alternate', type: 'application/rss+xml', title: feedTitle.value, href: feedUrl.value }]
+    : [],
+}))
 </script>
 
 <template>
@@ -81,6 +90,7 @@ useSeoMeta({
         </div>
 
         <div class="row" style="margin-left: auto;">
+          <RssLink v-if="canFeed" :href="feedUrl" :title="feedTitle" />
           <NuxtLink
             v-if="playableBuild"
             :to="`/p/${project.slug}/play/${playableBuild.id}`"

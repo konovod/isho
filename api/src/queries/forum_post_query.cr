@@ -23,4 +23,18 @@ class ForumPostQuery < ForumPost::BaseQuery
   def latest(limit : Int32)
     newest_first.limit(limit)
   end
+
+  # The opening message of every given topic in one query, for feed previews.
+  def first_for_topics(topic_ids : Array(Int64)) : self
+    return id.eq(-1_i64) if topic_ids.empty?
+
+    where(<<-SQL)
+      forum_posts.id IN (
+        SELECT MIN(first_posts.id)
+        FROM forum_posts first_posts
+        WHERE first_posts.topic_id = forum_posts.topic_id
+      )
+    SQL
+      .topic_id.in(topic_ids)
+  end
 end

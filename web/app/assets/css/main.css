@@ -111,6 +111,34 @@ p {
   font-size: 13px;
 }
 
+.rss-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.rss-link:hover {
+  color: var(--accent);
+}
+
+.rss-link svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.rss-link circle {
+  fill: currentColor;
+  stroke: none;
+}
+
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }

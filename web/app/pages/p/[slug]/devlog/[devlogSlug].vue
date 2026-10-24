@@ -36,6 +36,16 @@ useSeoMeta({
   ogDescription: () => markdownToText(devlog.value?.body).slice(0, 160),
   ogType: 'article',
 })
+
+const canFeed = computed(() => !!project.value && project.value.status === 'published' && !project.value.nsfw)
+const feedUrl = computed(() => `/api/v1/feeds/projects/${project.value?.slug}/devlogs.rss`)
+const feedTitle = computed(() => `${SITE_NAME} — дневник «${project.value?.title || ''}»`)
+
+useHead(() => ({
+  link: canFeed.value
+    ? [{ rel: 'alternate', type: 'application/rss+xml', title: feedTitle.value, href: feedUrl.value }]
+    : [],
+}))
 </script>
 
 <template>
@@ -55,13 +65,16 @@ useSeoMeta({
         </p>
       </div>
 
-      <NuxtLink
-        v-if="isOwner"
-        :to="`/dashboard/projects/${project.slug}/edit`"
-        class="btn btn-ghost btn-sm"
-      >
-        Редактировать
-      </NuxtLink>
+      <div v-if="isOwner || canFeed" class="row">
+        <RssLink v-if="canFeed" :href="feedUrl" :title="feedTitle" />
+        <NuxtLink
+          v-if="isOwner"
+          :to="`/dashboard/projects/${project.slug}/edit`"
+          class="btn btn-ghost btn-sm"
+        >
+          Редактировать
+        </NuxtLink>
+      </div>
     </div>
 
     <article class="card card-pad devlog-page">

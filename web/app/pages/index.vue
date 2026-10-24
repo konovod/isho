@@ -10,6 +10,15 @@ const api = useApi()
 const { user } = useAuth()
 const { plural } = useFormat()
 
+const feedUrl = '/api/v1/feeds/projects.rss'
+const feedTitle = `${SITE_NAME} — новые проекты`
+
+useHead({
+  link: [
+    { rel: 'alternate', type: 'application/rss+xml', title: feedTitle, href: feedUrl },
+  ],
+})
+
 // The catalogue depends on the viewer's content preferences, so the cache must
 // not be shared between a visitor and a signed-in account.
 const viewerKey = computed(() => user.value?.id ?? 'guest')
@@ -87,6 +96,8 @@ function submitSearch() {
           Небольшие проекты, эксперименты и большие идеи. Найди что-то новое
           или покажи своё.
         </p>
+
+        <RssLink class="mt-8" :href="feedUrl" :title="feedTitle" />
 
         <form class="search-row" @submit.prevent="submitSearch">
           <input

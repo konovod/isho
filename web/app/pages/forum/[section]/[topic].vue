@@ -339,6 +339,17 @@ useSeoMeta({
   title: () => `${topic.value?.title || 'Тема'} — ${SITE_NAME}`,
   description: () => description.value,
 })
+
+const feedUrl = computed(() => topic.value
+  ? `/api/v1/feeds/forum/${topic.value.section.slug}/${topic.value.slug}.rss`
+  : '')
+const feedTitle = computed(() => `${SITE_NAME} — сообщения темы «${topic.value?.title || ''}»`)
+
+useHead(() => ({
+  link: topic.value
+    ? [{ rel: 'alternate', type: 'application/rss+xml', title: feedTitle.value, href: feedUrl.value }]
+    : [],
+}))
 </script>
 
 <template>
@@ -396,6 +407,8 @@ useSeoMeta({
       </div>
 
       <div class="row">
+        <RssLink :href="feedUrl" :title="feedTitle" />
+
         <button
           v-if="canEditTopic && !editingTitle"
           class="btn btn-ghost btn-sm"
