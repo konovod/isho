@@ -138,6 +138,41 @@ describe Api::V1::Projects::Uploads do
     end
   end
 
+  describe "usage counters" do
+    it "shows them to the author only" do
+      user = UserFactory.create
+      project = ProjectFactory.create &.user_id(user.id).status("published").published_at(Time.utc)
+      zip_path = File.tempname("build", ".zip")
+      BuildUploadHelper.zip(zip_path, {"index.html" => "<html><body>hi</body></html>"})
+      created_build : Build? = nil
+
+      begin
+        created = BuildUploadHelper.upload(
+          AuthHelper.client_for(user), project.slug, "game.zip", File.read(zip_path), "web",
+        )
+        created.status_code.should eq 201
+        build_id = JSON.parse(created.body)["id"].as_i64
+        created_build = BuildQuery.new.id(build_id).first?
+
+        owner_response = AuthHelper.client_for(user).get("/api/v1/projects/#{project.slug}")
+        owner_build = JSON.parse(owner_response.body)["builds"].as_a
+          .find { |item| item["id"].as_i64 == build_id }.not_nil!
+        owner_build["downloads_count"].as_i64.should eq 0
+        owner_build["launches_count"].as_i64.should eq 0
+
+        guest_response = ApiClient.new.get("/api/v1/projects/#{project.slug}")
+        guest_response.status_code.should eq 200
+        guest_build = JSON.parse(guest_response.body)["builds"].as_a
+          .find { |item| item["id"].as_i64 == build_id }.not_nil!
+        guest_build.as_h.has_key?("downloads_count").should be_false
+        guest_build.as_h.has_key?("launches_count").should be_false
+      ensure
+        created_build.try { |row| BuildStorage.remove_web_dir(row.public_id) }
+        File.delete?(zip_path)
+      end
+    end
+  end
+
   describe "chunks" do
     it "resumes the same upload instead of starting another" do
       user = UserFactory.create

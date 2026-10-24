@@ -11,6 +11,7 @@ class AppServer < Lucky::BaseAppServer
       RequestSizeLimitHandler.new,
       Lucky::RouteHandler.new,
       MediaHeadersHandler.new,
+      BuildUsageHandler.new,
       WebBuildAssetsHandler.new,
       Lucky::StaticFileHandler.new("./public", fallthrough: true, directory_listing: false),
       Lucky::RouteNotFoundHandler.new,

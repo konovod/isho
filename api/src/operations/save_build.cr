@@ -15,6 +15,11 @@ class SaveBuild < Build::SaveOperation
     label.value = "Скачать" if label.value.to_s.empty?
     platform.value = platform.value.to_s.strip.presence
     version.value = version.value.to_s.strip.presence
+
+    # Avram asks for every non-nil column even when the database has a
+    # default; new builds start at zero.
+    downloads_count.value = 0_i64 if downloads_count.value.nil?
+    launches_count.value = 0_i64 if launches_count.value.nil?
   end
 
   private def validate_kind

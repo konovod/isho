@@ -16,7 +16,7 @@ const { data, pending, error: loadError, refresh } = await useAsyncData(
   async () => {
     const [project, tags, devlogs] = await Promise.all([
       api.get<ProjectDetail>(`/api/v1/projects/${slug}`),
-      api.get<{ items: Tag[] }>('/api/v1/tags'),
+      api.get<{ items: Tag[] }>('/api/v1/tags?min_projects=1'),
       api.get<{ items: Devlog[] }>(`/api/v1/projects/${slug}/devlogs`),
     ])
 
@@ -600,6 +600,7 @@ async function removeBuild(id: number) {
                   {{ item.kind === 'web' ? 'веб-сборка' : 'файл' }}
                 </span>
                 <span>{{ [item.platform, item.version, formatBytes(item.size_bytes)].filter(Boolean).join(' · ') }}</span>
+                <span v-if="buildUsageLabel(item)">{{ buildUsageLabel(item) }}</span>
               </div>
             </div>
 

@@ -23,8 +23,9 @@ watch(() => route.query, (query) => {
   tag.value = typeof query.tag === 'string' ? query.tag : ''
 }, { immediate: true })
 
-// There can be hundreds of tags, so the strip renders only the popular ones.
-// The search field queries the API, so it finds tags outside that list too.
+// The API returns only tags a viewer can see on at least two published
+// projects, so the strip is short. The search field queries the API too, so
+// it still finds tags outside the rendered list.
 const tagSearch = ref('')
 const appliedTagSearch = ref('')
 let tagSearchTimer: ReturnType<typeof setTimeout> | undefined

@@ -3,6 +3,6 @@ class Api::V1::Projects::Unpublish < ApiAction
 
   post "/api/v1/projects/:slug/unpublish" do
     ChangeProjectStatus.new(project: project, publish: false).run
-    json ProjectSerializer.new(reload_project(project), detailed: true, moderation: true)
+    json ProjectSerializer.new(reload_project(project), detailed: true, moderation: true, with_usage: true)
   end
 end

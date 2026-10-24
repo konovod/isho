@@ -1,5 +1,10 @@
 class ProjectSerializer < BaseSerializer
-  def initialize(@project : Project, @detailed : Bool = false, @moderation : Bool = false)
+  def initialize(
+    @project : Project,
+    @detailed : Bool = false,
+    @moderation : Bool = false,
+    @with_usage : Bool = false,
+  )
   end
 
   def render
@@ -61,7 +66,7 @@ class ProjectSerializer < BaseSerializer
   private def builds : Array(BuildSerializer)
     return [] of BuildSerializer unless @project.builds_preloaded?
 
-    @project.builds.sort_by(&.id).map { |build| BuildSerializer.new(build) }
+    @project.builds.sort_by(&.id).map { |build| BuildSerializer.new(build, with_usage: @with_usage) }
   end
 
   private def cover_url : String?

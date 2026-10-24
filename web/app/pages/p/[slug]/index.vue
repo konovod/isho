@@ -183,7 +183,13 @@ useSeoMeta({
             </div>
           </section>
 
-          <DownloadList class="mt-24" :downloads="project.downloads" :builds="project.builds" :slug="project.slug" />
+          <DownloadList
+            class="mt-24"
+            :downloads="project.downloads"
+            :builds="project.builds"
+            :slug="project.slug"
+            :show-usage="isOwner"
+          />
         </div>
 
         <aside class="project-sidebar">

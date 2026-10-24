@@ -9,7 +9,7 @@ const router = useRouter()
 
 const { data: tagData } = await useAsyncData(
   'new-project-tags',
-  () => api.get<{ items: Tag[] }>('/api/v1/tags'),
+  () => api.get<{ items: Tag[] }>('/api/v1/tags?min_projects=1'),
 )
 
 const allTags = computed(() => tagData.value?.items ?? [])

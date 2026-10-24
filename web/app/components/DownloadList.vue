@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Build, Download } from '~/types/api'
 
-defineProps<{ downloads: Download[], builds?: Build[], slug?: string }>()
+defineProps<{ downloads: Download[], builds?: Build[], slug?: string, showUsage?: boolean }>()
 </script>
 
 <template>
@@ -23,6 +23,7 @@ defineProps<{ downloads: Download[], builds?: Build[], slug?: string }>()
           <span class="badge" :class="item.kind === 'web' ? 'badge-published' : 'badge-draft'">
             {{ item.kind === 'web' ? 'в браузере' : 'файл' }}
           </span>
+          <span v-if="showUsage && buildUsageLabel(item)">{{ buildUsageLabel(item) }}</span>
         </div>
       </div>
 

@@ -10,6 +10,6 @@ class Api::V1::MyProjects::Index < ApiAction
       .preload_tags
       .results
 
-    json({items: projects.map { |project| ProjectSerializer.new(project, detailed: true, moderation: true) }})
+    json({items: projects.map { |project| ProjectSerializer.new(project, detailed: true, moderation: true, with_usage: true) }})
   end
 end

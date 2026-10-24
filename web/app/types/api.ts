@@ -235,6 +235,9 @@ export interface Build {
   play_url: string | null
   entry_path: string | null
   created_at: string
+  /** Counters, present only in the author's own responses. */
+  downloads_count?: number
+  launches_count?: number
 }
 
 export interface StorageProjectUsage {

@@ -1,9 +1,9 @@
 class BuildSerializer < BaseSerializer
-  def initialize(@build : Build)
+  def initialize(@build : Build, @with_usage : Bool = false)
   end
 
   def render
-    {
+    base = {
       id:         @build.id,
       kind:       @build.kind,
       label:      @build.label,
@@ -14,6 +14,17 @@ class BuildSerializer < BaseSerializer
       play_url:   play_url,
       entry_path: @build.entry_path,
       created_at: @build.created_at,
+    }
+
+    @with_usage ? base.merge(usage) : base
+  end
+
+  # Counters are for the author only, so they are absent from every response
+  # that is not built for the owner.
+  private def usage
+    {
+      downloads_count: @build.downloads_count,
+      launches_count:  @build.launches_count,
     }
   end
 

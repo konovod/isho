@@ -13,6 +13,8 @@ class Build < BaseModel
     attach stored_file : BuildUploader::StoredFile?
     column entry_path : String?
     column size_bytes : Int64
+    column downloads_count : Int64
+    column launches_count : Int64
   end
 
   def web? : Bool
