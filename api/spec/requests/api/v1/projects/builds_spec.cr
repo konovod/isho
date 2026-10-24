@@ -300,6 +300,31 @@ describe Api::V1::Projects::Uploads do
       end
     end
 
+    it "points play URLs at the media origin when one is configured" do
+      user = UserFactory.create
+      project = ProjectFactory.create &.user_id(user.id)
+      zip_path = File.tempname("build", ".zip")
+      BuildUploadHelper.zip(zip_path, {"index.html" => "<html><body>hi</body></html>"})
+
+      begin
+        with_env("MEDIA_ORIGIN", "https://games.example.test/") do
+          response = BuildUploadHelper.upload(
+            AuthHelper.client_for(user), project.slug, "game.zip", File.read(zip_path), "web",
+          )
+
+          response.status_code.should eq 201
+          body = JSON.parse(response.body)
+          body["play_url"].as_s.should start_with("https://games.example.test/media/web/")
+          body["play_url"].as_s.should end_with("/index.html")
+
+          build = BuildQuery.new.id(body["id"].as_i64).first.not_nil!
+          BuildStorage.remove_web_dir(build.public_id)
+        end
+      ensure
+        File.delete?(zip_path)
+      end
+    end
+
     it "rejects path traversal in the archive" do
       user = UserFactory.create
       project = ProjectFactory.create &.user_id(user.id)

@@ -50,9 +50,16 @@
   сборки проекта, 1 ГБ на аккаунт (сборки + скриншоты + картинки Markdown) и 12 ГБ на
   сервер, плюс резерв 2 ГБ свободного диска; всё настраивается переменными
   `STORAGE_*_BYTES`. Квоты считает `StorageUsage` (размеры картинок — из метаданных
-  Latch). Веб-сборки отдаются с CSP `sandbox` без `allow-same-origin` и `X-Content-Type-
-  Options: nosniff`, файлы — с `Content-Disposition: attachment`; это делает
-  `MediaHeadersHandler`. Архив проверяется `WebBuildArchive` (zip-slip, лимит файлов,
+  Latch). Веб-сборки отдаются с CSP `sandbox` и `X-Content-Type-Options: nosniff`,
+  файлы — с `Content-Disposition: attachment`; это делает `MediaHeadersHandler`.
+  Играм нужны Cache Storage, IndexedDB и localStorage (кеш сборки Unity, `PlayerPrefs`),
+  а в opaque origin их нет, поэтому на отдельном media-origin (`MEDIA_ORIGIN`,
+  задаётся деплою через `-MediaAddress`, например `https://games.<домен>`) к sandbox
+  добавляется `allow-same-origin`: там нет cookie сайта. На основном origin флага нет никогда.
+  Сжатые файлы Unity (`*.js.br`, `*.wasm.br`, `*.data.br`, `*.gz`) отдаёт
+  `WebBuildAssetsHandler` — с `Content-Encoding` и типом исходного файла, иначе
+  загрузчик получает `application/octet-stream` и `nosniff` не даёт запустить
+  framework. Архив проверяется `WebBuildArchive` (zip-slip, лимит файлов,
   распакованный объём, `index.html`). Остатки подметают `tasks storage.stats` и
   `tasks storage.cleanup` (таймер `isho-storage.timer`).
 - **Контент-фильтры:** у проекта есть `nsfw` (18+) и `ai_usage`

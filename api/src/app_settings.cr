@@ -132,6 +132,21 @@ module AppSettings
     origin.not_nil!.sub(/\/+\z/, "")
   end
 
+  # Browser builds get their own origin when MEDIA_ORIGIN is set: the sandbox
+  # there keeps `allow-same-origin`, which games need for Cache Storage,
+  # IndexedDB and localStorage, and that is only safe away from the session
+  # cookie. Unset means the old same-origin layout (and relative play URLs).
+  def self.media_origin : String?
+    origin = ENV["MEDIA_ORIGIN"]?.try(&.strip)
+    return nil if origin.nil? || origin.empty?
+
+    origin.sub(/\/+\z/, "")
+  end
+
+  def self.media_host : String?
+    media_origin.try { |origin| URI.parse(origin).host }
+  end
+
   # The key is the switch: no key means no AI anywhere, so a fresh checkout and
   # a deployment without secrets behave exactly as before.
   def self.ai_enabled? : Bool

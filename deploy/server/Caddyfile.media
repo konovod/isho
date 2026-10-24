@@ -1,0 +1,18 @@
+# Browser builds live on their own origin, so a game may keep
+# `allow-same-origin` in its sandbox: Unity then gets Cache Storage, IndexedDB
+# and localStorage (build cache, PlayerPrefs), while this host has no session
+# cookie and nothing else of the site. Only /media/web is reachable here.
+#
+# Appended to /etc/caddy/Caddyfile by bootstrap.sh when ISHO_MEDIA_SITE_ADDRESS
+# is set, and never when it equals the site address.
+{$ISHO_MEDIA_SITE_ADDRESS} {
+	encode zstd gzip
+
+	handle /media/web/* {
+		reverse_proxy 127.0.0.1:4000
+	}
+
+	handle {
+		respond 404
+	}
+}

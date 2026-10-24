@@ -16,6 +16,8 @@ Crystal и не нужна сборка: туда уезжают только re
 | Сборки | `/srv/isho/api/public/media/build` и `/media/web`, `isho-storage.timer` |
 
 Caddy раздаёт всё с одного origin: `/api/*` и `/media/*` идут в Lucky, остальное — в Nuxt.
+Браузерные сборки можно вынести на отдельный хост (`-MediaAddress`), см. «Сборки и место
+на диске».
 Скриншоты лежат в `/srv/isho/api/public/media` (Latch, файловое хранилище).
 
 ## Первый деплой
@@ -196,10 +198,28 @@ sudo -u isho -H bash -c 'set -a; . /etc/isho/api.env; set +a; cd /srv/isho/api &
 sudo -u isho -H bash -c 'set -a; . /etc/isho/api.env; set +a; cd /srv/isho/api && ./bin/tasks storage.cleanup'
 ```
 
-Веб-сборки отдаются с `Content-Security-Policy: sandbox` без `allow-same-origin`:
-игра не может читать куки и обращаться к API от имени посетителя. Плата за это —
-только относительные пути и отсутствие `localStorage` и `SharedArrayBuffer`.
+Веб-сборки отдаются с отдельного origin — `-MediaAddress https://games.<домен>`
+(или `MEDIA_ORIGIN` в `/etc/isho/api.env`). Caddy отдаёт на этом хосте только
+`/media/web/*`, всё остальное — 404, поэтому cookie сайта туда не попадают.
+Игре в песочнице нужен собственный origin (Cache Storage, IndexedDB и
+`localStorage` в opaque origin недоступны — без них Unity не кеширует сборку и не
+сохраняет `PlayerPrefs`), поэтому `allow-same-origin` добавляется только на
+медиа-хосте. Без `-MediaAddress` игра работает по-старому, но без кеша и сейвов.
+Сжатые файлы Unity (`*.br`, `*.gz`) уходят с `Content-Encoding` и типом
+исходного файла — иначе `nosniff` не даёт запустить framework.
 Файлы для скачивания отдаются с `Content-Disposition: attachment`.
+
+Включить отдельный origin на уже работающем сервере:
+
+```powershell
+.\deploy\deploy.ps1 -SiteAddress https://isho.duckdns.org `
+  -MediaAddress https://games.isho.duckdns.org -SkipBuild
+```
+
+`games.isho.duckdns.org` резолвится тем же wildcard-правилом DuckDNS, отдельная
+запись не нужна; для своего домена достаточно CNAME `games` на сайт. Сертификат
+Caddy выпустит сам, адрес запоминается в `/etc/isho/caddy.env`, а `MEDIA_ORIGIN` —
+в `/etc/isho/api.env`, так что следующий деплой без флага ничего не сломает.
 
 ## Полезное на сервере
 

@@ -1,7 +1,8 @@
 require "../spec_helper"
 
-private def handler_headers(method : String, path : String) : {HTTP::Server::Response, HTTP::Headers}
+private def handler_headers(method : String, path : String, host : String? = nil) : {HTTP::Server::Response, HTTP::Headers}
   request = HTTP::Request.new(method, path)
+  request.headers["Host"] = host if host
   response = HTTP::Server::Response.new(IO::Memory.new)
   context = HTTP::Server::Context.new(request, response)
 
@@ -12,6 +13,16 @@ private def handler_headers(method : String, path : String) : {HTTP::Server::Res
   handler.call(context)
 
   {response, response.headers}
+end
+
+private def with_media_origin(value : String, &)
+  previous = ENV["MEDIA_ORIGIN"]?
+  ENV["MEDIA_ORIGIN"] = value
+  begin
+    yield
+  ensure
+    previous ? (ENV["MEDIA_ORIGIN"] = previous) : ENV.delete("MEDIA_ORIGIN")
+  end
 end
 
 describe MediaHeadersHandler do
@@ -30,6 +41,22 @@ describe MediaHeadersHandler do
     response.status_code.should eq(204)
     headers["Access-Control-Allow-Origin"].should eq("*")
     headers["Access-Control-Allow-Methods"].should contain("GET")
+  end
+
+  it "keeps the media host's own origin for cache storage and saves" do
+    with_media_origin("https://games.example.test") do
+      _, headers = handler_headers("GET", "/media/web/abc/index.html", host: "games.example.test")
+
+      headers["Content-Security-Policy"].should contain("allow-same-origin")
+    end
+  end
+
+  it "never allows the app origin back through the play URL" do
+    with_media_origin("https://games.example.test") do
+      _, headers = handler_headers("GET", "/media/web/abc/index.html", host: "isho.example.test")
+
+      headers["Content-Security-Policy"].should_not contain("allow-same-origin")
+    end
   end
 
   it "serves downloadable builds as attachments" do

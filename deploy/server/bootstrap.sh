@@ -19,6 +19,23 @@ SITE_ADDRESS=${ISHO_SITE_ADDRESS:-:80}
 PUBLIC_ORIGIN=${ISHO_PUBLIC_ORIGIN:-}
 SEED_SAMPLE=${ISHO_SEED_SAMPLE:-0}
 
+# Browser builds get their own host when the deploy says so: a game keeps its
+# own origin in the sandbox there (Cache Storage, IndexedDB), which is only
+# safe away from the site's cookies. The address is remembered in caddy.env so
+# a later deploy without the flag does not silently break play URLs.
+MEDIA_SITE_ADDRESS=${ISHO_MEDIA_SITE_ADDRESS:-}
+MEDIA_ORIGIN=${ISHO_MEDIA_ORIGIN:-}
+if [ -z "$MEDIA_SITE_ADDRESS" ] && [ -f "$ENV_DIR/caddy.env" ]; then
+  MEDIA_SITE_ADDRESS=$(sed -nE 's|^ISHO_MEDIA_SITE_ADDRESS=(.*)$|\1|p' "$ENV_DIR/caddy.env" | tail -1)
+fi
+if [ -z "$MEDIA_ORIGIN" ] && [ -n "$MEDIA_SITE_ADDRESS" ]; then
+  MEDIA_ORIGIN=${MEDIA_SITE_ADDRESS%/}
+fi
+if [ "$MEDIA_SITE_ADDRESS" = "$SITE_ADDRESS" ]; then
+  MEDIA_SITE_ADDRESS=
+  MEDIA_ORIGIN=
+fi
+
 log() { printf '\n==> %s\n' "$*"; }
 
 if [ ! -d "$RELEASE/api/bin" ] || [ ! -f "$RELEASE/server/bootstrap.sh" ]; then
@@ -170,6 +187,10 @@ set_env "$ENV_DIR/api.env" HOST 127.0.0.1
 set_env "$ENV_DIR/api.env" APP_ORIGIN "$PUBLIC_ORIGIN"
 set_env "$ENV_DIR/api.env" APP_DOMAIN "$PUBLIC_ORIGIN"
 set_env "$ENV_DIR/api.env" COOKIE_SECURE "$COOKIE_SECURE"
+if [ -n "$MEDIA_ORIGIN" ]; then
+  # Play URLs and the sandbox flag of browser builds come from this origin.
+  set_env "$ENV_DIR/api.env" MEDIA_ORIGIN "$MEDIA_ORIGIN"
+fi
 
 # Mail. deploy.ps1 passes -MailFrom (and the SMTP settings) on the first run;
 # afterwards the values in this file are the source of truth. Without MAIL_FROM
@@ -211,6 +232,9 @@ chmod 0640 "$ENV_DIR/web.env"
 cat > "$ENV_DIR/caddy.env" <<EOF
 ISHO_SITE_ADDRESS=$SITE_ADDRESS
 EOF
+if [ -n "$MEDIA_SITE_ADDRESS" ]; then
+  printf 'ISHO_MEDIA_SITE_ADDRESS=%s\n' "$MEDIA_SITE_ADDRESS" >> "$ENV_DIR/caddy.env"
+fi
 chmod 0644 "$ENV_DIR/caddy.env"
 
 log "Ensuring PostgreSQL role and database"
@@ -232,6 +256,9 @@ install -m 0755 "$RELEASE/api/bin/tasks" "$ISHO_HOME/api/bin/tasks"
 rm -rf "$ISHO_HOME/web/.output"
 cp -a "$RELEASE/web/.output" "$ISHO_HOME/web/.output"
 install -m 0644 "$RELEASE/server/Caddyfile" /etc/caddy/Caddyfile
+if [ -n "$MEDIA_SITE_ADDRESS" ]; then
+  cat "$RELEASE/server/Caddyfile.media" >> /etc/caddy/Caddyfile
+fi
 install -m 0644 "$RELEASE/server/isho-api.service" /etc/systemd/system/isho-api.service
 install -m 0644 "$RELEASE/server/isho-web.service" /etc/systemd/system/isho-web.service
 install -m 0644 "$RELEASE/server/isho-storage.service" /etc/systemd/system/isho-storage.service
@@ -284,6 +311,6 @@ wait_for http://127.0.0.1:3000/ "Nuxt"
 wait_for "http://127.0.0.1/" "Caddy"
 
 log "Deployed"
-printf 'public origin: %s\ncaddy site:    %s\nsecure cookies: %s\nmail adapter:  %s\nai model:      %s\n' \
-  "$PUBLIC_ORIGIN" "$SITE_ADDRESS" "$COOKIE_SECURE" "$(sed -nE 's|^MAIL_ADAPTER=(.*)$|\1|p' "$ENV_DIR/api.env" | tail -1)" \
+printf 'public origin: %s\ncaddy site:    %s\nmedia site:    %s\nsecure cookies: %s\nmail adapter:  %s\nai model:      %s\n' \
+  "$PUBLIC_ORIGIN" "$SITE_ADDRESS" "${MEDIA_SITE_ADDRESS:-none}" "$COOKIE_SECURE" "$(sed -nE 's|^MAIL_ADAPTER=(.*)$|\1|p' "$ENV_DIR/api.env" | tail -1)" \
   "$(sed -nE 's|^AI_MODEL=(.*)$|\1|p' "$ENV_DIR/api.env" | tail -1)"

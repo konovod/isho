@@ -23,6 +23,11 @@
   .\deploy\deploy.ps1 -SiteAddress https://185-180-231-183.nip.io
 
 .EXAMPLE
+  # Games on their own origin, so Unity keeps Cache Storage and PlayerPrefs
+  # (see deploy/README.md). Caddy serves /media/web there and nothing else.
+  .\deploy\deploy.ps1 -SiteAddress https://isho.duckdns.org -MediaAddress https://games.isho.duckdns.org
+
+.EXAMPLE
   .\deploy\deploy.ps1 -SampleData   # also seed demo projects and accounts
 
 .EXAMPLE
@@ -45,6 +50,12 @@ param(
   # Origin used by the API for cookies and the Origin check (defaults to the
   # origin of -SiteAddress, or http://<server> when the site is plain HTTP).
   [string]$PublicOrigin = '',
+  # Separate origin for browser builds, for example
+  # https://games.isho.duckdns.org. A sandboxed game keeps Cache Storage,
+  # IndexedDB and localStorage only while it has its own origin, which is safe
+  # away from the site's cookies: Caddy serves /media/web there and closes
+  # everything else. Omitted means the old same-origin layout.
+  [string]$MediaAddress = '',
   # DuckDNS token: before deploying, points <name>.duckdns.org at -Server with
   # the DuckDNS API (only used with a *.duckdns.org site address).
   [string]$DuckDnsToken = $env:ISHO_DUCKDNS_TOKEN,
@@ -98,13 +109,27 @@ if ($DuckDnsToken) {
   else { throw 'DuckDnsToken only applies to a <name>.duckdns.org site address.' }
 }
 
+# The media host must be an origin of its own: the same address would only
+# repeat the site block and leave games on the site's origin.
+$mediaOrigin = ''
+if ($MediaAddress) {
+  if ($MediaAddress -notmatch '^(https?)://([^/]+)/?$') {
+    throw "MediaAddress must be an origin like https://games.example.com: $MediaAddress"
+  }
+  $MediaAddress = "$($Matches[1])://$($Matches[2])"
+  $mediaOrigin = $MediaAddress
+  if ($siteOrigin -and $mediaOrigin -eq $siteOrigin) {
+    throw 'MediaAddress must differ from SiteAddress.'
+  }
+}
+
 if ($MailFrom) {
   if (-not $SmtpUser) { $SmtpUser = $MailFrom }
 }
 else {
   $MailAdapter = 'dev'
 }
-foreach ($value in @($SiteAddress, $PublicOrigin, $SshUser, $Server, $MailFrom, $MailAdapter, $SmtpHost, $SmtpPort, $SmtpTls, $SmtpUser, $SmtpPassword, $AiApiKey, $AiModel)) {
+foreach ($value in @($SiteAddress, $PublicOrigin, $MediaAddress, $mediaOrigin, $SshUser, $Server, $MailFrom, $MailAdapter, $SmtpHost, $SmtpPort, $SmtpTls, $SmtpUser, $SmtpPassword, $AiApiKey, $AiModel)) {
   if ($value -match "'") { throw "Values passed to the server must not contain single quotes: $value" }
 }
 
@@ -180,6 +205,7 @@ $remote = @"
 rm -rf /opt/isho-release && mkdir -p /opt/isho-release &&
 tar -xzf /tmp/isho-deploy.tar.gz -C /opt/isho-release &&
 ISHO_SITE_ADDRESS='$SiteAddress' ISHO_PUBLIC_ORIGIN='$PublicOrigin' ISHO_COOKIE_SECURE='$SecureCookies' ISHO_SEED_SAMPLE='$seedSample' \
+ISHO_MEDIA_SITE_ADDRESS='$MediaAddress' ISHO_MEDIA_ORIGIN='$mediaOrigin' \
 ISHO_MAIL_ADAPTER='$MailAdapter' ISHO_MAIL_FROM='$(ConvertTo-RemoteLiteral $MailFrom)' \
 ISHO_SMTP_HOST='$(ConvertTo-RemoteLiteral $SmtpHost)' ISHO_SMTP_PORT='$SmtpPort' ISHO_SMTP_TLS='$SmtpTls' \
 ISHO_SMTP_USER='$(ConvertTo-RemoteLiteral $SmtpUser)' ISHO_SMTP_PASSWORD='$(ConvertTo-RemoteLiteral $SmtpPassword)' \

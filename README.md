@@ -41,6 +41,11 @@ Ctrl+C останавливает оба сервера. По отдельнос
 
 Демо-аккаунт после сида: `demo@isho.local` / `password1234`.
 
+Веб-сборки локально по умолчанию живут на одном origin с сайтом. Чтобы проверить
+их как на сервере (отдельный origin, кеш и сейвы игры), запустите API с
+`MEDIA_ORIGIN=http://127.0.0.1:4000`: `play_url` станет абсолютным, а песочница —
+с `allow-same-origin`.
+
 ### ImageMagick на Windows
 
 Scoop-сборка не прописывает пути к конфигам. `api/script/dev-api.ps1` выставляет
@@ -170,6 +175,13 @@ Caddy отдаёт `/api/*` и `/media/*` в Lucky, всё остальное �
 работает с одним origin, а cookie остаются first-party. Для S3 нужно заменить
 `Latch::Storage::FileSystem` на S3-хранилище в `api/config/latch.cr` и раздавать
 медиа через CDN.
+
+Браузерные сборки живут на отдельном origin (`-MediaAddress https://games.<домен>`,
+Caddy отдаёт там только `/media/web/*`): игра в песочнице сохраняет свой origin и
+поэтому может пользоваться Cache Storage, IndexedDB и localStorage, которых
+opaque origin не даёт, — а cookie сайта на этот хост не отправляются. Сжатые файлы
+Unity (`.br`, `.gz`) уходят с `Content-Encoding` и типом исходного файла, иначе
+`nosniff` не даёт загрузить framework.
 
 ## Ограничения прототипа
 
