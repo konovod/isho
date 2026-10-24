@@ -30,9 +30,11 @@ class Api::V1::Forum::Topics::Show < ApiAction
       quote_pages[quoted_id] = forum_quote_page(post)
     end
 
+    reactions = ForumReactions.summaries(posts.map(&.id), current_user?.try(&.id))
+
     json({
       topic: ForumTopicSerializer.new(topic, forum_read_count(topic), page == 1 ? ForumAiAnswerQuery.new.for_topic(topic.id).first? : nil),
-      items: posts.map { |post| ForumPostSerializer.new(post, post.quoted_post_id.try { |id| quote_pages[id]? }) },
+      items: posts.map { |post| ForumPostSerializer.new(post, post.quoted_post_id.try { |id| quote_pages[id]? }, reactions[post.id]? || ForumReactions::Summary.empty) },
       meta:  pagination_meta(page, per_page, total),
     })
   end

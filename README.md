@@ -115,6 +115,8 @@ docker-compose.yml   PostgreSQL
 | POST | `/api/v1/forum/topics/:id/read` | вход |
 | PATCH | `/api/v1/forum/posts/:id` | автор или админ |
 | DELETE | `/api/v1/forum/posts/:id` | админ |
+| POST | `/api/v1/forum/posts/:id/reactions` | вход |
+| GET | `/api/v1/forum/posts/:id/reactions` (`kind`) | публично |
 | GET | `/api/v1/projects/:slug/forum/topics` | публично (черновик — владельцу) |
 | POST | `/api/v1/projects/:slug/forum/topics` | вход |
 | GET | `/api/v1/users/:username` | публично |
@@ -139,6 +141,14 @@ docker-compose.yml   PostgreSQL
 `POST /api/v1/forum/topics/:id/read`, поэтому открытие последней страницы закрывает
 тему целиком. Автор последнего ответа денормализован в
 `forum_topics.last_post_user_id` и показывается в списке тем.
+
+Лайки и дизлайки лежат в `forum_post_reactions` (одна реакция на пользователя и
+сообщение, `kind` — `like` или `dislike`). Счётчики не хранятся в постах: их считает
+`ForumReactions`, поэтому удаление пользователя или сообщения не оставляет мусора.
+`POST /api/v1/forum/posts/:id/reactions` ставит голос, повторный клик снимает его, а
+другой символ заменяет; за своё сообщение голосовать нельзя. Список проголосовавших для
+попапа отдаёт `GET /api/v1/forum/posts/:id/reactions?kind=like|dislike` — последние 10
+и признак `truncated`.
 
 Администраторы (`users.is_admin`) могут удалять любые сообщения и темы; авторы
 редактируют свои сообщения и название темы, но удалять их может только администратор.

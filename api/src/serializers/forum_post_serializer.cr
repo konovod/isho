@@ -1,5 +1,9 @@
 class ForumPostSerializer < BaseSerializer
-  def initialize(@post : ForumPost, @quote_page : Int32? = nil)
+  def initialize(
+    @post : ForumPost,
+    @quote_page : Int32? = nil,
+    @reactions : ForumReactions::Summary = ForumReactions::Summary.empty,
+  )
   end
 
   def render
@@ -11,6 +15,7 @@ class ForumPostSerializer < BaseSerializer
       updated_at: @post.updated_at,
       edited:     edited?,
       quote:      quote,
+      reactions:  ForumPostReactionsSerializer.new(@reactions).render,
     }
   end
 

@@ -139,6 +139,23 @@ export interface ForumPostQuote {
   body: string | null
 }
 
+export type ForumReactionKind = 'like' | 'dislike'
+
+/** Counts on a post plus the reaction of the reader, when signed in. */
+export interface ForumPostReactions {
+  likes_count: number
+  dislikes_count: number
+  my_reaction: ForumReactionKind | null
+}
+
+/** Latest voters shown in the popup next to a counter. */
+export interface ForumReactionVoters {
+  kind: ForumReactionKind
+  total: number
+  items: ApiUser[]
+  truncated: boolean
+}
+
 export interface ForumPost {
   id: number
   body: string
@@ -147,6 +164,7 @@ export interface ForumPost {
   updated_at: string
   edited: boolean
   quote: ForumPostQuote | null
+  reactions: ForumPostReactions
 }
 
 /** A post the author is about to quote, narrowed to a selected fragment. */

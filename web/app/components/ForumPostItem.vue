@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ForumPost } from '~/types/api'
+import type { ApiUser, ForumPost, ForumPostReactions, ForumReactionKind, ForumReactionVoters } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 const props = defineProps<{
@@ -27,6 +27,144 @@ const saving = ref(false)
 const localError = ref('')
 // Set on pointerdown, because the browser drops the selection before `click`.
 let pendingQuote = ''
+
+const reactionKinds: ForumReactionKind[] = ['like', 'dislike']
+const reactions = ref<ForumPostReactions>({ ...props.post.reactions })
+const voting = ref<ForumReactionKind | null>(null)
+const reactionError = ref('')
+
+interface VoterPopup extends ForumReactionVoters {
+  loading: boolean
+  error: string
+}
+
+const voters = ref<VoterPopup | null>(null)
+const reactionsEl = ref<HTMLElement | null>(null)
+
+watch(() => props.post.reactions, (value) => {
+  reactions.value = { ...value }
+}, { deep: true })
+
+const isOwnPost = computed(() => !!props.currentUserId && props.post.author.id === props.currentUserId)
+
+function countFor(kind: ForumReactionKind): number {
+  return kind === 'like' ? reactions.value.likes_count : reactions.value.dislikes_count
+}
+
+function voterName(voter: ApiUser): string {
+  return voter.display_name || voter.username
+}
+
+// The server rejects a vote on the own message; the UI keeps the symbols
+// visible but inert, so the counters and the popup still work there.
+function voteTitle(kind: ForumReactionKind): string {
+  if (isOwnPost.value) return 'Нельзя голосовать за своё сообщение'
+  if (!props.currentUserId) return 'Войдите, чтобы голосовать'
+  return kind === 'like' ? 'Нравится' : 'Не нравится'
+}
+
+function withReaction(state: ForumPostReactions, next: ForumReactionKind | null): ForumPostReactions {
+  const likes = state.likes_count - (state.my_reaction === 'like' ? 1 : 0) + (next === 'like' ? 1 : 0)
+  const dislikes = state.dislikes_count - (state.my_reaction === 'dislike' ? 1 : 0) + (next === 'dislike' ? 1 : 0)
+
+  return {
+    likes_count: Math.max(0, likes),
+    dislikes_count: Math.max(0, dislikes),
+    my_reaction: next,
+  }
+}
+
+async function vote(kind: ForumReactionKind) {
+  if (isOwnPost.value || voting.value) return
+
+  if (!props.currentUserId) {
+    await navigateTo('/sign_in')
+    return
+  }
+
+  const previous = { ...reactions.value }
+  const next = previous.my_reaction === kind ? null : kind
+  reactions.value = withReaction(previous, next)
+  voting.value = kind
+  reactionError.value = ''
+
+  try {
+    const result = await api.post<{ reactions: ForumPostReactions }>(
+      `/api/v1/forum/posts/${props.post.id}/reactions`,
+      { forum_post_reaction: { kind } },
+    )
+    reactions.value = { ...result.reactions }
+
+    // The visible list is stale after the reader's own vote.
+    if (voters.value) await loadVoters(voters.value.kind, true)
+  }
+  catch (err) {
+    reactions.value = previous
+    reactionError.value = formatApiError(err)
+  }
+  finally {
+    voting.value = null
+  }
+}
+
+async function toggleVoters(kind: ForumReactionKind) {
+  if (voters.value?.kind === kind) {
+    voters.value = null
+    return
+  }
+
+  await loadVoters(kind)
+}
+
+async function loadVoters(kind: ForumReactionKind, silent = false) {
+  if (!silent || voters.value?.kind !== kind) {
+    voters.value = {
+      kind,
+      total: countFor(kind),
+      items: [],
+      truncated: false,
+      loading: true,
+      error: '',
+    }
+  }
+
+  try {
+    const result = await api.get<ForumReactionVoters>(
+      `/api/v1/forum/posts/${props.post.id}/reactions?kind=${kind}`,
+    )
+    if (voters.value?.kind !== kind) return
+    voters.value = { ...result, loading: false, error: '' }
+  }
+  catch (err) {
+    if (voters.value?.kind !== kind) return
+    voters.value = { ...voters.value, loading: false, error: formatApiError(err) }
+  }
+}
+
+function closeVoters() {
+  voters.value = null
+}
+
+function onDocumentPointerDown(event: PointerEvent) {
+  if (!voters.value) return
+  const target = event.target as Node | null
+  if (target && reactionsEl.value?.contains(target)) return
+  closeVoters()
+}
+
+function onDocumentKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') closeVoters()
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', onDocumentPointerDown)
+  document.addEventListener('keydown', onDocumentKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('pointerdown', onDocumentPointerDown)
+  document.removeEventListener('keydown', onDocumentKeydown)
+})
 
 const authorName = computed(() => props.post.author.display_name || props.post.author.username)
 const initials = computed(() => authorName.value.slice(0, 2))
@@ -213,6 +351,99 @@ async function save() {
           </button>
         </div>
       </template>
+
+      <footer ref="reactionsEl" class="forum-reactions">
+        <div
+          v-for="kind in reactionKinds"
+          :key="kind"
+          class="forum-reaction"
+          :class="[kind, { 'is-active': reactions.my_reaction === kind }]"
+        >
+          <button
+            type="button"
+            class="forum-reaction-vote"
+            :disabled="isOwnPost"
+            :aria-label="kind === 'like' ? 'Нравится' : 'Не нравится'"
+            :aria-pressed="reactions.my_reaction === kind"
+            :title="voteTitle(kind)"
+            @click="vote(kind)"
+          >
+            <svg
+              v-if="kind === 'like'"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M17 14V2" />
+              <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            class="forum-reaction-count"
+            aria-haspopup="dialog"
+            :aria-expanded="voters?.kind === kind"
+            :aria-label="`Кто проголосовал: ${kind === 'like' ? 'нравится' : 'не нравится'}`"
+            @click="toggleVoters(kind)"
+          >
+            {{ countFor(kind) }}
+          </button>
+
+          <div
+            v-if="voters?.kind === kind"
+            class="forum-reaction-popup"
+            role="dialog"
+            :aria-label="kind === 'like' ? 'Кому нравится' : 'Кому не нравится'"
+          >
+            <p v-if="voters.loading" class="muted small">
+              Загружаем…
+            </p>
+            <p v-else-if="voters.error" class="form-error small">
+              {{ voters.error }}
+            </p>
+            <template v-else-if="!voters.items.length">
+              <p class="muted small">
+                Пока никто не голосовал.
+              </p>
+            </template>
+            <template v-else>
+              <NuxtLink
+                v-for="voter in voters.items"
+                :key="voter.id"
+                :to="`/u/${voter.username}`"
+                class="forum-reaction-voter"
+              >
+                {{ voterName(voter) }}
+                <span class="muted">@{{ voter.username }}</span>
+              </NuxtLink>
+              <p v-if="voters.truncated" class="forum-reaction-more muted small">
+                … и ещё {{ voters.total - voters.items.length }}
+              </p>
+            </template>
+          </div>
+        </div>
+
+        <p v-if="reactionError" class="forum-reaction-error">
+          {{ reactionError }}
+        </p>
+      </footer>
     </div>
   </article>
 </template>

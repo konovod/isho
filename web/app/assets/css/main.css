@@ -2058,6 +2058,163 @@ p {
   font-size: 12px;
 }
 
+.forum-reactions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.forum-reaction {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-soft);
+  color: var(--muted);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.forum-reaction-vote,
+.forum-reaction-count {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.forum-reaction-vote {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px 5px 10px;
+}
+
+.forum-reaction-vote svg {
+  width: 16px;
+  height: 16px;
+}
+
+.forum-reaction-vote:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.forum-reaction-vote:not(:disabled):hover {
+  color: var(--accent);
+}
+
+.forum-reaction.dislike .forum-reaction-vote:not(:disabled):hover {
+  color: var(--danger);
+}
+
+.forum-reaction-count {
+  min-width: 28px;
+  padding: 5px 9px 5px 7px;
+  border-left: 1px solid var(--border);
+  border-radius: 0 999px 999px 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.forum-reaction-count:hover {
+  color: var(--accent);
+}
+
+.forum-reaction.dislike .forum-reaction-count:hover {
+  color: var(--danger);
+}
+
+.forum-reaction.is-active {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+.forum-reaction.dislike.is-active {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+}
+
+.forum-reaction.is-active .forum-reaction-count {
+  border-left-color: color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.forum-reaction.like.is-active .forum-reaction-vote svg {
+  fill: currentColor;
+}
+
+.forum-reaction.dislike.is-active .forum-reaction-vote svg {
+  fill: none;
+}
+
+.forum-reaction.is-active .forum-reaction-vote:not(:disabled):hover,
+.forum-reaction.is-active .forum-reaction-count:hover {
+  color: inherit;
+}
+
+.forum-reaction-popup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  width: max-content;
+  min-width: 170px;
+  max-width: min(260px, calc(100vw - 48px));
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.forum-reaction:last-child .forum-reaction-popup {
+  right: 0;
+  left: auto;
+}
+
+.forum-reaction-popup p {
+  margin: 0;
+}
+
+.forum-reaction-voter {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 0;
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.forum-reaction-voter .muted {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.forum-reaction-voter:hover {
+  color: var(--accent);
+}
+
+.forum-reaction-more {
+  margin-top: 4px;
+}
+
+.forum-reaction-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--danger-text);
+  font-size: 12px;
+}
+
 .forum-quote {
   margin-bottom: 14px;
   padding: 10px 14px;

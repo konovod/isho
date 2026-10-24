@@ -109,6 +109,12 @@
   отмечает прочтение через `POST /api/v1/forum/topics/:id/read` последним сообщением
   просмотренной страницы. Автор последнего ответа денормализован в
   `forum_topics.last_post_user_id` и обновляется операциями создания/удаления сообщений.
+- **Реакции:** `forum_post_reactions` (`post_id`, `user_id`, `kind` `like|dislike`,
+  уникальность `[post_id, user_id]`). Счётчики не денормализованы — их считает
+  `ForumReactions` одним запросом на страницу, поэтому удаление пользователя или поста
+  не оставляет стухших чисел. `POST /api/v1/forum/posts/:id/reactions` ставит голос,
+  повтор снимает, другой заменяет; за своё сообщение нельзя (`422 own_post`), забаненному
+  `403`. Попап — `GET .../reactions?kind=like|dislike`: 10 последних и `truncated`.
 - **ИИ на форуме:** `Ai::Client` (`api/src/services/ai/`) ходит в DeepSeek через
   OpenAI-совместимый `/chat/completions` на stdlib `HTTP::Client`; без `AI_API_KEY`
   всё выключено, `AI_ENABLED=off` — аварийный выключатель. Долгие вызовы не держат

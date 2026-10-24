@@ -19,6 +19,10 @@ module Api::V1::Forum::Params
     params.nested?("forum_topic_read")
   end
 
+  def forum_post_reaction_fields : Hash(String, String)
+    params.nested?("forum_post_reaction")
+  end
+
   def pagination_meta(page : Int32, per_page : Int32, total : Int64)
     pages = (total + per_page - 1) // per_page
     {page: page, per_page: per_page, total: total, pages: pages}
