@@ -23,6 +23,7 @@ class Api::V1::Projects::Index < ApiAction
       .preload_user
       .preload_screenshots
       .preload_tags
+      .preload_builds
       .limit(per_page)
       .offset((page - 1) * per_page)
       .results

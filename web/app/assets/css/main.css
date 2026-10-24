@@ -506,6 +506,7 @@ p {
 }
 
 .project-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   border-radius: var(--radius);
@@ -515,10 +516,55 @@ p {
   transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
+.project-card-link {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .project-card:hover {
   transform: translateY(-3px);
   border-color: var(--border-strong);
   box-shadow: var(--shadow);
+}
+
+/* A browser build is playable straight from the card. The play link sits over
+   the cover, next to the project link rather than inside it: a link cannot
+   contain another link. */
+.project-play {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-sm);
+  background: rgba(15, 17, 22, 0.62);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 650;
+  backdrop-filter: blur(4px);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.project-play:hover {
+  background: rgba(15, 17, 22, 0.82);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.project-play:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.project-play-icon {
+  width: 11px;
+  height: 11px;
+  flex: none;
 }
 
 .project-cover {

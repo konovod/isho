@@ -298,6 +298,8 @@ export interface ProjectCard {
   ai_usage: AiUsage
   published_at: string | null
   cover_url: string | null
+  /** Id of the first browser build, so the card can offer «Играть». */
+  play_build_id: number | null
   author: ApiUser
   tags: Tag[]
 }

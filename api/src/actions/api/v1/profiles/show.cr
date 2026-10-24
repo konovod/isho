@@ -12,6 +12,7 @@ class Api::V1::Profiles::Show < ApiAction
       .preload_user
       .preload_screenshots
       .preload_tags
+      .preload_builds
       .limit(AppSettings::PROJECTS_PER_PAGE)
       .results
 

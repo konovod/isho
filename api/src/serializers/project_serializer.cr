@@ -19,8 +19,10 @@ class ProjectSerializer < BaseSerializer
       ai_usage:     @project.ai_usage,
       published_at: @project.published_at,
       cover_url:    cover_url,
-      author:       UserSerializer.new(@project.user),
-      tags:         tags,
+      # Lets a card offer «Играть» without loading the whole project.
+      play_build_id: play_build_id,
+      author:        UserSerializer.new(@project.user),
+      tags:          tags,
     }
 
     if @detailed
@@ -77,5 +79,14 @@ class ProjectSerializer < BaseSerializer
     return nil unless file
 
     (file.versions_card? || file).url.gsub('\\', '/')
+  end
+
+  # The first browser build, the same one the project page picks. Nil when
+  # builds are not preloaded, so a plain query does not hit the database.
+  private def play_build_id : Int64?
+    return nil unless @project.builds_preloaded?
+
+    build = @project.builds.sort_by(&.id).find { |item| item.web? && !item.entry_path.to_s.empty? }
+    build.try(&.id)
   end
 end

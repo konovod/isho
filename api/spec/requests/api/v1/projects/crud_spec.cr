@@ -77,6 +77,44 @@ describe Api::V1::Projects do
       items.size.should eq 1
       items.first["slug"].as_s.should eq published.slug
     end
+
+    it "marks a project with a browser build as playable" do
+      playable = ProjectFactory.create &.status("published").published_at(Time.utc)
+      build = SaveBuild.create!(
+        project_id: playable.id,
+        public_id: UUID.random.to_s,
+        kind: "web",
+        entry_path: "index.html",
+        size_bytes: 1_i64,
+      )
+      plain = ProjectFactory.create &.status("published").published_at(Time.utc)
+
+      response = ApiClient.exec(Api::V1::Projects::Index)
+
+      response.status_code.should eq 200
+      items = JSON.parse(response.body)["items"].as_a
+      items.find { |item| item["slug"].as_s == playable.slug }.not_nil!["play_build_id"].as_i64.should eq build.id
+      items.find { |item| item["slug"].as_s == plain.slug }.not_nil!["play_build_id"].as_nil.should be_nil
+    end
+  end
+
+  describe "GET /api/v1/users/:username" do
+    it "marks a card on a profile as playable" do
+      user = UserFactory.create
+      project = ProjectFactory.create &.user_id(user.id).status("published").published_at(Time.utc)
+      build = SaveBuild.create!(
+        project_id: project.id,
+        public_id: UUID.random.to_s,
+        kind: "web",
+        entry_path: "index.html",
+        size_bytes: 1_i64,
+      )
+
+      response = ApiClient.new.get("/api/v1/users/#{user.username}")
+
+      response.status_code.should eq 200
+      JSON.parse(response.body)["projects"].as_a.first["play_build_id"].as_i64.should eq build.id
+    end
   end
 
   describe "GET /api/v1/projects/:slug" do
