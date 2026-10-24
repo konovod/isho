@@ -80,6 +80,11 @@ module StorageUsage
           FROM markdown_images mi
           WHERE mi.user_id = $1
         ), 0)
+        + COALESCE((
+          SELECT SUM(COALESCE((j.banner->'metadata'->>'size')::bigint, 0))
+          FROM jams j
+          WHERE j.user_id = $1
+        ), 0)
       )::bigint AS images
     SQL
 
@@ -103,6 +108,7 @@ module StorageUsage
       + COALESCE((SELECT SUM(total_bytes) FROM upload_sessions), 0)
       + COALESCE((SELECT SUM(COALESCE((image->'metadata'->>'size')::bigint, 0)) FROM screenshots), 0)
       + COALESCE((SELECT SUM(COALESCE((image->'metadata'->>'size')::bigint, 0)) FROM markdown_images), 0)
+      + COALESCE((SELECT SUM(COALESCE((banner->'metadata'->>'size')::bigint, 0)) FROM jams), 0)
     )::bigint
     SQL
 

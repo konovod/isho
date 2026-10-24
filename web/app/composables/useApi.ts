@@ -45,6 +45,18 @@ const fieldNames: Record<string, string> = {
   group_title: 'Группа',
   position: 'Позиция',
   parent_id: 'Родительский раздел',
+  cancel_reason: 'Причина отмены',
+  starts_at: 'Дата старта',
+  submissions_close_at: 'Конец приёма заявок',
+  voting_closes_at: 'Конец судейства',
+  time_zone: 'Часовой пояс',
+  judging_mode: 'Кто оценивает',
+  score_scale: 'Шкала оценок',
+  criteria: 'Критерии',
+  theme: 'Тема',
+  rules: 'Правила',
+  prizes: 'Призы',
+  results_note: 'Итоги',
 }
 
 const detailMessages: Record<string, string> = {
@@ -69,6 +81,15 @@ const detailMessages: Record<string, string> = {
   'must be a root section': 'родителем может быть только корневой раздел',
   'can not be added to a section with subsections': 'раздел с подразделами нельзя сделать подразделом',
   'can not be changed for a protected section': 'этот раздел всегда корневой',
+  'must be after the start': 'должно быть позже старта',
+  'must be after submissions close': 'должно быть позже конца приёма заявок',
+  'is not a known time zone': 'неизвестный часовой пояс',
+  'must be community, participants or jury': 'нужно выбрать один из режимов оценки',
+  'must be 5 or 10': 'нужно выбрать шкалу 1–5 или 1–10',
+  'can not be changed after publication': 'нельзя менять после публикации',
+  'can not have more than 10 criteria': 'нельзя добавить больше 10 критериев',
+  'must be between 1 and 3': 'вес должен быть от 1 до 3',
+  'at least one criterion is required': 'нужен хотя бы один критерий',
 }
 
 const codeMessages: Record<string, string> = {
@@ -105,6 +126,12 @@ const codeMessages: Record<string, string> = {
   protected_section: 'Этот раздел удалить нельзя.',
   section_has_children: 'В разделе есть подразделы — сначала удалите или перенесите их.',
   section_not_empty: 'В разделе есть темы — удалить можно только пустой раздел.',
+  jam_not_ready: 'Заполните даты и добавьте хотя бы один критерий.',
+  jam_already_published: 'Джем уже опубликован.',
+  jam_canceled: 'Джем отменён.',
+  jam_not_draft: 'Удалить можно только черновик; опубликованный джем отменяют.',
+  jam_banner_too_large: 'Файл слишком большой — баннер должен быть до 5 МБ.',
+  invalid_file_type: 'Поддерживаются PNG, JPEG и WebP.',
 }
 
 function translateDetail(message: string): string {

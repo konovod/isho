@@ -316,6 +316,66 @@ export interface ProjectList {
   meta: { page: number, per_page: number, total: number }
 }
 
+export type JamPhase = 'draft' | 'upcoming' | 'open' | 'judging' | 'finished' | 'canceled'
+export type JamStatus = 'draft' | 'published' | 'canceled'
+
+export interface JamCriterion {
+  id: number
+  title: string
+  description: string | null
+  weight: number
+  position: number
+}
+
+/** What the current account may do with a jam. */
+export interface JamViewer {
+  is_organizer: boolean
+  is_admin: boolean
+  can_edit: boolean
+  results_visible: boolean
+}
+
+export interface Jam {
+  id: number
+  slug: string
+  title: string
+  tagline: string | null
+  theme: string | null
+  theme_visible: boolean
+  banner_url: string | null
+  banner_card_url: string | null
+  starts_at: string | null
+  submissions_close_at: string | null
+  voting_closes_at: string | null
+  time_zone: string
+  status: JamStatus
+  phase: JamPhase
+  next_phase_at: string | null
+  judging_mode: string
+  score_scale: number
+  published_at: string | null
+  canceled_at: string | null
+  cancel_reason: string | null
+  organizer: ApiUser
+  /** Present on the detail endpoint. */
+  description?: string | null
+  rules?: string | null
+  prizes?: string | null
+  results_note?: string | null
+  forum_section?: ForumSectionRef | null
+  criteria?: JamCriterion[]
+  viewer?: JamViewer | null
+}
+
+export interface JamList {
+  items: Jam[]
+  meta: { page: number, per_page: number, total: number, pages: number }
+}
+
+export interface JamCriterionList {
+  items: JamCriterion[]
+}
+
 export interface AdminUser extends ApiUser {
   email: string
   is_admin: boolean

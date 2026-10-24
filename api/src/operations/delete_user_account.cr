@@ -7,6 +7,7 @@ class DeleteUserAccount < Avram::Operation
   def run
     delete_project_files
     delete_markdown_image_files
+    delete_jam_banners
     DeleteUserContent.run!(user: user)
 
     AppDatabase.transaction do
@@ -40,6 +41,12 @@ class DeleteUserAccount < Avram::Operation
   private def delete_markdown_image_files
     MarkdownImageQuery.new.user_id(user.id).results.each do |image|
       image.image.try(&.delete)
+    end
+  end
+
+  private def delete_jam_banners
+    JamQuery.new.for_user(user.id).results.each do |jam|
+      jam.banner.try(&.delete)
     end
   end
 

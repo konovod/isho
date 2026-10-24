@@ -3,7 +3,10 @@ const props = withDefaults(defineProps<{
   page: number
   pages: number
   basePath: string
-}>(), {})
+  query?: Record<string, string>
+}>(), {
+  query: () => ({}),
+})
 
 const visiblePages = computed(() => {
   const total = props.pages
@@ -15,7 +18,16 @@ const visiblePages = computed(() => {
 })
 
 function pageLink(page: number): string {
-  return page === 1 ? props.basePath : `${props.basePath}?page=${page}`
+  const params = new URLSearchParams()
+
+  for (const [key, value] of Object.entries(props.query)) {
+    if (value) params.set(key, value)
+  }
+
+  if (page > 1) params.set('page', String(page))
+
+  const query = params.toString()
+  return query ? `${props.basePath}?${query}` : props.basePath
 }
 </script>
 

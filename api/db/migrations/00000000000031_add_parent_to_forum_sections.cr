@@ -10,7 +10,7 @@ class AddParentToForumSections::V00000000000031 < Avram::Migrator::Migration::V1
 
   def rollback
     alter table_for(ForumSection) do
-      remove_belongs_to parent
+      remove_belongs_to :parent
     end
   end
 end

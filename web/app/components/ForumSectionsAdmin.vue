@@ -427,7 +427,10 @@ async function remove(section: AdminForumSection) {
               <template v-if="row.child && row.section.parent">
                 в разделе «{{ row.section.parent.title }}» ·
               </template>
-              {{ row.section.group_title || 'без группы' }} · позиция {{ row.section.position }} ·
+              <template v-else>
+                {{ row.section.group_title || 'без группы' }} ·
+              </template>
+              позиция {{ row.section.position }} ·
               {{ row.section.topics_count }} {{ plural(row.section.topics_count, 'тема', 'темы', 'тем') }} ·
               {{ row.section.posts_count }} {{ plural(row.section.posts_count, 'сообщение', 'сообщения', 'сообщений') }}
               <template v-if="row.section.children_count > 0">

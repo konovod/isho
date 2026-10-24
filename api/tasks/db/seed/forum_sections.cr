@@ -4,6 +4,8 @@ module Db::Seed::ForumSections
      description: "Обсуждение работы сайта, идеи и ошибки."},
     {slug: "offtopic", title: "Оффтоп", group: "Сообщество", position: 20,
      description: "Свободные темы и разговоры не о разработке."},
+    {slug: "jams", title: "Джемы", group: "Сообщество", position: 25,
+     description: "Игровые джемы и конкурсы."},
     {slug: "engines", title: "Движки и технологии", group: "Разработка", position: 30,
      description: "Unity, Unreal Engine, Godot и другие инструменты."},
     {slug: "code", title: "Код и архитектура", group: "Разработка", position: 40,
@@ -37,7 +39,7 @@ module Db::Seed::ForumSections
         description: attrs[:description],
         group_title: attrs[:group],
         position: attrs[:position],
-        ai_answers_enabled: attrs[:slug] != "projects",
+        ai_answers_enabled: !%w[projects jams].includes?(attrs[:slug]),
       )
     end
   end

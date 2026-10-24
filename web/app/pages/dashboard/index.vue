@@ -22,9 +22,14 @@ const projects = computed(() => data.value?.items ?? [])
         <p>Черновики видны только вам. Опубликованные попадают в каталог.</p>
       </div>
 
-      <NuxtLink to="/dashboard/projects/new" class="btn btn-primary">
-        + Новый проект
-      </NuxtLink>
+      <div class="row">
+        <NuxtLink to="/dashboard/jams" class="btn btn-ghost">
+          Мои джемы
+        </NuxtLink>
+        <NuxtLink to="/dashboard/projects/new" class="btn btn-primary">
+          + Новый проект
+        </NuxtLink>
+      </div>
     </div>
 
     <div v-if="pending" class="empty">

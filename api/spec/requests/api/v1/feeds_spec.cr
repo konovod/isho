@@ -81,6 +81,18 @@ describe "Feeds" do
       response.body.should contain "/forum/site/#{newer.slug}"
     end
 
+    it "includes topics from subsections" do
+      root = ForumSectionFactory.create &.slug("jams")
+      child = ForumSectionFactory.create &.slug("jam-1").parent_id(root.id)
+      topic = ForumTopicFactory.create &.section_id(child.id).title("Тема джема")
+
+      response = ApiClient.new.get("/api/v1/feeds/forum/jams.rss")
+
+      response.status_code.should eq 200
+      response.body.should contain topic.title
+      response.body.should contain "/forum/#{child.slug}/#{topic.slug}"
+    end
+
     it "hides topics of drafts and adult projects in the projects section" do
       section = ForumSectionFactory.create &.slug("projects")
       visible = ProjectFactory.create &.status("published").published_at(Time.utc)

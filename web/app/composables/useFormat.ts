@@ -15,6 +15,26 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
   minute: '2-digit',
 })
 
+const TIME_ZONE_FORMATTERS = new Map<string, Intl.DateTimeFormat>()
+
+function timeZoneFormatter(timeZone: string): Intl.DateTimeFormat {
+  let formatter = TIME_ZONE_FORMATTERS.get(timeZone)
+
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat('ru-RU', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone,
+    })
+    TIME_ZONE_FORMATTERS.set(timeZone, formatter)
+  }
+
+  return formatter
+}
+
 export function useFormat() {
   function date(value: string | null | undefined): string {
     if (!value) return '—'
@@ -24,6 +44,19 @@ export function useFormat() {
   function dateTime(value: string | null | undefined): string {
     if (!value) return '—'
     return DATE_TIME_FORMATTER.format(new Date(value))
+  }
+
+  // Jam deadlines are shown in the jam's own time zone, not the reader's:
+  // "до 23:59 по Москве" must mean the same instant for everyone.
+  function dateTimeIn(value: string | null | undefined, timeZone: string): string {
+    if (!value) return '—'
+
+    try {
+      return timeZoneFormatter(timeZone).format(new Date(value))
+    }
+    catch {
+      return DATE_TIME_FORMATTER.format(new Date(value))
+    }
   }
 
   function bytes(value: number | null | undefined): string {
@@ -44,5 +77,5 @@ export function useFormat() {
     return many
   }
 
-  return { date, dateTime, bytes, plural }
+  return { date, dateTime, dateTimeIn, bytes, plural }
 }

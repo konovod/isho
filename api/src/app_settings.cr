@@ -35,6 +35,22 @@ module AppSettings
   ]
   THEMES = %w[light dark]
 
+  # Game jams. Dates may be empty while a jam is a draft; publishing checks
+  # that all three are present and ordered.
+  JAMS_PER_PAGE           =            12
+  JAM_TITLE_MAX           =           120
+  JAM_TAGLINE_MAX         =           200
+  JAM_THEME_MAX           =           200
+  JAM_TEXT_MAX            =        50_000
+  JAM_RESULTS_NOTE_MAX    =        20_000
+  JAM_CRITERIA_MAX        =            10
+  JAM_CRITERION_TITLE_MAX =            80
+  JAM_CRITERION_DESC_MAX  =           300
+  JAM_BANNER_MAX_BYTES    = 5_000_000_i64
+  JAM_BANNER_TYPES        = %w[image/jpeg image/png image/webp]
+  JAM_SCORE_SCALES        = [5, 10]
+  JAM_JUDGING_MODES       = %w[community participants jury]
+
   # AI involvement, ordered from the least to the most. `max_ai_usage` on a
   # user is the highest level they want to see.
   AI_USAGE_LEVELS = %w[ai_free partial significant full]

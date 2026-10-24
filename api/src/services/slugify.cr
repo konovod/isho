@@ -39,6 +39,19 @@ module Slugify
     candidate
   end
 
+  def self.unique_jam_slug(title : String) : String
+    base = call(title, "jam")
+    candidate = base
+    suffix = 2
+
+    while JamQuery.new.slug(candidate).first?
+      candidate = "#{base}-#{suffix}"
+      suffix += 1
+    end
+
+    candidate
+  end
+
   def self.unique_devlog_slug(project_id : Int64, title : String) : String
     base = call(title, "devlog")
     candidate = base

@@ -75,6 +75,38 @@ describe Api::V1::Admin::Forum::Sections do
       JSON.parse(response.body)["position"].as_i64.should eq 80
     end
 
+    it "creates a subsection under a root section" do
+      admin = UserFactory.create &.is_admin(true)
+      root = ForumSectionFactory.create &.title("Джемы").position(10)
+
+      response = AuthHelper.client_for(admin).post("/api/v1/admin/forum/sections", forum_section: {
+        title:       "Джем №1",
+        parent_id:   root.id,
+        group_title: "Не нужна",
+      })
+
+      response.status_code.should eq 201
+      body = JSON.parse(response.body)
+      body["parent_id"].as_i64.should eq root.id
+      body["parent"]["slug"].as_s.should eq root.slug
+      body["group_title"].as_nil.should be_nil
+      body["depth"].as_i.should eq 1
+    end
+
+    it "rejects a subsection of a subsection" do
+      admin = UserFactory.create &.is_admin(true)
+      root = ForumSectionFactory.create
+      child = ForumSectionFactory.create &.parent_id(root.id)
+
+      response = AuthHelper.client_for(admin).post("/api/v1/admin/forum/sections", forum_section: {
+        title:     "Третий уровень",
+        parent_id: child.id,
+      })
+
+      response.status_code.should eq 422
+      JSON.parse(response.body)["error"]["details"]["parent_id"].as_a.first.as_s.should contain "root section"
+    end
+
     it "rejects an empty title" do
       admin = UserFactory.create &.is_admin(true)
 
@@ -152,6 +184,62 @@ describe Api::V1::Admin::Forum::Sections do
       response.status_code.should eq 422
     end
 
+    it "does not change the slug of a section with subsections" do
+      admin = UserFactory.create &.is_admin(true)
+      root = ForumSectionFactory.create
+      ForumSectionFactory.create &.parent_id(root.id)
+
+      response = AuthHelper.client_for(admin).patch("/api/v1/admin/forum/sections/#{root.id}", forum_section: {
+        slug: "new-address",
+      })
+
+      response.status_code.should eq 422
+      JSON.parse(response.body)["error"]["details"]["slug"].as_a.first.as_s.should contain "can not be changed"
+    end
+
+    it "moves a child section to another root" do
+      admin = UserFactory.create &.is_admin(true)
+      first_root = ForumSectionFactory.create &.position(10)
+      second_root = ForumSectionFactory.create &.position(20)
+      child = ForumSectionFactory.create &.parent_id(first_root.id)
+
+      response = AuthHelper.client_for(admin).patch("/api/v1/admin/forum/sections/#{child.id}", forum_section: {
+        parent_id: second_root.id,
+      })
+
+      response.status_code.should eq 200
+      body = JSON.parse(response.body)
+      body["parent_id"].as_i64.should eq second_root.id
+      body["parent"]["slug"].as_s.should eq second_root.slug
+    end
+
+    it "does not make a root with subsections a child" do
+      admin = UserFactory.create &.is_admin(true)
+      root = ForumSectionFactory.create
+      ForumSectionFactory.create &.parent_id(root.id)
+      other_root = ForumSectionFactory.create
+
+      response = AuthHelper.client_for(admin).patch("/api/v1/admin/forum/sections/#{root.id}", forum_section: {
+        parent_id: other_root.id,
+      })
+
+      response.status_code.should eq 422
+      JSON.parse(response.body)["error"]["details"]["parent_id"].as_a.first.as_s.should contain "subsections"
+    end
+
+    it "keeps protected sections at the root" do
+      admin = UserFactory.create &.is_admin(true)
+      section = ForumSectionFactory.create &.slug("projects")
+      root = ForumSectionFactory.create
+
+      response = AuthHelper.client_for(admin).patch("/api/v1/admin/forum/sections/#{section.id}", forum_section: {
+        parent_id: root.id,
+      })
+
+      response.status_code.should eq 422
+      JSON.parse(response.body)["error"]["details"]["parent_id"].as_a.first.as_s.should contain "protected"
+    end
+
     it "returns 404 for a missing section" do
       admin = UserFactory.create &.is_admin(true)
 
@@ -184,6 +272,18 @@ describe Api::V1::Admin::Forum::Sections do
       response.status_code.should eq 422
       JSON.parse(response.body)["error"]["code"].as_s.should eq "section_not_empty"
       ForumSectionQuery.new.id(section.id).first?.should_not be_nil
+    end
+
+    it "refuses to delete a section with subsections" do
+      admin = UserFactory.create &.is_admin(true)
+      root = ForumSectionFactory.create
+      ForumSectionFactory.create &.parent_id(root.id)
+
+      response = AuthHelper.client_for(admin).delete("/api/v1/admin/forum/sections/#{root.id}")
+
+      response.status_code.should eq 422
+      JSON.parse(response.body)["error"]["code"].as_s.should eq "section_has_children"
+      ForumSectionQuery.new.id(root.id).first?.should_not be_nil
     end
 
     it "refuses to delete the projects section" do

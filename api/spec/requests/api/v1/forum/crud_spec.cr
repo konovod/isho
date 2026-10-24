@@ -15,6 +15,24 @@ describe Api::V1::Forum do
       item["topics_count"].as_i.should eq 1
       item["posts_count"].as_i.should eq 1
     end
+
+    it "returns the two-level hierarchy" do
+      root = ForumSectionFactory.create &.slug("jams")
+      child = ForumSectionFactory.create &.slug("jam-1").parent_id(root.id)
+
+      response = ApiClient.new.get("/api/v1/forum/sections")
+
+      response.status_code.should eq 200
+      items = JSON.parse(response.body)["items"].as_a
+      root_item = items.find { |item| item["slug"].as_s == root.slug }.not_nil!
+      child_item = items.find { |item| item["slug"].as_s == child.slug }.not_nil!
+
+      root_item["parent_id"].as_nil.should be_nil
+      root_item["children_count"].as_i.should eq 1
+      child_item["parent_id"].as_i64.should eq root.id
+      child_item["parent"]["slug"].as_s.should eq root.slug
+      child_item["depth"].as_i.should eq 1
+    end
   end
 
   describe "POST /api/v1/forum/sections/:section_slug/topics" do
@@ -85,6 +103,19 @@ describe Api::V1::Forum do
       body["meta"]["total"].as_i.should eq 3
       body["meta"]["pages"].as_i.should eq 2
     end
+
+    it "returns subsections above the topics" do
+      root = ForumSectionFactory.create &.slug("jams")
+      child = ForumSectionFactory.create &.slug("jam-1").parent_id(root.id)
+
+      response = ApiClient.new.get("/api/v1/forum/sections/jams")
+
+      response.status_code.should eq 200
+      body = JSON.parse(response.body)
+      body["section"]["children_count"].as_i.should eq 1
+      body["children"].as_a.map(&.["slug"].as_s).should eq [child.slug]
+      body["children"].as_a.first["parent"]["slug"].as_s.should eq root.slug
+    end
   end
 
   describe "GET /api/v1/forum/sections/:section_slug/topics/:topic_slug" do
@@ -100,6 +131,19 @@ describe Api::V1::Forum do
       body = JSON.parse(response.body)
       body["topic"]["id"].as_i64.should eq topic.id
       body["items"].as_a.map(&.["id"].as_i64).should eq [first.id, second.id]
+    end
+
+    it "includes the parent section in the topic breadcrumb" do
+      root = ForumSectionFactory.create &.slug("jams")
+      child = ForumSectionFactory.create &.slug("jam-1").parent_id(root.id)
+      topic = ForumTopicFactory.create &.section_id(child.id)
+
+      response = ApiClient.new.get("/api/v1/forum/sections/jam-1/topics/#{topic.slug}")
+
+      response.status_code.should eq 200
+      section = JSON.parse(response.body)["topic"]["section"]
+      section["slug"].as_s.should eq child.slug
+      section["parent"]["slug"].as_s.should eq root.slug
     end
   end
 
