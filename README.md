@@ -42,8 +42,9 @@ Ctrl+C останавливает оба сервера. По отдельнос
 Демо-аккаунт после сида: `demo@isho.local` / `password1234`.
 
 Веб-сборки локально по умолчанию живут на одном origin с сайтом. Чтобы проверить
-их как на сервере (отдельный origin, кеш и сейвы игры), запустите API с
-`MEDIA_ORIGIN=http://127.0.0.1:4000`: `play_url` станет абсолютным, а песочница —
+их как на сервере (отдельный origin на проект, кеш и сейвы игры), запустите API с
+`MEDIA_ORIGIN=http://localhost:4000`: `play_url` станет абсолютным и укажет на
+`<slug>.localhost:4000` (браузеры резолвят `*.localhost` в 127.0.0.1), а песочница —
 с `allow-same-origin`.
 
 ### ImageMagick на Windows
@@ -186,13 +187,17 @@ Caddy отдаёт `/api/*` и `/media/*` в Lucky, всё остальное �
 `Latch::Storage::FileSystem` на S3-хранилище в `api/config/latch.cr` и раздавать
 медиа через CDN.
 
-Браузерные сборки живут на отдельном origin (`-MediaAddress https://isho-games.duckdns.org`,
-Caddy отдаёт там только `/media/web/*`): игра в песочнице сохраняет свой origin и
-поэтому может пользоваться Cache Storage, IndexedDB и localStorage, которых
-opaque origin не даёт, — а cookie сайта на этот хост не отправляются. Это отдельное
-имя, а не поддомен сайта: поддомен делит registrable domain и может ставить cookie
-на родителя. Сжатые файлы Unity (`.br`, `.gz`) уходят с `Content-Encoding` и типом
-исходного файла, иначе `nosniff` не даёт загрузить framework.
+Браузерные сборки живут на отдельных origin'ах: база `-MediaAddress
+https://isho-games.duckdns.org` и у каждого проекта свой хост
+`<slug>.isho-games.duckdns.org` (Caddy отдаёт на них только `/media/web/*`). Игра в
+песочнице сохраняет свой origin и поэтому может пользоваться Cache Storage, IndexedDB
+и localStorage, которых opaque origin не даёт, — а cookie сайта на эти хосты не
+отправляются. Один origin на проект: сейвы и кеш игр не смешиваются, а все сборки
+проекта делят хост, так что прогресс переживает обновление версии. База — отдельное
+имя, а не поддомен сайта: поддомен делит registrable domain и может ставить cookie на
+родителя. Сертификаты проектных хостов выдаются on-demand, Caddy спрашивает API
+(`/internal/tls/allow`). Сжатые файлы Unity (`.br`, `.gz`) уходят с `Content-Encoding`
+и типом исходного файла, иначе `nosniff` не даёт загрузить framework.
 
 ## Ограничения прототипа
 

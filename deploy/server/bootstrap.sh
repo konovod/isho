@@ -36,6 +36,13 @@ if [ "$MEDIA_SITE_ADDRESS" = "$SITE_ADDRESS" ]; then
   MEDIA_ORIGIN=
 fi
 
+# The bare host of the media origin: the Caddyfile matches project hosts as
+# *.<host>, so strip the scheme and any port.
+MEDIA_HOST=
+if [ -n "$MEDIA_ORIGIN" ]; then
+  MEDIA_HOST=$(printf '%s' "$MEDIA_ORIGIN" | sed -E 's#^[a-z]+://##; s#/.*$##; s#:[0-9]+$##')
+fi
+
 log() { printf '\n==> %s\n' "$*"; }
 
 if [ ! -d "$RELEASE/api/bin" ] || [ ! -f "$RELEASE/server/bootstrap.sh" ]; then
@@ -234,6 +241,7 @@ ISHO_SITE_ADDRESS=$SITE_ADDRESS
 EOF
 if [ -n "$MEDIA_SITE_ADDRESS" ]; then
   printf 'ISHO_MEDIA_SITE_ADDRESS=%s\n' "$MEDIA_SITE_ADDRESS" >> "$ENV_DIR/caddy.env"
+  printf 'ISHO_MEDIA_HOST=%s\n' "$MEDIA_HOST" >> "$ENV_DIR/caddy.env"
 fi
 chmod 0644 "$ENV_DIR/caddy.env"
 

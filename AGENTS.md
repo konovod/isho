@@ -54,11 +54,17 @@
   Latch). Веб-сборки отдаются с CSP `sandbox` и `X-Content-Type-Options: nosniff`,
   файлы — с `Content-Disposition: attachment`; это делает `MediaHeadersHandler`.
   Играм нужны Cache Storage, IndexedDB и localStorage (кеш сборки Unity, `PlayerPrefs`),
-  а в opaque origin их нет, поэтому на отдельном media-origin (`MEDIA_ORIGIN`,
-  задаётся деплою через `-MediaAddress`, например `https://isho-games.duckdns.org`)
-  к sandbox добавляется `allow-same-origin`: там нет cookie сайта. На основном origin
-  флага нет никогда. Медиа-хост берут **отдельным именем**, а не поддоменом сайта:
-  поддомен делит registrable domain и может ставить cookie на родителя (cookie tossing).
+  а в opaque origin их нет, поэтому на медиа-хостах к sandbox добавляется
+  `allow-same-origin`: там нет cookie сайта. На основном origin флага нет никогда.
+  Медиа-база — отдельное имя (`MEDIA_ORIGIN`, `-MediaAddress`, например
+  `https://isho-games.duckdns.org`), а не поддомен сайта: поддомен делит registrable
+  domain и может ставить cookie на родителя. У каждого проекта свой хост
+  `<slug>.isho-games.duckdns.org` (`MediaOrigin`): один origin на игру, так что сейвы,
+  кеш и квоты не смешиваются, а все сборки проекта делят хост и прогресс переживает
+  обновление. Сертификаты на проектные хосты выдаются on-demand (Caddy спрашивает
+  `GET /internal/tls/allow?domain=...`, API разрешает только хосты существующих
+  проектов; маршрут вне `/api` и только с localhost). Лимит Let's Encrypt считается
+  по новым именам, продления в него не входят.
   Сжатые файлы Unity (`*.js.br`, `*.wasm.br`, `*.data.br`, `*.gz`) отдаёт
   `WebBuildAssetsHandler` — с `Content-Encoding` и типом исходного файла, иначе
   загрузчик получает `application/octet-stream` и `nosniff` не даёт запустить

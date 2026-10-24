@@ -51,6 +51,14 @@ describe MediaHeadersHandler do
     end
   end
 
+  it "gives every project host its own origin too" do
+    with_media_origin("https://games.example.test") do
+      _, headers = handler_headers("GET", "/media/web/abc/index.html", host: "nectaris.games.example.test")
+
+      headers["Content-Security-Policy"].should contain("allow-same-origin")
+    end
+  end
+
   it "never allows the app origin back through the play URL" do
     with_media_origin("https://games.example.test") do
       _, headers = handler_headers("GET", "/media/web/abc/index.html", host: "isho.example.test")

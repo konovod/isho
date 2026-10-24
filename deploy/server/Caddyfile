@@ -10,6 +10,14 @@
 {
 	admin off
 	storage file_system /var/lib/caddy
+
+	# Per-project game hosts (deploy/server/Caddyfile.media) get their
+	# certificate during the first handshake. The API allows only hosts of
+	# existing projects, so the server cannot issue certificates for arbitrary
+	# names and is not a certificate vending machine.
+	on_demand_tls {
+		ask http://127.0.0.1:4000/internal/tls/allow
+	}
 }
 
 {$ISHO_SITE_ADDRESS::80} {

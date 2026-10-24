@@ -9,9 +9,9 @@ class MediaHeadersHandler
 
   # A game needs Cache Storage, IndexedDB and localStorage (Unity keeps its
   # build cache and PlayerPrefs there), and an opaque origin has none of them.
-  # Keeping its own origin is safe only on the dedicated media host, where no
-  # session cookie and nothing of the site exists, so the flag is added only
-  # there and never on the app origin.
+  # Keeping its own origin is safe only on the media hosts, where no session
+  # cookie and nothing of the site exists: the base host and the per-project
+  # hosts under it, never the app origin.
   SANDBOX_SAME_ORIGIN = "#{SANDBOX} allow-same-origin"
 
   def call(context : HTTP::Server::Context)
@@ -43,8 +43,7 @@ class MediaHeadersHandler
   end
 
   private def sandbox_policy(context : HTTP::Server::Context) : String
-    media_host = AppSettings.media_host
-    if media_host && context.request.hostname == media_host
+    if MediaOrigin.host?(context.request.hostname.to_s)
       SANDBOX_SAME_ORIGIN
     else
       SANDBOX

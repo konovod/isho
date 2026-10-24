@@ -1,19 +1,54 @@
-# Browser builds live on their own origin, so a game may keep
+# Browser builds live on their own origins, so a game may keep
 # `allow-same-origin` in its sandbox: Unity then gets Cache Storage, IndexedDB
-# and localStorage (build cache, PlayerPrefs), while this host has no session
-# cookie and nothing else of the site. Only /media/web is reachable here.
+# and localStorage (build cache, PlayerPrefs), while these hosts have no
+# session cookie and nothing else of the site. Only /media/web is reachable.
 #
-# Give it a name of its own (isho-games.example.com), not a subdomain of the
+# Give the base its own name (isho-games.example.com), not a subdomain of the
 # site: a subdomain shares the registrable domain and could still set a
 # parent-domain cookie, while the site's cookies are same-site for it.
 #
 # Appended to /etc/caddy/Caddyfile by bootstrap.sh when ISHO_MEDIA_SITE_ADDRESS
 # is set, and never when it equals the site address.
+
+# The base host keeps serving already published links.
 {$ISHO_MEDIA_SITE_ADDRESS} {
 	encode zstd gzip
 
 	handle /media/web/* {
 		reverse_proxy 127.0.0.1:4000
+	}
+
+	handle {
+		respond 404
+	}
+}
+
+# One host per project (`<project-slug>.isho-games.example.com`): every game
+# gets its own origin, so saves, caches and storage quotas never mix, while all
+# builds of one project keep the player's progress across updates.
+#
+# The certificate for a project host is issued during the first handshake
+# (on_demand_tls in the main Caddyfile asks the API, which allows only hosts of
+# existing projects). Let's Encrypt counts new certificates per registered
+# domain, but renewals are exempt, so the limit only applies to newly created
+# projects.
+:443 {
+	tls {
+		on_demand
+	}
+
+	@project host *.{$ISHO_MEDIA_HOST}
+
+	handle @project {
+		encode zstd gzip
+
+		handle /media/web/* {
+			reverse_proxy 127.0.0.1:4000
+		}
+
+		handle {
+			respond 404
+		}
 	}
 
 	handle {

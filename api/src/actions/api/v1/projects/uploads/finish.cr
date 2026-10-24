@@ -44,7 +44,7 @@ class Api::V1::Projects::Uploads::Finish < ApiAction
       end
 
       DeleteUploadSession.run!(session: session)
-      json BuildSerializer.new(build, with_usage: true), status: 201
+      json BuildSerializer.new(build, project, with_usage: true), status: 201
     end
   end
 

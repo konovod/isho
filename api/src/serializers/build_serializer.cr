@@ -1,5 +1,7 @@
 class BuildSerializer < BaseSerializer
-  def initialize(@build : Build, @with_usage : Bool = false)
+  # The project is passed in: play URLs are per project, and every caller
+  # already has it loaded.
+  def initialize(@build : Build, @project : Project, @with_usage : Bool = false)
   end
 
   def render
@@ -39,7 +41,6 @@ class BuildSerializer < BaseSerializer
     return nil if entry.nil? || entry.empty?
 
     path = "/media/web/#{BuildStorage.safe_public_id(@build.public_id)}/#{URI.encode_path(entry)}"
-    media_origin = AppSettings.media_origin
-    media_origin ? "#{media_origin}#{path}" : path
+    MediaOrigin.url(@project, path)
   end
 end

@@ -349,7 +349,7 @@ describe Api::V1::Projects::Uploads do
 
           response.status_code.should eq 201
           body = JSON.parse(response.body)
-          body["play_url"].as_s.should start_with("https://games.example.test/media/web/")
+          body["play_url"].as_s.should start_with("https://#{project.slug}.games.example.test/media/web/")
           body["play_url"].as_s.should end_with("/index.html")
 
           build = BuildQuery.new.id(body["id"].as_i64).first.not_nil!

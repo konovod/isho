@@ -198,20 +198,33 @@ sudo -u isho -H bash -c 'set -a; . /etc/isho/api.env; set +a; cd /srv/isho/api &
 sudo -u isho -H bash -c 'set -a; . /etc/isho/api.env; set +a; cd /srv/isho/api && ./bin/tasks storage.cleanup'
 ```
 
-Веб-сборки отдаются с отдельного origin — `-MediaAddress https://isho-games.example.com`
-(или `MEDIA_ORIGIN` в `/etc/isho/api.env`). Caddy отдаёт на этом хосте только
-`/media/web/*`, всё остальное — 404, поэтому cookie сайта туда не попадают.
+Веб-сборки отдаются с отдельного медиа-домена — `-MediaAddress
+https://isho-games.example.com` (или `MEDIA_ORIGIN` в `/etc/isho/api.env`).
+У каждого проекта там свой хост `<slug>.isho-games.example.com`, Caddy отдаёт на них
+только `/media/web/*`, всё остальное — 404, поэтому cookie сайта туда не попадают.
 Игре в песочнице нужен собственный origin (Cache Storage, IndexedDB и
 `localStorage` в opaque origin недоступны — без них Unity не кеширует сборку и не
 сохраняет `PlayerPrefs`), поэтому `allow-same-origin` добавляется только на
-медиа-хосте. Без `-MediaAddress` игра работает по-старому, но без кеша и сейвов.
-Медиа-хост берут **отдельным именем**, а не поддоменом сайта: поддомен делит
+медиа-хостах. Один хост на **проект**, а не на сборку: сейвы и кеш игр не смешиваются,
+а обновление версии не обнуляет прогресс. Без `-MediaAddress` игра работает
+по-старому, но без кеша и сейвов.
+Медиа-базу берут **отдельным именем**, а не поддоменом сайта: поддомен делит
 registrable domain с сайтом, может ставить cookie на родителя, а cookie сайта
 для него same-site. Сжатые файлы Unity (`*.br`, `*.gz`) уходят с `Content-Encoding`
 и типом исходного файла — иначе `nosniff` не даёт запустить framework.
 Файлы для скачивания отдаются с `Content-Disposition: attachment`.
 
-Включить отдельный origin на уже работающем сервере:
+### Сертификаты проектных хостов
+
+Хосты проектов заранее неизвестны, поэтому Caddy выдаёт сертификат во время первого
+TLS-хендшейка (`on_demand_tls` в `server/Caddyfile`). Перед выпуском он спрашивает
+`GET http://127.0.0.1:4000/internal/tls/allow?domain=<host>`; API отвечает 200 только
+для `<slug>.<медиа-хост>` существующего проекта, остальным — 403. Маршрут живёт вне
+`/api` и снаружи не проксируется. Let's Encrypt считает лимит (50 в неделю на
+registrable domain) по **новым** именам, продления в него не входят, так что
+количество уже существующих проектов на лимит не влияет.
+
+Включить отдельный медиа-домен на уже работающем сервере:
 
 ```powershell
 .\deploy\deploy.ps1 -SiteAddress https://isho.duckdns.org `
@@ -221,7 +234,7 @@ registrable domain с сайтом, может ставить cookie на род
 `isho-games.duckdns.org` — вторая бесплатная запись в DuckDNS на тот же IP
 (поддомен `games.isho.duckdns.org` тоже резолвится wildcard-правилом, но он общий
 registrable domain с сайтом). Для своего домена достаточно CNAME
-`isho-games` на сайт. Сертификат Caddy выпустит сам, адрес запоминается в
+`isho-games` на сайт. Сертификат базы Caddy выпустит сам, адрес запоминается в
 `/etc/isho/caddy.env`, а `MEDIA_ORIGIN` — в `/etc/isho/api.env`, так что следующий
 деплой без флага ничего не сломает.
 

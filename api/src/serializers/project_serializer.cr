@@ -66,7 +66,7 @@ class ProjectSerializer < BaseSerializer
   private def builds : Array(BuildSerializer)
     return [] of BuildSerializer unless @project.builds_preloaded?
 
-    @project.builds.sort_by(&.id).map { |build| BuildSerializer.new(build, with_usage: @with_usage) }
+    @project.builds.sort_by(&.id).map { |build| BuildSerializer.new(build, @project, with_usage: @with_usage) }
   end
 
   private def cover_url : String?
