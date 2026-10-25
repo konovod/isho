@@ -280,6 +280,32 @@ describe Api::V1::Jams::Scoring do
       item["voter"].as_nil.should be_nil
     end
 
+    it "shows anonymous feedback to any visitor after judging" do
+      jam = finished_jam
+      criterion = criterion_for(jam)
+      entry = entry_for(jam)
+      add_score(entry, UserFactory.create, criterion, 5, "Публичный отзыв")
+
+      response = ApiClient.new.get("/api/v1/jams/#{jam.slug}/entries/#{entry.id}/feedback")
+
+      response.status_code.should eq 200
+      body = JSON.parse(response.body)
+      body["criteria"].as_a.first["items"].as_a.first["comment"].as_s
+        .should eq "Публичный отзыв"
+      body["criteria"].as_a.first["items"].as_a.first["voter"].as_nil.should be_nil
+    end
+
+    it "hides public feedback for a disqualified entry" do
+      jam = finished_jam
+      criterion = criterion_for(jam)
+      entry = entry_for(jam)
+      add_score(entry, UserFactory.create, criterion, 5, "Скрытый отзыв")
+      JamEntry::SaveOperation.update!(entry, status: "disqualified", disqualified_reason: "Нарушение")
+
+      ApiClient.new.get("/api/v1/jams/#{jam.slug}/entries/#{entry.id}/feedback")
+        .status_code.should eq 404
+    end
+
     it "shows the voter to the organizer" do
       organizer = UserFactory.create
       jam = finished_jam
@@ -308,6 +334,16 @@ describe Api::V1::Jams::Scoring do
       response = AuthHelper.client_for(author).get(
         "/api/v1/jams/#{jam.slug}/entries/#{entry.id}/feedback",
       )
+
+      response.status_code.should eq 422
+      JSON.parse(response.body)["error"]["code"].as_s.should eq "feedback_not_ready"
+    end
+
+    it "keeps feedback hidden from visitors until judging ends" do
+      jam = judging_jam
+      entry = entry_for(jam)
+
+      response = ApiClient.new.get("/api/v1/jams/#{jam.slug}/entries/#{entry.id}/feedback")
 
       response.status_code.should eq 422
       JSON.parse(response.body)["error"]["code"].as_s.should eq "feedback_not_ready"

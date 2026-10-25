@@ -1,20 +1,23 @@
 class Api::V1::Projects::Index < ApiAction
   include Api::Auth::SkipRequireSession
+  include Api::V1::Projects::CatalogFilters
 
   get "/api/v1/projects" do
     page = (params.get?(:page).try(&.to_i?) || 1).clamp(1, 10_000)
     per_page = (params.get?(:per_page).try(&.to_i?) || AppSettings::PROJECTS_PER_PAGE).clamp(1, 48)
 
-    query = ProjectQuery.new.visible_to(current_user?).newest
+    query = catalog_query(current_user?).newest
 
     if term = params.get?(:q).try(&.strip)
       query = query.search(term) unless term.empty?
     end
 
-    if tag_slug = params.get?(:tag).try(&.strip)
-      unless tag_slug.empty?
-        tag = TagQuery.new.slug(tag_slug).first?
-        query = tag ? query.join_project_tags(ProjectTagQuery.new.tag_id(tag.id)) : query.id.eq(-1_i64)
+    # `?tag=` is the old single-tag address; `?tags=a,b` replaces it when the
+    # visitor picks more than one. Old links and feeds keep working.
+    if legacy_slug = params.get?(:tag).try(&.strip)
+      if filter_tag_slugs.empty? && !legacy_slug.empty?
+        tag = TagQuery.new.slug(legacy_slug).first?
+        query = tag ? query.with_all_tags([tag.id]) : query.id.eq(-1_i64)
       end
     end
 

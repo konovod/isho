@@ -1,18 +1,24 @@
 <script setup lang="ts">
-import type { Tag } from '~/types/api'
+import type { RouteLocationRaw } from 'vue-router'
 
-defineProps<{ tag: Tag, active?: boolean, count?: number }>()
+defineProps<{
+  name: string
+  to: RouteLocationRaw
+  active?: boolean
+  count?: number
+}>()
 
 const { plural } = useFormat()
 </script>
 
 <template>
   <NuxtLink
-    :to="active ? '/' : `/?tag=${tag.slug}`"
+    :to="to"
     class="tag"
     :class="{ active }"
+    :aria-current="active ? 'true' : undefined"
   >
-    {{ tag.name }}
+    {{ name }}
     <span
       v-if="count && count > 0"
       class="tag-count"
@@ -20,5 +26,6 @@ const { plural } = useFormat()
     >
       {{ count }}
     </span>
+    <span v-if="active" class="tag-x" aria-hidden="true">✕</span>
   </NuxtLink>
 </template>

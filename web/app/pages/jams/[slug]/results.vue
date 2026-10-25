@@ -14,6 +14,11 @@ const { data, pending, error } = await useAsyncData(
 
 const results = computed(() => data.value ?? null)
 const items = computed(() => results.value?.items ?? [])
+const feedbackOpen = ref<number | null>(null)
+
+function toggleFeedback(entryId: number) {
+  feedbackOpen.value = feedbackOpen.value === entryId ? null : entryId
+}
 
 function date(value: string | null | undefined): string {
   return results.value ? dateTimeIn(value, results.value.jam.time_zone) : '—'
@@ -101,50 +106,65 @@ useSeoMeta({
           </p>
 
           <div class="jam-results">
-            <article
-              v-for="item in items"
-              :key="item.entry_id"
-              class="card card-pad jam-result-row"
-              :class="{ 'jam-result-winner': item.place === 1 }"
-            >
-              <div class="jam-result-place">
-                {{ placeLabel(item.place) }}
-              </div>
-
-              <div class="dash-thumb">
-                <img v-if="item.project.cover_url" :src="item.project.cover_url" :alt="item.project.title">
-              </div>
-
-              <div class="jam-result-main">
-                <h3>
-                  <NuxtLink :to="`/p/${item.project.slug}`">
-                    {{ item.project.title }}
-                  </NuxtLink>
-                </h3>
-                <p v-if="item.project.tagline" class="muted small">
-                  {{ item.project.tagline }}
-                </p>
-                <div class="muted small">
-                  {{ item.votes_count }} {{ plural(item.votes_count, 'оценка', 'оценки', 'оценок') }}
+            <template v-for="item in items" :key="item.entry_id">
+              <article
+                class="card card-pad jam-result-row"
+                :class="{ 'jam-result-winner': item.place === 1 }"
+              >
+                <div class="jam-result-place">
+                  {{ placeLabel(item.place) }}
                 </div>
-              </div>
 
-              <div class="jam-result-score">
-                <strong>{{ item.total }}</strong>
-                <span class="muted small">из {{ item.max_total }}</span>
-              </div>
+                <div class="dash-thumb">
+                  <img v-if="item.project.cover_url" :src="item.project.cover_url" :alt="item.project.title">
+                </div>
 
-              <div class="jam-result-criteria">
-                <span v-for="criterion in item.criteria" :key="criterion.criterion_id" class="jam-result-criterion">
-                  {{ criterion.title }}: {{ criterion.average }}
-                </span>
-              </div>
-            </article>
+                <div class="jam-result-main">
+                  <h3>
+                    <NuxtLink :to="`/p/${item.project.slug}`">
+                      {{ item.project.title }}
+                    </NuxtLink>
+                  </h3>
+                  <p v-if="item.project.tagline" class="muted small">
+                    {{ item.project.tagline }}
+                  </p>
+                  <div class="row">
+                    <span class="muted small">
+                      {{ item.votes_count }} {{ plural(item.votes_count, 'оценка', 'оценки', 'оценок') }}
+                    </span>
+                    <button
+                      class="btn btn-ghost btn-sm"
+                      type="button"
+                      @click="toggleFeedback(item.entry_id)"
+                    >
+                      Отзывы
+                    </button>
+                  </div>
+                </div>
+
+                <div class="jam-result-score">
+                  <strong>{{ item.total }}</strong>
+                  <span class="muted small">из {{ item.max_total }}</span>
+                </div>
+
+                <div class="jam-result-criteria">
+                  <span v-for="criterion in item.criteria" :key="criterion.criterion_id" class="jam-result-criterion">
+                    {{ criterion.title }}: {{ criterion.average }}
+                  </span>
+                </div>
+              </article>
+
+              <JamFeedbackPanel
+                v-if="feedbackOpen === item.entry_id"
+                :jam-slug="results.jam.slug"
+                :entry-id="item.entry_id"
+              />
+            </template>
           </div>
         </template>
 
         <p class="muted small mt-16">
-          Индивидуальные отзывы по критериям видны авторам заявок.
+          Отзывы по критериям публичны после судейства и анонимны. Организатор видит авторов оценок.
         </p>
       </template>
     </template>

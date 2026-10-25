@@ -12,6 +12,10 @@ const { data, pending, error } = await useAsyncData(
   `jam-feedback-${props.jamSlug}-${props.entryId}`,
   () => api.get<JamFeedback>(`/api/v1/jams/${props.jamSlug}/entries/${props.entryId}/feedback`),
 )
+
+const showVoters = computed(() => {
+  return data.value?.criteria.some(criterion => criterion.items.some(item => !!item.voter)) ?? false
+})
 </script>
 
 <template>
@@ -36,6 +40,9 @@ const { data, pending, error } = await useAsyncData(
     <template v-else-if="data">
       <p class="muted small mb-16">
         {{ jamJudgingModeHint(data.mode) }}
+      </p>
+      <p v-if="!showVoters" class="muted small mb-16">
+        Отзывы анонимны.
       </p>
 
       <div class="jam-feedback-criteria">

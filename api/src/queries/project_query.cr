@@ -38,4 +38,34 @@ class ProjectQuery < Project::BaseQuery
 
     ai_usage.in(AppSettings::AI_USAGE_LEVELS[0..highest])
   end
+
+  # A catalogue filter needs a project to carry every selected tag, so the
+  # subquery groups by project and keeps only full matches. The same condition
+  # also narrows tag counts, which is what makes the next tag "compatible".
+  def with_all_tags(tag_ids : Array(Int64)) : self
+    return self if tag_ids.empty?
+
+    where(<<-SQL, tag_ids, tag_ids.size)
+      projects.id IN (
+        SELECT project_tags.project_id
+        FROM project_tags
+        WHERE project_tags.tag_id = ANY(?::bigint[])
+        GROUP BY project_tags.project_id
+        HAVING COUNT(DISTINCT project_tags.tag_id) = ?
+      )
+    SQL
+  end
+
+  # Matches the card's «Играть»: a browser build with an entry point.
+  def with_web_build : self
+    where(<<-SQL)
+      EXISTS (
+        SELECT 1 FROM builds
+        WHERE builds.project_id = projects.id
+          AND builds.kind = 'web'
+          AND builds.entry_path IS NOT NULL
+          AND builds.entry_path <> ''
+      )
+    SQL
+  end
 end
