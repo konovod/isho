@@ -320,6 +320,112 @@ export interface ProjectList {
 
 export type JamPhase = 'draft' | 'upcoming' | 'open' | 'judging' | 'finished' | 'canceled'
 export type JamStatus = 'draft' | 'published' | 'canceled'
+export type JamEntryStatus = 'submitted' | 'disqualified'
+
+export interface JamEntry {
+  id: number
+  status: JamEntryStatus
+  created_at: string
+  disqualified_reason: string | null
+  disqualified_at: string | null
+  project: ProjectCard
+}
+
+export interface JamEntryList {
+  items: JamEntry[]
+  meta: { page: number, per_page: number, total: number, pages: number }
+}
+
+/** A project's participation in a jam, shown on the project page. */
+export interface ProjectJamEntry {
+  id: number
+  status: JamEntryStatus
+  created_at: string
+  disqualified_reason: string | null
+  jam: {
+    id: number
+    slug: string
+    title: string
+    phase: JamPhase
+    starts_at: string | null
+    submissions_close_at: string | null
+  }
+}
+
+export interface JamScoreValue {
+  criterion_id: number
+  score: number
+  comment: string | null
+}
+
+/** One entry on the scoring page, with the viewer's current scorecard. */
+export interface JamScoringEntry {
+  entry: JamEntry
+  complete: boolean
+  my_scores: JamScoreValue[]
+}
+
+export interface JamScoringResponse {
+  jam: Jam
+  items: JamScoringEntry[]
+  progress: { scored: number, total: number }
+}
+
+export interface JamCriterionResult {
+  criterion_id: number
+  title: string
+  weight: number
+  average: number
+}
+
+export interface JamResultEntry {
+  entry_id: number
+  place: number | null
+  total: number
+  max_total: number
+  votes_count: number
+  project: ProjectCard
+  criteria: JamCriterionResult[]
+}
+
+export interface JamResults {
+  available: boolean
+  jam: {
+    slug: string
+    title: string
+    phase: JamPhase
+    judging_mode: string
+    score_scale: number
+    results_note: string | null
+    voting_closes_at: string | null
+    time_zone: string
+  }
+  items: JamResultEntry[]
+}
+
+export interface JamFeedbackItem {
+  score: number
+  comment: string | null
+  counted: boolean
+  voter: ApiUser | null
+}
+
+export interface JamFeedbackCriterion {
+  id: number
+  title: string
+  weight: number
+  average: number
+  items: JamFeedbackItem[]
+}
+
+export interface JamFeedback {
+  entry_id: number
+  project: { slug: string, title: string }
+  mode: string
+  counted_votes: number
+  total_votes: number
+  criteria: JamFeedbackCriterion[]
+}
 
 export interface JamCriterion {
   id: number
@@ -334,7 +440,10 @@ export interface JamViewer {
   is_organizer: boolean
   is_admin: boolean
   can_edit: boolean
+  can_submit: boolean
+  can_score: boolean
   results_visible: boolean
+  my_entries: JamEntry[]
 }
 
 export interface Jam {
@@ -358,6 +467,7 @@ export interface Jam {
   published_at: string | null
   canceled_at: string | null
   cancel_reason: string | null
+  entries_count: number
   organizer: ApiUser
   /** Present on the detail endpoint. */
   description?: string | null

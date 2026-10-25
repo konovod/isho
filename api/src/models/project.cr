@@ -18,6 +18,7 @@ class Project < BaseModel
     has_many builds : Build
     has_many devlogs : Devlog
     has_many forum_topics : ForumTopic
+    has_many jam_entries : JamEntry
     has_many project_tags : ProjectTag
     has_many tags : Tag, through: [:project_tags, :tag]
   end

@@ -3,6 +3,13 @@ class Api::V1::Jams::Criteria::Delete < ApiAction
   include Api::Auth::RequireConfirmedEmail
 
   delete "/api/v1/jams/:slug/criteria/:id" do
+    if JamScoring.locked?(jam)
+      return json ErrorSerializer.new(
+        code: "criteria_locked",
+        message: "Критерии нельзя менять после начала оценивания",
+      ), status: 422
+    end
+
     criterion = find_criterion!
     JamCriterion::DeleteOperation.delete!(criterion)
     head 204

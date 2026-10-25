@@ -25,6 +25,7 @@ class Jam < BaseModel
     column canceled_at : Time?
     column cancel_reason : String?
     has_many criteria : JamCriterion
+    has_many entries : JamEntry
   end
 
   def draft? : Bool

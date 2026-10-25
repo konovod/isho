@@ -20,6 +20,7 @@ class SaveJam < Jam::SaveOperation
     validate_time_zone
     validate_judging_mode
     validate_score_scale
+    validate_scoring_lock
   end
 
   after_save do |jam|
@@ -102,7 +103,7 @@ class SaveJam < Jam::SaveOperation
 
   private def validate_judging_mode
     unless AppSettings::JAM_JUDGING_MODES.includes?(judging_mode.value.to_s)
-      judging_mode.add_error "must be community, participants or jury"
+      judging_mode.add_error "must be community or participants"
     end
   end
 
@@ -110,6 +111,34 @@ class SaveJam < Jam::SaveOperation
     value = score_scale.value || 5
     unless AppSettings::JAM_SCORE_SCALES.includes?(value)
       score_scale.add_error "must be 5 or 10"
+    end
+  end
+
+  # Once the first scorecard exists, changing the counting mode, the scale or
+  # the judging window would silently rewrite the results.
+  private def validate_scoring_lock
+    existing = record
+    return unless existing
+    return unless JamScoring.locked?(existing)
+
+    if judging_mode.value.to_s != existing.judging_mode
+      judging_mode.add_error "can not be changed after scoring starts"
+    end
+
+    if (score_scale.value || 5) != existing.score_scale
+      score_scale.add_error "can not be changed after scoring starts"
+    end
+
+    if starts_at.value != existing.starts_at
+      starts_at.add_error "can not be changed after scoring starts"
+    end
+
+    if submissions_close_at.value != existing.submissions_close_at
+      submissions_close_at.add_error "can not be changed after scoring starts"
+    end
+
+    if voting_closes_at.value != existing.voting_closes_at
+      voting_closes_at.add_error "can not be changed after scoring starts"
     end
   end
 end

@@ -6,12 +6,13 @@ module Api::V1::Jams::JamParams
       .first? || raise Avram::RecordNotFoundError.new(Jam.table_name, params.get(:slug).to_s)
   end
 
-  # Drafts and canceled jams are visible only to their organizer and admins.
+  # Drafts are visible only to their organizer and admins. A jam that was
+  # published and later canceled stays available as a notice page.
   def jam_visible? : Bool
     user = current_user?
     return true if user && (jam.user_id == user.id || user.moderator?)
 
-    jam.published? && !jam.canceled?
+    jam.published? || (jam.canceled? && !jam.published_at.nil?)
   end
 
   def reload_jam(jam : Jam) : Jam

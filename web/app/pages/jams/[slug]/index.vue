@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { Jam } from '~/types/api'
+import type { Jam, JamEntry, JamEntryList } from '~/types/api'
+import { formatApiError } from '~/composables/useApi'
 
 const route = useRoute()
 const api = useApi()
@@ -9,9 +10,15 @@ const { dateTimeIn, plural } = useFormat()
 const slug = computed(() => route.params.slug as string)
 const userKey = computed(() => user.value?.id ?? 'guest')
 
-const { data: jam, error } = await useAsyncData(
+const { data: jam, error, refresh: refreshJam } = await useAsyncData(
   () => `jam-${slug.value}-${userKey.value}`,
   () => api.get<Jam>(`/api/v1/jams/${slug.value}`),
+  { watch: [slug, userKey] },
+)
+
+const { data: entriesData, refresh: refreshEntries } = await useAsyncData(
+  () => `jam-entries-${slug.value}-${userKey.value}`,
+  () => api.get<JamEntryList>(`/api/v1/jams/${slug.value}/entries?per_page=6`),
   { watch: [slug, userKey] },
 )
 
@@ -22,8 +29,18 @@ if (!jam.value && error.value) {
 const criteria = computed(() => jam.value?.criteria ?? [])
 const forumSection = computed(() => jam.value?.forum_section ?? null)
 const canEdit = computed(() => !!jam.value?.viewer?.can_edit)
+const canSubmit = computed(() => !!jam.value?.viewer?.can_submit)
+const canScore = computed(() => !!jam.value?.viewer?.can_score)
+const myEntries = computed(() => jam.value?.viewer?.my_entries ?? [])
+const entries = computed(() => entriesData.value?.items ?? [])
+const entriesTotal = computed(() => entriesData.value?.meta.total ?? jam.value?.entries_count ?? 0)
 const organizerName = computed(() => jam.value?.organizer.display_name || jam.value?.organizer.username || '')
 const organizerInitials = computed(() => organizerName.value.slice(0, 2))
+const showSubmit = ref(false)
+const feedbackOpen = ref<number | null>(null)
+const notice = ref('')
+const actionError = ref('')
+
 const nextLabel = computed(() => {
   switch (jam.value?.phase) {
     case 'upcoming': return 'До старта'
@@ -35,6 +52,38 @@ const nextLabel = computed(() => {
 
 function time(value: string | null | undefined): string {
   return jam.value ? dateTimeIn(value, jam.value.time_zone) : '—'
+}
+
+async function refreshAll() {
+  await Promise.all([refreshJam(), refreshEntries()])
+  await refreshNuxtData()
+}
+
+async function onSubmitted(_entry: JamEntry) {
+  showSubmit.value = false
+  actionError.value = ''
+  notice.value = 'Заявка подана'
+  await refreshAll()
+}
+
+async function withdraw(entry: JamEntry) {
+  if (!confirm(`Отозвать заявку «${entry.project.title}»?`)) return
+
+  actionError.value = ''
+  notice.value = ''
+
+  try {
+    await api.del(`/api/v1/jams/${slug.value}/entries/${entry.id}`)
+    notice.value = 'Заявка отозвана'
+    await refreshAll()
+  }
+  catch (err) {
+    actionError.value = formatApiError(err)
+  }
+}
+
+function toggleFeedback(entry: JamEntry) {
+  feedbackOpen.value = feedbackOpen.value === entry.id ? null : entry.id
 }
 
 useSeoMeta({
@@ -162,6 +211,15 @@ useSeoMeta({
               Критерии оценки
             </h2>
 
+            <div class="card card-pad jam-mode-note mb-16">
+              <div class="row-between mb-8">
+                <strong>Итоговые баллы: {{ jamJudgingModeLabel(jam.judging_mode) }}</strong>
+              </div>
+              <p class="muted small">
+                {{ jamJudgingModeHint(jam.judging_mode) }}
+              </p>
+            </div>
+
             <div v-if="criteria.length" class="jam-criteria">
               <div v-for="criterion in criteria" :key="criterion.id" class="card card-pad">
                 <div class="row-between mb-8">
@@ -188,6 +246,157 @@ useSeoMeta({
             </div>
           </section>
 
+          <section class="section" style="padding-top: 0;">
+            <div class="row-between mb-16">
+              <h2 class="section-title" style="margin-bottom: 0;">
+                Заявки ({{ entriesTotal }})
+              </h2>
+              <NuxtLink
+                v-if="entriesTotal > entries.length"
+                :to="`/jams/${jam.slug}/entries`"
+                class="btn btn-ghost btn-sm"
+              >
+                Все заявки
+              </NuxtLink>
+            </div>
+
+            <div v-if="notice" class="form-success mb-16">
+              {{ notice }}
+            </div>
+            <div v-if="actionError" class="form-error mb-16">
+              {{ actionError }}
+            </div>
+
+            <div v-if="jam.phase === 'open'" class="card card-pad mb-16">
+              <template v-if="user">
+                <template v-if="canSubmit">
+                  <p class="muted small">
+                    Можно подать несколько проектов. Один проект — одна заявка в этом джеме.
+                  </p>
+                  <button
+                    v-if="!showSubmit"
+                    class="btn btn-primary mt-16"
+                    type="button"
+                    @click="showSubmit = true"
+                  >
+                    Подать заявку
+                  </button>
+                </template>
+                <p v-else class="muted small">
+                  Подача недоступна: подтвердите почту или проверьте статус аккаунта.
+                </p>
+              </template>
+              <template v-else>
+                <p class="muted">
+                  Войдите, чтобы подать проект в джем.
+                </p>
+                <NuxtLink to="/sign_in" class="btn btn-primary btn-sm mt-16">
+                  Войти
+                </NuxtLink>
+              </template>
+            </div>
+            <div v-else-if="jam.phase === 'upcoming'" class="card card-pad mb-16 muted">
+              Приём заявок начнётся {{ time(jam.starts_at) }}.
+            </div>
+            <div v-else-if="jam.phase === 'judging' || jam.phase === 'finished'" class="card card-pad mb-16 muted">
+              Приём заявок закрыт.
+            </div>
+
+            <div v-if="jam.phase === 'judging'" class="card card-pad mb-16">
+              <template v-if="user">
+                <template v-if="canScore">
+                  <p class="muted small">
+                    Судейство идёт. Оцените заявки по критериям и оставьте текстовый отзыв — он важнее баллов.
+                  </p>
+                  <NuxtLink :to="`/jams/${jam.slug}/judge`" class="btn btn-primary mt-16">
+                    Оценить заявки
+                  </NuxtLink>
+                </template>
+                <p v-else class="muted small">
+                  Голосование недоступно: подтвердите почту или проверьте статус аккаунта.
+                </p>
+              </template>
+              <template v-else>
+                <p class="muted">
+                  Войдите, чтобы оценить заявки и оставить отзывы.
+                </p>
+                <NuxtLink to="/sign_in" class="btn btn-primary btn-sm mt-16">
+                  Войти
+                </NuxtLink>
+              </template>
+            </div>
+
+            <JamSubmitForm
+              v-if="showSubmit"
+              :jam-slug="jam.slug"
+              class="mb-24"
+              @submitted="onSubmitted"
+              @cancel="showSubmit = false"
+            />
+
+            <div v-if="myEntries.length" class="card card-pad mb-16">
+              <h3 class="section-title" style="font-size: 15px;">
+                Ваши заявки
+              </h3>
+
+              <template v-for="entry in myEntries" :key="entry.id">
+                <div class="jam-my-entry">
+                  <NuxtLink :to="`/p/${entry.project.slug}`" class="jam-my-entry-title">
+                    {{ entry.project.title }}
+                  </NuxtLink>
+                  <span v-if="entry.status === 'disqualified'" class="badge badge-disqualified">
+                    снята
+                  </span>
+                  <span v-if="entry.disqualified_reason" class="muted small">
+                    {{ entry.disqualified_reason }}
+                  </span>
+                  <button
+                    v-if="jam.phase === 'open'"
+                    class="btn btn-ghost btn-sm"
+                    type="button"
+                    @click="withdraw(entry)"
+                  >
+                    Отозвать
+                  </button>
+                  <button
+                    v-if="jam.phase === 'finished'"
+                    class="btn btn-ghost btn-sm"
+                    type="button"
+                    @click="toggleFeedback(entry)"
+                  >
+                    Обратная связь
+                  </button>
+                </div>
+
+                <JamFeedbackPanel
+                  v-if="feedbackOpen === entry.id"
+                  :jam-slug="jam.slug"
+                  :entry-id="entry.id"
+                  class="mb-16"
+                />
+              </template>
+            </div>
+
+            <div v-if="entries.length" class="grid">
+              <ProjectCard
+                v-for="entry in entries"
+                :key="entry.id"
+                :project="entry.project"
+              />
+            </div>
+            <div v-else class="empty">
+              {{ jam.phase === 'open' ? 'Заявок пока нет. Будьте первым.' : 'Заявок пока нет.' }}
+            </div>
+
+            <NuxtLink
+              v-if="entriesTotal > entries.length"
+              :to="`/jams/${jam.slug}/entries`"
+              class="btn btn-ghost btn-sm mt-16"
+            >
+              Все заявки ({{ entriesTotal }})
+            </NuxtLink>
+          </section>
+
           <section v-if="jam.phase === 'finished'" class="section" style="padding-top: 0;">
             <h2 class="section-title">
               Итоги
@@ -195,8 +404,12 @@ useSeoMeta({
 
             <MarkdownBody v-if="jam.results_note" :source="jam.results_note" />
             <div v-else class="empty">
-              Итоги ещё не подведены.
+              Победителей объявляет администратор. Баллы и места уже доступны.
             </div>
+
+            <NuxtLink :to="`/jams/${jam.slug}/results`" class="btn btn-primary btn-sm mt-16">
+              Все баллы и места
+            </NuxtLink>
           </section>
 
           <section v-if="forumSection" class="section" style="padding-top: 0;">
@@ -270,6 +483,9 @@ useSeoMeta({
             <div class="muted small">
               Шкала: 1–{{ jam.score_scale }} · {{ criteria.length }}
               {{ plural(criteria.length, 'критерий', 'критерия', 'критериев') }}
+            </div>
+            <div class="muted small" style="margin-top: 4px;">
+              Баллы: {{ jamJudgingModeLabel(jam.judging_mode) }}
             </div>
           </div>
         </aside>

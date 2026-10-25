@@ -5,7 +5,7 @@ defineProps<{
   jam: Jam
 }>()
 
-const { dateTimeIn } = useFormat()
+const { dateTimeIn, plural } = useFormat()
 
 function dateRange(jam: Jam): string {
   const start = jam.starts_at ? dateTimeIn(jam.starts_at, jam.time_zone) : '—'
@@ -48,7 +48,10 @@ function dateRange(jam: Jam): string {
 
       <div class="jam-card-meta muted small">
         <span>{{ dateRange(jam) }}</span>
-        <span>@{{ jam.organizer.username }}</span>
+        <span>
+          {{ jam.entries_count }} {{ plural(jam.entries_count, 'заявка', 'заявки', 'заявок') }}
+          · @{{ jam.organizer.username }}
+        </span>
       </div>
     </div>
   </NuxtLink>

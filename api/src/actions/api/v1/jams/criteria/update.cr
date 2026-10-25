@@ -3,6 +3,13 @@ class Api::V1::Jams::Criteria::Update < ApiAction
   include Api::Auth::RequireConfirmedEmail
 
   patch "/api/v1/jams/:slug/criteria/:id" do
+    if JamScoring.locked?(jam)
+      return json ErrorSerializer.new(
+        code: "criteria_locked",
+        message: "Критерии нельзя менять после начала оценивания",
+      ), status: 422
+    end
+
     criterion = find_criterion!
     updated = SaveJamCriterion.update!(criterion, params)
 

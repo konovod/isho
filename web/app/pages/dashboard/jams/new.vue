@@ -16,6 +16,7 @@ const form = reactive({
   submissions_close_at: '',
   voting_closes_at: '',
   time_zone: 'Europe/Moscow',
+  judging_mode: 'community',
 })
 
 const error = ref('')
@@ -40,6 +41,7 @@ async function submit() {
         submissions_close_at: toIso(form.submissions_close_at),
         voting_closes_at: toIso(form.voting_closes_at),
         time_zone: form.time_zone,
+        judging_mode: form.judging_mode,
       },
     })
 
@@ -137,6 +139,15 @@ async function submit() {
               <option value="Asia/Vladivostok">Владивосток (UTC+10)</option>
             </select>
           </div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="jam-judging">Кто идёт в итоговые баллы</label>
+          <select id="jam-judging" v-model="form.judging_mode" class="input">
+            <option value="community">Все пользователи</option>
+            <option value="participants">Только участники</option>
+          </select>
+          <span class="hint">{{ jamJudgingModeHint(form.judging_mode) }}</span>
         </div>
 
         <div class="field">

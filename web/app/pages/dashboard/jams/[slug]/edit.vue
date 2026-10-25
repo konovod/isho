@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Jam, JamCriterion } from '~/types/api'
+import type { Jam, JamCriterion, JamEntry, JamEntryList } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
@@ -7,7 +7,7 @@ definePageMeta({ middleware: 'auth' })
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
-const { plural } = useFormat()
+const { plural, dateTime } = useFormat()
 const slug = route.params.slug as string
 
 const { data, pending, error: loadError, refresh } = await useAsyncData(
@@ -15,10 +15,16 @@ const { data, pending, error: loadError, refresh } = await useAsyncData(
   () => api.get<Jam>(`/api/v1/jams/${slug}`),
 )
 
+const { data: entriesData, refresh: refreshEntries } = await useAsyncData(
+  `edit-jam-entries-${slug}`,
+  () => api.get<JamEntryList>(`/api/v1/jams/${slug}/entries?status=all&per_page=100`),
+)
+
 const jam = computed(() => data.value ?? null)
 const criteria = computed(() => jam.value?.criteria ?? [])
+const entries = computed(() => entriesData.value?.items ?? [])
 
-const tab = ref<'details' | 'criteria' | 'publish'>('details')
+const tab = ref<'details' | 'criteria' | 'entries' | 'publish'>('details')
 const error = ref('')
 const notice = ref('')
 const saving = ref(false)
@@ -52,6 +58,7 @@ const criterionDraft = reactive({
   description: '',
   weight: 1,
 })
+const feedbackOpen = ref<number | null>(null)
 
 watch(jam, (value) => {
   if (!value) return
@@ -226,6 +233,43 @@ async function deleteCriterion(criterion: JamCriterion) {
   }
 }
 
+async function disqualifyEntry(entry: JamEntry) {
+  const reason = prompt(`Причина снятия заявки «${entry.project.title}»`)
+  if (!reason?.trim()) return
+
+  clearMessages()
+
+  try {
+    await api.post(`/api/v1/jams/${slug}/entries/${entry.id}/disqualify`, {
+      jam_entry: { disqualified_reason: reason.trim() },
+    })
+    notice.value = 'Заявка снята'
+    await Promise.all([refresh(), refreshEntries()])
+    await refreshNuxtData()
+  }
+  catch (err) {
+    fail(err)
+  }
+}
+
+async function restoreEntry(entry: JamEntry) {
+  clearMessages()
+
+  try {
+    await api.post(`/api/v1/jams/${slug}/entries/${entry.id}/restore`)
+    notice.value = 'Заявка возвращена'
+    await Promise.all([refresh(), refreshEntries()])
+    await refreshNuxtData()
+  }
+  catch (err) {
+    fail(err)
+  }
+}
+
+function toggleFeedback(entry: JamEntry) {
+  feedbackOpen.value = feedbackOpen.value === entry.id ? null : entry.id
+}
+
 const readyToPublish = computed(() => {
   return !!form.starts_at
     && !!form.submissions_close_at
@@ -338,6 +382,9 @@ async function removeJam() {
         <button class="editor-tab" :class="{ active: tab === 'criteria' }" @click="tab = 'criteria'">
           Критерии
         </button>
+        <button class="editor-tab" :class="{ active: tab === 'entries' }" @click="tab = 'entries'">
+          Заявки
+        </button>
         <button class="editor-tab" :class="{ active: tab === 'publish' }" @click="tab = 'publish'">
           Публикация
         </button>
@@ -415,12 +462,12 @@ async function removeJam() {
 
           <div class="form-grid">
             <div class="field">
-              <label class="label" for="jam-judging">Кто оценивает</label>
+              <label class="label" for="jam-judging">Кто идёт в итоговые баллы</label>
               <select id="jam-judging" v-model="form.judging_mode" class="input">
                 <option value="community">Все пользователи</option>
                 <option value="participants">Только участники</option>
-                <option value="jury">Назначенное жюри</option>
               </select>
+              <span class="hint">{{ jamJudgingModeHint(form.judging_mode) }}</span>
             </div>
 
             <div class="field">
@@ -485,6 +532,7 @@ async function removeJam() {
         <div class="card card-pad" style="max-width: 840px;">
           <p class="muted small mb-16">
             Критерии задают, по чему оценивают заявки. Вес 1–3 увеличивает вклад критерия в итоговую оценку.
+            После первой оценки критерии, шкала и режим подсчёта фиксируются.
           </p>
 
           <div v-if="criteria.length" class="dash-list">
@@ -587,6 +635,87 @@ async function removeJam() {
               Добавить критерий
             </button>
           </form>
+        </div>
+      </section>
+
+      <section v-else-if="tab === 'entries'">
+        <div class="card card-pad" style="max-width: 840px;">
+          <div class="row-between mb-16">
+            <h2 class="section-title" style="margin-bottom: 0;">
+              Заявки ({{ entries.length }})
+            </h2>
+            <NuxtLink :to="`/jams/${jam.slug}/entries`" class="btn btn-ghost btn-sm">
+              Публичный список
+            </NuxtLink>
+          </div>
+
+          <div v-if="!entries.length" class="empty">
+            Заявок пока нет.
+          </div>
+
+          <div v-else class="dash-list">
+            <template v-for="entry in entries" :key="entry.id">
+              <div class="dash-row">
+                <div class="dash-thumb">
+                  <img v-if="entry.project.cover_url" :src="entry.project.cover_url" :alt="entry.project.title">
+                </div>
+
+                <div class="dash-info">
+                  <div class="row mb-8">
+                    <h3>
+                      <NuxtLink :to="`/p/${entry.project.slug}`">
+                        {{ entry.project.title }}
+                      </NuxtLink>
+                    </h3>
+                    <span
+                      class="badge"
+                      :class="entry.status === 'submitted' ? 'badge-published' : 'badge-disqualified'"
+                    >
+                      {{ entry.status === 'submitted' ? 'подана' : 'снята' }}
+                    </span>
+                  </div>
+                  <div class="muted small">
+                    @{{ entry.project.author.username }} · {{ dateTime(entry.created_at) }}
+                    <template v-if="entry.disqualified_reason">
+                      · {{ entry.disqualified_reason }}
+                    </template>
+                  </div>
+                </div>
+
+                <div class="dash-actions">
+                  <button
+                    class="btn btn-ghost btn-sm"
+                    type="button"
+                    @click="toggleFeedback(entry)"
+                  >
+                    Отзывы
+                  </button>
+                  <button
+                    v-if="entry.status === 'submitted'"
+                    class="btn btn-danger btn-sm"
+                    type="button"
+                    @click="disqualifyEntry(entry)"
+                  >
+                    Снять
+                  </button>
+                  <button
+                    v-else
+                    class="btn btn-ghost btn-sm"
+                    type="button"
+                    @click="restoreEntry(entry)"
+                  >
+                    Вернуть
+                  </button>
+                </div>
+              </div>
+
+              <JamFeedbackPanel
+                v-if="feedbackOpen === entry.id"
+                :jam-slug="jam.slug"
+                :entry-id="entry.id"
+              />
+            </template>
+          </div>
         </div>
       </section>
 

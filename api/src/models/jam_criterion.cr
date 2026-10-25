@@ -5,5 +5,6 @@ class JamCriterion < BaseModel
     column description : String?
     column weight : Int32
     column position : Int32
+    has_many scores : JamScore
   end
 end

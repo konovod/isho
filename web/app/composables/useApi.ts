@@ -57,6 +57,12 @@ const fieldNames: Record<string, string> = {
   rules: 'Правила',
   prizes: 'Призы',
   results_note: 'Итоги',
+  project_slug: 'Проект',
+  disqualified_reason: 'Причина снятия',
+  jam_scores: 'Оценки',
+  criterion_id: 'Критерий',
+  score: 'Балл',
+  comment: 'Отзыв',
 }
 
 const detailMessages: Record<string, string> = {
@@ -85,11 +91,17 @@ const detailMessages: Record<string, string> = {
   'must be after submissions close': 'должно быть позже конца приёма заявок',
   'is not a known time zone': 'неизвестный часовой пояс',
   'must be community, participants or jury': 'нужно выбрать один из режимов оценки',
+  'must be community or participants': 'нужно выбрать, чьи баллы идут в итоги',
   'must be 5 or 10': 'нужно выбрать шкалу 1–5 или 1–10',
   'can not be changed after publication': 'нельзя менять после публикации',
+  'can not be changed after scoring starts': 'нельзя менять после начала оценивания',
   'can not have more than 10 criteria': 'нельзя добавить больше 10 критериев',
   'must be between 1 and 3': 'вес должен быть от 1 до 3',
   'at least one criterion is required': 'нужен хотя бы один критерий',
+  'must include every criterion': 'нужно оценить каждый критерий',
+  'does not belong to this jam': 'критерий относится к другому джему',
+  'is duplicated': 'критерий указан дважды',
+  'is out of range': 'балл вне выбранной шкалы',
 }
 
 const codeMessages: Record<string, string> = {
@@ -132,6 +144,19 @@ const codeMessages: Record<string, string> = {
   jam_not_draft: 'Удалить можно только черновик; опубликованный джем отменяют.',
   jam_banner_too_large: 'Файл слишком большой — баннер должен быть до 5 МБ.',
   invalid_file_type: 'Поддерживаются PNG, JPEG и WebP.',
+  jam_not_open: 'Приём заявок закрыт.',
+  project_not_found: 'Проект не найден среди ваших проектов.',
+  project_not_published: 'Сначала опубликуйте проект.',
+  already_submitted: 'Этот проект уже подан в этот джем.',
+  entry_locked: 'Приём заявок закрыт — отозвать заявку может только организатор.',
+  already_disqualified: 'Заявка уже снята.',
+  entry_not_disqualified: 'Заявка не снята.',
+  judging_closed: 'Судейство ещё не началось или уже закончилось.',
+  own_entry: 'Свою заявку оценивать нельзя.',
+  entry_disqualified: 'Снятую заявку оценивать нельзя.',
+  criteria_locked: 'Критерии нельзя менять после начала оценивания.',
+  criteria_missing: 'У джема нет критериев для оценки.',
+  feedback_not_ready: 'Отзывы откроются после окончания судейства.',
 }
 
 function translateDetail(message: string): string {

@@ -108,6 +108,16 @@ describe Api::V1::Jams do
       body["theme_visible"].as_bool.should be_false
       body["phase"].as_s.should eq "upcoming"
     end
+
+    it "keeps a canceled jam page available as a notice" do
+      now = Time.utc
+      jam = JamFactory.create &.status("canceled").published_at(now).canceled_at(now)
+
+      response = ApiClient.new.get("/api/v1/jams/#{jam.slug}")
+
+      response.status_code.should eq 200
+      JSON.parse(response.body)["phase"].as_s.should eq "canceled"
+    end
   end
 
   describe "PATCH /api/v1/jams/:slug" do

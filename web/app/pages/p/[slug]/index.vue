@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Devlog, ForumTopic, ProjectDetail } from '~/types/api'
+import type { Devlog, ForumTopic, ProjectDetail, ProjectJamEntry } from '~/types/api'
 
 const route = useRoute()
 const api = useApi()
@@ -22,8 +22,14 @@ const { data: forumData } = await useAsyncData(
   () => api.get<{ items: ForumTopic[] }>(`/api/v1/projects/${route.params.slug}/forum/topics?per_page=3`),
 )
 
+const { data: jamsData } = await useAsyncData(
+  `project-jams-${route.params.slug}`,
+  () => api.get<{ items: ProjectJamEntry[] }>(`/api/v1/projects/${route.params.slug}/jams`),
+)
+
 const devlogs = computed(() => devlogData.value?.items ?? [])
 const forumTopics = computed(() => forumData.value?.items ?? [])
+const projectJams = computed(() => jamsData.value?.items ?? [])
 
 if (!project.value) {
   throw createError({ statusCode: 404, statusMessage: 'Проект не найден' })
@@ -164,6 +170,37 @@ useHead(() => ({
                   </NuxtLink>
                 </template>
               </article>
+            </div>
+          </section>
+
+          <section v-if="projectJams.length" class="section" style="padding-top: 0;">
+            <h2 class="section-title">
+              Участие в джемах
+            </h2>
+
+            <div class="dash-list">
+              <NuxtLink
+                v-for="entry in projectJams"
+                :key="entry.id"
+                :to="`/jams/${entry.jam.slug}`"
+                class="dash-row"
+              >
+                <div class="dash-info">
+                  <div class="row mb-8">
+                    <h3>{{ entry.jam.title }}</h3>
+                    <JamPhaseBadge :phase="entry.jam.phase" />
+                    <span v-if="entry.status === 'disqualified'" class="badge badge-disqualified">
+                      снята
+                    </span>
+                  </div>
+                  <div class="muted small">
+                    {{ entry.status === 'disqualified'
+                      ? (entry.disqualified_reason || 'Заявка снята организатором')
+                      : 'Заявка подана' }}
+                  </div>
+                </div>
+                <span class="forum-section-arrow">→</span>
+              </NuxtLink>
             </div>
           </section>
 
