@@ -27,6 +27,11 @@ module AppSettings
   FORUM_POST_MAX_CHARS    =             20_000
   FORUM_QUOTE_MAX_CHARS   =              2_000
   FORUM_TOPIC_TITLE_MAX   =                160
+  # Private messages: one thread per pair of accounts, no editing or reactions.
+  PRIVATE_MESSAGES_PER_PAGE   =    50
+  PRIVATE_MESSAGES_REFRESH    =   100
+  PRIVATE_MESSAGE_MAX_CHARS   = 5_000
+  PRIVATE_MESSAGES_PER_MINUTE =    20
   # Inline images in project descriptions, devlogs and forum posts. GIFs are
   # allowed as-is: ImageMagick keeps their frames and delays when resizing.
   MARKDOWN_IMAGE_MAX_BYTES = 10_000_000_i64

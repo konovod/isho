@@ -48,6 +48,46 @@ export interface Me extends ApiUser {
   ban: ActiveBan | null
   ai: MeAi
   impersonation: Impersonation | null
+  /** Starting value for the header badge; messages pages refresh it. */
+  unread_messages_count: number
+}
+
+/** One message in a private conversation. */
+export interface PrivateMessage {
+  id: number
+  body: string
+  author: ApiUser
+  /** Sent by the account the site currently acts as. */
+  mine: boolean
+  created_at: string
+}
+
+/** The last message preview shown in the inbox. */
+export interface ConversationLastMessage {
+  id: number
+  body: string
+  mine: boolean
+  created_at: string
+}
+
+/** One row of the inbox: the other side and the latest message. */
+export interface Conversation {
+  peer: ApiUser
+  last_message: ConversationLastMessage
+  unread_count: number
+}
+
+export interface ConversationList {
+  items: Conversation[]
+  unread_count: number
+}
+
+/** A page of a conversation plus the viewer's total unread count. */
+export interface PrivateMessageList {
+  peer: ApiUser
+  items: PrivateMessage[]
+  has_more: boolean
+  unread_count: number
 }
 
 /** Active moderation ban shown to the user and in the admin list. */

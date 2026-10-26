@@ -17,9 +17,12 @@ class MeSerializer < BaseSerializer
       is_admin:        @user.is_admin,
       email_confirmed: @user.email_confirmed?,
       created_at:      @user.created_at,
-      ban:             ban ? ActiveBanSerializer.new(ban) : nil,
-      ai:              ai,
-      impersonation:   impersonation,
+      # Starting value for the header badge; the messages pages keep it fresh
+      # from their own responses.
+      unread_messages_count: DirectMessages.unread_count(@user),
+      ban:                   ban ? ActiveBanSerializer.new(ban) : nil,
+      ai:                    ai,
+      impersonation:         impersonation,
     }
   end
 

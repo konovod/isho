@@ -3,7 +3,7 @@ import type { ApiUser, ProfileStats, ProjectCard } from '~/types/api'
 
 const route = useRoute()
 const api = useApi()
-const { user } = useAuth()
+const { user, emailConfirmed, banned, impersonating } = useAuth()
 const { plural } = useFormat()
 
 const { data, error } = await useAsyncData(
@@ -17,6 +17,16 @@ if (!data.value) {
 
 const name = computed(() => data.value?.user.display_name || data.value?.user.username || '')
 const initials = computed(() => name.value.slice(0, 2))
+
+const canMessage = computed(() => {
+  const viewer = user.value
+  const profile = data.value?.user
+  if (!viewer || !profile) return false
+  if (viewer.id === profile.id) return false
+  if (!emailConfirmed.value || banned.value || impersonating.value) return false
+
+  return true
+})
 
 interface ProfileStat {
   key: string
@@ -92,6 +102,14 @@ useHead(() => ({
       </div>
 
       <RssLink :href="feedUrl" :title="feedTitle" />
+
+      <NuxtLink
+        v-if="canMessage"
+        :to="`/messages/${data.user.username}`"
+        class="btn btn-primary btn-sm"
+      >
+        Переписка
+      </NuxtLink>
     </div>
 
     <p v-if="data.user.bio" class="muted mb-24" style="max-width: 640px;">

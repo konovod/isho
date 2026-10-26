@@ -105,13 +105,14 @@ const detailMessages: Record<string, string> = {
 }
 
 const codeMessages: Record<string, string> = {
-  email_not_confirmed: 'Подтвердите почту — тогда можно публиковать проекты и писать на форуме.',
+  email_not_confirmed: 'Подтвердите почту — тогда можно публиковать проекты, писать на форуме и в личных сообщениях.',
   invalid_token: 'Ссылка недействительна или устарела. Запросите новое письмо.',
   email_delivery_failed: 'Не удалось отправить письмо. Попробуйте позже.',
-  too_many_requests: 'Слишком много попыток. Попробуйте позже.',
+  too_many_requests: 'Слишком много запросов подряд. Подождите немного.',
   unauthorized: 'Нужно войти в аккаунт.',
   user_banned: 'Аккаунт забанен — публикация недоступна до окончания срока.',
   own_post: 'Нельзя голосовать за своё сообщение.',
+  cannot_message_self: 'Нельзя переписываться с самим собой.',
   cannot_ban_self: 'Нельзя забанить свой аккаунт.',
   cannot_ban_admin: 'Нельзя забанить администратора.',
   cannot_impersonate_self: 'Нельзя войти от имени своего аккаунта.',
@@ -160,6 +161,9 @@ const codeMessages: Record<string, string> = {
 }
 
 function translateDetail(message: string): string {
+  const size = message.match(/^must not have more than (\d+) characters$/)
+  if (size) return `не длиннее ${size[1]} символов`
+
   return detailMessages[message] ?? message
 }
 

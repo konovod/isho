@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { user, canModerate, impersonating, signOut, stopImpersonation, saveTheme } = useAuth()
+const { unreadCount } = useMessages()
 const { toggleTheme } = useTheme()
 const router = useRouter()
 
@@ -43,6 +44,10 @@ async function onToggleTheme() {
         </NuxtLink>
         <NuxtLink to="/jams" class="nav-link">
           Джемы
+        </NuxtLink>
+        <NuxtLink v-if="user" to="/messages" class="nav-link">
+          Переписка
+          <span v-if="unreadCount" class="nav-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
         </NuxtLink>
         <NuxtLink v-if="user" to="/dashboard" class="nav-link">
           Мои проекты
