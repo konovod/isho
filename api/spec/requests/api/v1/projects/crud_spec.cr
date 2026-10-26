@@ -17,6 +17,65 @@ describe Api::V1::Projects do
       project.should_not be_nil
       project.not_nil!.user_id.should eq user.id
       project.not_nil!.status.should eq "draft"
+      project.not_nil!.dev_status.should eq "active"
+      project.not_nil!.genre.should be_nil
+    end
+
+    it "stores the development status and genre of a game" do
+      user = UserFactory.create
+
+      response = AuthHelper.client_for(user).post("/api/v1/projects", project: {
+        title:      "Beta Horror",
+        kind:       "game",
+        dev_status: "beta",
+        genre:      "horror",
+      })
+
+      response.status_code.should eq 201
+      body = JSON.parse(response.body)
+      body["dev_status"].as_s.should eq "beta"
+      body["genre"].as_s.should eq "horror"
+
+      project = ProjectQuery.new.slug("beta-horror").first?.not_nil!
+      project.dev_status.should eq "beta"
+      project.genre.should eq "horror"
+    end
+
+    it "drops the genre when the project is not a game" do
+      user = UserFactory.create
+
+      AuthHelper.client_for(user).post("/api/v1/projects", project: {
+        title: "Genre Tool",
+        kind:  "tool",
+        genre: "horror",
+      }).status_code.should eq 201
+
+      ProjectQuery.new.slug("genre-tool").first?.not_nil!.genre.should be_nil
+    end
+
+    it "rejects an unknown genre" do
+      user = UserFactory.create
+
+      response = AuthHelper.client_for(user).post("/api/v1/projects", project: {
+        title: "Strange Game",
+        kind:  "game",
+        genre: "shopping",
+      })
+
+      response.status_code.should eq 422
+      ProjectQuery.new.slug("strange-game").first?.should be_nil
+    end
+
+    it "rejects an unknown development status" do
+      user = UserFactory.create
+
+      response = AuthHelper.client_for(user).post("/api/v1/projects", project: {
+        title:      "Strange Status",
+        kind:       "game",
+        dev_status: "shipped",
+      })
+
+      response.status_code.should eq 422
     end
 
     it "requires authentication" do
@@ -40,6 +99,51 @@ describe Api::V1::Projects do
       response.status_code.should eq 201
       body = JSON.parse(response.body)
       body["tags"].as_a.map(&.["slug"].as_s).should eq ["rpg"]
+    end
+  end
+
+  describe "PATCH /api/v1/projects/:slug" do
+    it "updates the development status" do
+      owner = UserFactory.create
+      project = ProjectFactory.create &.user_id(owner.id)
+
+      response = AuthHelper.client_for(owner).patch("/api/v1/projects/#{project.slug}", project: {
+        dev_status: "completed",
+      })
+
+      response.status_code.should eq 200
+      ProjectQuery.new.id(project.id).first?.not_nil!.dev_status.should eq "completed"
+    end
+
+    it "clears the genre when the project stops being a game" do
+      owner = UserFactory.create
+      project = ProjectFactory.create do |operation|
+        operation.user_id(owner.id)
+        operation.genre("horror")
+      end
+
+      response = AuthHelper.client_for(owner).patch("/api/v1/projects/#{project.slug}", project: {
+        kind: "tool",
+      })
+
+      response.status_code.should eq 200
+      ProjectQuery.new.id(project.id).first?.not_nil!.genre.should be_nil
+    end
+
+    it "clears the genre when the form sends an empty value" do
+      owner = UserFactory.create
+      project = ProjectFactory.create do |operation|
+        operation.user_id(owner.id)
+        operation.genre("horror")
+      end
+
+      response = AuthHelper.client_for(owner).patch("/api/v1/projects/#{project.slug}", project: {
+        kind:  "game",
+        genre: "",
+      })
+
+      response.status_code.should eq 200
+      ProjectQuery.new.id(project.id).first?.not_nil!.genre.should be_nil
     end
   end
 

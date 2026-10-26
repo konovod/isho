@@ -1,17 +1,10 @@
 <script setup lang="ts">
-import type { ProjectList, TagSummary } from '~/types/api'
+import type { ProjectDevStatus, ProjectGenre, ProjectKind, ProjectList, TagSummary } from '~/types/api'
 import type { RouteLocationRaw } from 'vue-router'
 
 const TAG_LIMIT = 20
 const TAG_SEARCH_DEBOUNCE_MS = 250
 const MAX_SELECTED_TAGS = 8
-
-const FILTER_KINDS = [
-  { value: 'game', label: 'Игры' },
-  { value: 'tool', label: 'Инструменты' },
-  { value: 'asset', label: 'Ассеты' },
-] as const
-type FilterKind = typeof FILTER_KINDS[number]['value']
 
 const route = useRoute()
 const router = useRouter()
@@ -35,7 +28,9 @@ const viewerKey = computed(() => user.value?.id ?? 'guest')
 const qInput = ref('')
 const appliedQ = ref('')
 const selectedTags = ref<string[]>([])
-const kind = ref<FilterKind | ''>('')
+const kind = ref<ProjectKind | ''>('')
+const devStatus = ref<ProjectDevStatus | ''>('')
+const genre = ref<ProjectGenre | ''>('')
 const webOnly = ref(false)
 
 // Query-only navigation reuses this component, so sync the filters from the URL.
@@ -55,14 +50,29 @@ watch(() => route.query, (query) => {
   selectedTags.value = [...new Set(parts)].slice(0, MAX_SELECTED_TAGS)
 
   const rawKind = typeof query.kind === 'string' ? query.kind : ''
-  kind.value = FILTER_KINDS.some(item => item.value === rawKind) ? rawKind as FilterKind : ''
+  kind.value = PROJECT_KINDS.some(item => item.value === rawKind) ? rawKind as ProjectKind : ''
+
+  const rawStatus = typeof query.dev_status === 'string' ? query.dev_status : ''
+  devStatus.value = PROJECT_DEV_STATUSES.some(item => item.value === rawStatus)
+    ? rawStatus as ProjectDevStatus
+    : ''
+
+  const rawGenre = typeof query.genre === 'string' ? query.genre : ''
+  genre.value = PROJECT_GENRES.some(item => item.value === rawGenre) ? rawGenre as ProjectGenre : ''
+  // Only games have a genre; a stale pairing must not empty the catalogue.
+  if (kind.value && kind.value !== 'game') genre.value = ''
+
   webOnly.value = query.web === '1' || query.web === 'true'
 }, { immediate: true })
 
 // The tag strip is a facet of the catalogue: it asks the API which tags still
 // have a project behind them, so a selected tag can only be paired with tags it
 // actually occurs with.
-const filtersActive = computed(() => selectedTags.value.length > 0 || !!kind.value || webOnly.value)
+const filtersActive = computed(() => selectedTags.value.length > 0
+  || !!kind.value
+  || !!devStatus.value
+  || !!genre.value
+  || webOnly.value)
 const anyFilterActive = computed(() => filtersActive.value || !!appliedQ.value)
 
 const projectsKey = computed(() => [
@@ -71,6 +81,8 @@ const projectsKey = computed(() => [
   appliedQ.value,
   selectedTags.value.join(','),
   kind.value,
+  devStatus.value,
+  genre.value,
   webOnly.value ? 1 : 0,
 ].join(':'))
 
@@ -80,6 +92,8 @@ const { data, pending, error, refresh } = await useAsyncData(
     q: appliedQ.value || undefined,
     tags: selectedTags.value.length ? selectedTags.value.join(',') : undefined,
     kind: kind.value || undefined,
+    dev_status: devStatus.value || undefined,
+    genre: genre.value || undefined,
     web: webOnly.value ? '1' : undefined,
   }),
 )
@@ -103,6 +117,8 @@ const tagKey = computed(() => [
   appliedTagSearch.value,
   selectedTags.value.join(','),
   kind.value,
+  devStatus.value,
+  genre.value,
   webOnly.value ? 1 : 0,
 ].join(':'))
 
@@ -116,6 +132,8 @@ const { data: tagData, status: tagStatus } = await useAsyncData(
     min_projects: filtersActive.value ? 1 : undefined,
     tags: selectedTags.value.length ? selectedTags.value.join(',') : undefined,
     kind: kind.value || undefined,
+    dev_status: devStatus.value || undefined,
+    genre: genre.value || undefined,
     web: webOnly.value ? '1' : undefined,
   }),
 )
@@ -148,19 +166,23 @@ function writeQuery() {
   query.q = appliedQ.value || undefined
   query.tags = selectedTags.value.length ? selectedTags.value.join(',') : undefined
   query.kind = kind.value || undefined
+  query.dev_status = devStatus.value || undefined
+  // A genre without a game type would empty the catalogue, so it never lands
+  // in the address while a tool or an asset is selected.
+  query.genre = genre.value && (!kind.value || kind.value === 'game') ? genre.value : undefined
   query.web = webOnly.value ? '1' : undefined
   router.replace({ query })
+}
+
+function onKindChange() {
+  if (kind.value && kind.value !== 'game') genre.value = ''
+  writeQuery()
 }
 
 function toggleTag(slug: string) {
   selectedTags.value = selectedTags.value.includes(slug)
     ? selectedTags.value.filter(item => item !== slug)
     : [...selectedTags.value, slug].slice(0, MAX_SELECTED_TAGS)
-  writeQuery()
-}
-
-function selectKind(value: FilterKind) {
-  kind.value = kind.value === value ? '' : value
   writeQuery()
 }
 
@@ -181,10 +203,12 @@ function resetFilters() {
   appliedTagSearch.value = ''
   selectedTags.value = []
   kind.value = ''
+  devStatus.value = ''
+  genre.value = ''
   webOnly.value = false
 
   const query: Record<string, any> = { ...route.query }
-  for (const key of ['q', 'tags', 'tag', 'kind', 'web']) delete query[key]
+  for (const key of ['q', 'tags', 'tag', 'kind', 'dev_status', 'genre', 'web']) delete query[key]
   router.replace({ query })
 }
 
@@ -262,18 +286,59 @@ function tagTarget(slug: string): RouteLocationRaw {
             </span>
           </div>
 
-          <div class="row tag-filter-list" aria-live="polite">
-            <button
-              v-for="item in FILTER_KINDS"
-              :key="item.value"
-              type="button"
-              class="tag tag-special tag-kind"
-              :class="{ active: kind === item.value }"
-              :aria-pressed="kind === item.value"
-              @click="selectKind(item.value)"
-            >
-              {{ item.label }}
-            </button>
+          <div class="tag-filter-controls">
+            <label class="tag-filter-select">
+              <span class="tag-filter-select-label">Тип</span>
+              <select
+                v-model="kind"
+                class="select"
+                aria-label="Тип проекта"
+                @change="onKindChange"
+              >
+                <option value="">
+                  Все типы
+                </option>
+                <option v-for="item in PROJECT_KINDS" :key="item.value" :value="item.value">
+                  {{ item.label }}
+                </option>
+              </select>
+            </label>
+
+            <label class="tag-filter-select">
+              <span class="tag-filter-select-label">Статус</span>
+              <select
+                v-model="devStatus"
+                class="select"
+                aria-label="Статус разработки"
+                @change="writeQuery"
+              >
+                <option value="">
+                  Все статусы
+                </option>
+                <option v-for="item in PROJECT_DEV_STATUSES" :key="item.value" :value="item.value">
+                  {{ item.label }}
+                </option>
+              </select>
+            </label>
+
+            <label class="tag-filter-select">
+              <span class="tag-filter-select-label">Жанр</span>
+              <select
+                v-model="genre"
+                class="select"
+                aria-label="Жанр игры"
+                :disabled="kind !== '' && kind !== 'game'"
+                :title="kind !== '' && kind !== 'game' ? 'Жанр есть только у игр' : undefined"
+                @change="writeQuery"
+              >
+                <option value="">
+                  Все жанры
+                </option>
+                <option v-for="item in PROJECT_GENRES" :key="item.value" :value="item.value">
+                  {{ item.label }}
+                </option>
+              </select>
+            </label>
 
             <button
               type="button"
@@ -284,9 +349,9 @@ function tagTarget(slug: string): RouteLocationRaw {
             >
               С веб-сборкой
             </button>
+          </div>
 
-            <span class="tag-filter-sep" aria-hidden="true" />
-
+          <div class="row tag-filter-list" aria-live="polite">
             <TagPill
               v-for="item in selectedTagViews"
               :key="item.slug"

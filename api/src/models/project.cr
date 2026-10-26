@@ -2,6 +2,8 @@ class Project < BaseModel
   table do
     belongs_to user : User
     column kind : String
+    column dev_status : String
+    column genre : String?
     column title : String
     column slug : String
     column tagline : String?

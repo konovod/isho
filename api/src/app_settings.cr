@@ -11,6 +11,16 @@ module AppSettings
   MAX_DOWNLOADS         =             20
   MAX_EXTERNAL_URL_SIZE =           2048
 
+  # Catalogue options. `kind` says what the project is, `dev_status` how far
+  # it went, and `genre` only makes sense for games. Keep the labels in
+  # web/app/utils/projectOptions.ts in sync.
+  PROJECT_KINDS        = %w[game tool asset]
+  PROJECT_DEV_STATUSES = %w[alpha beta active completed contest]
+  PROJECT_GENRES       = %w[
+    action adventure arcade puzzle strategy rpg simulator racing platformer
+    horror shooter visual_novel sport other
+  ]
+
   # Hosted builds. Uploads are chunked because Lucky reads a whole request
   # body into memory, so one 300 MB POST would not survive the prototype
   # server (709 MB RAM next to Nuxt).

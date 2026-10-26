@@ -10,8 +10,8 @@ class Db::Seed::SampleData < LuckyTask::Task
     user = find_or_create_user
     ensure_tags
     Db::Seed::ForumSections.ensure_all
-    night_shift = create_project(user, "Ночная смена", "Атмосферный хоррор про одинокий маяк.", "Ты — смотритель маяка. На улице шторм, а в дверь кто-то стучит. Игра про звук, свет и решения, которые нельзя отменить.", "game", %w[Экшен Хоррор])
-    create_project(user, "Пиксельный сад", "Уютная головоломка о выращивании странных растений.", "Каждый цветок меняет правила сада. Собирай семена, переставляй грядки и найди путь к сердцу сада.", "game", %w[Головоломка Уютное])
+    night_shift = create_project(user, "Ночная смена", "Атмосферный хоррор про одинокий маяк.", "Ты — смотритель маяка. На улице шторм, а в дверь кто-то стучит. Игра про звук, свет и решения, которые нельзя отменить.", "game", %w[Атмосферное], genre: "horror", dev_status: "beta")
+    create_project(user, "Пиксельный сад", "Уютная головоломка о выращивании странных растений.", "Каждый цветок меняет правила сада. Собирай семена, переставляй грядки и найди путь к сердцу сада.", "game", %w[Уютное], genre: "puzzle", dev_status: "active")
     create_project(user, "Карта миров", "Инструмент для писателей и мастеров НРИ.", "Описывай регионы, связи между ними и события. Экспортируй карту в Markdown и используй в своей игре.", "tool", %w[Мирастроение])
     ensure_devlogs(night_shift) if night_shift
     ensure_forum(user, night_shift)
@@ -37,11 +37,8 @@ class Db::Seed::SampleData < LuckyTask::Task
 
   private def ensure_tags
     {
-      "action"        => "Экшен",
-      "horror"        => "Хоррор",
-      "puzzle"        => "Головоломка",
+      "atmospheric"   => "Атмосферное",
       "cozy"          => "Уютное",
-      "rpg"           => "RPG",
       "worldbuilding" => "Мирастроение",
     }.each do |slug, name|
       if tag = TagQuery.new.slug(slug).first?
@@ -52,7 +49,16 @@ class Db::Seed::SampleData < LuckyTask::Task
     end
   end
 
-  private def create_project(user : User, title : String, tagline : String, description : String, kind : String, tag_names : Array(String)) : Project?
+  private def create_project(
+    user : User,
+    title : String,
+    tagline : String,
+    description : String,
+    kind : String,
+    tag_names : Array(String),
+    genre : String? = nil,
+    dev_status = "active",
+  ) : Project?
     slug = Slugify.call(title)
     if existing = ProjectQuery.new.slug(slug).first?
       return existing
@@ -63,6 +69,8 @@ class Db::Seed::SampleData < LuckyTask::Task
       tagline: tagline,
       description: description,
       kind: kind,
+      dev_status: dev_status,
+      genre: genre,
       user_id: user.id,
     )
 

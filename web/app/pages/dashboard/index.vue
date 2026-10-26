@@ -64,6 +64,7 @@ const projects = computed(() => data.value?.items ?? [])
             <span class="badge" :class="project.status === 'published' ? 'badge-published' : 'badge-draft'">
               {{ project.status === 'published' ? 'Опубликован' : 'Черновик' }}
             </span>
+            <span class="badge badge-stage">{{ devStatusLabel(project.dev_status) }}</span>
           </div>
           <div class="muted small">
             {{ project.screenshots.length }}

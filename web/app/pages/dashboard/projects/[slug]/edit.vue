@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AiUsage, Build, Devlog, Download, ProjectDetail, Screenshot, StorageUsage, Tag, TagDraft } from '~/types/api'
+import type { AiUsage, Build, Devlog, Download, ProjectDetail, ProjectDevStatus, ProjectGenre, ProjectKind, Screenshot, StorageUsage, Tag, TagDraft } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
@@ -33,7 +33,9 @@ const form = reactive({
   title: '',
   tagline: '',
   description: '',
-  kind: 'game',
+  kind: 'game' as ProjectKind,
+  dev_status: 'active' as ProjectDevStatus,
+  genre: '' as ProjectGenre | '',
   nsfw: false,
   ai_usage: 'ai_free' as AiUsage,
 })
@@ -48,10 +50,18 @@ watch(project, (value) => {
   form.tagline = value.tagline ?? ''
   form.description = value.description ?? ''
   form.kind = value.kind
+  form.dev_status = value.dev_status
+  form.genre = value.genre ?? ''
   form.nsfw = value.nsfw
   form.ai_usage = value.ai_usage
   selectedTags.value = value.tags.map(tag => ({ name: tag.name, slug: tag.slug }))
 }, { immediate: true })
+
+// The server drops the genre when the project stops being a game; mirror that
+// in the form so a stale value is not sent after switching the type.
+watch(() => form.kind, (value) => {
+  if (value !== 'game') form.genre = ''
+})
 
 function fail(err: unknown) {
   error.value = formatApiError(err)
@@ -73,6 +83,8 @@ async function save() {
         tagline: form.tagline.trim() || undefined,
         description: form.description.trim() || undefined,
         kind: form.kind,
+        dev_status: form.dev_status,
+        genre: form.genre,
         nsfw: form.nsfw,
         ai_usage: form.ai_usage,
       },
@@ -445,10 +457,39 @@ async function removeBuild(id: number) {
         <div class="field">
           <label class="label" for="kind">Тип</label>
           <select id="kind" v-model="form.kind" class="select">
-            <option value="game">Игра</option>
-            <option value="tool">Инструмент</option>
-            <option value="asset">Ассет</option>
+            <option v-for="option in PROJECT_KINDS" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
           </select>
+        </div>
+
+        <div class="field">
+          <label class="label" for="dev-status">Статус</label>
+          <select id="dev-status" v-model="form.dev_status" class="select">
+            <option v-for="option in PROJECT_DEV_STATUSES" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="label" for="genre">Жанр</label>
+          <select
+            id="genre"
+            v-model="form.genre"
+            class="select"
+            :disabled="form.kind !== 'game'"
+          >
+            <option value="">
+              Без жанра
+            </option>
+            <option v-for="option in PROJECT_GENRES" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <span class="hint">
+            {{ form.kind === 'game' ? 'Жанр помогает найти игру в каталоге.' : 'Жанр есть только у игр.' }}
+          </span>
         </div>
 
         <div class="field">

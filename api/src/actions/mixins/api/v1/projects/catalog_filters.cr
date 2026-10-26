@@ -3,7 +3,6 @@
 # empty page.
 module Api::V1::Projects::CatalogFilters
   MAX_TAGS = 8
-  KINDS    = %w[game tool asset]
 
   # `?tags=unity,2d` — a slug is always `[a-z0-9-]`, so a comma cannot appear
   # inside one and the list stays unambiguous.
@@ -24,10 +23,16 @@ module Api::V1::Projects::CatalogFilters
   end
 
   def filter_kind : String?
-    kind = params.get?(:kind).try(&.strip)
-    return nil unless kind
+    filter_choice(:kind, AppSettings::PROJECT_KINDS)
+  end
 
-    KINDS.includes?(kind) ? kind : nil
+  # Development status, not the publication `status` of the project.
+  def filter_dev_status : String?
+    filter_choice(:dev_status, AppSettings::PROJECT_DEV_STATUSES)
+  end
+
+  def filter_genre : String?
+    filter_choice(:genre, AppSettings::PROJECT_GENRES)
   end
 
   def web_build_only? : Bool
@@ -45,6 +50,14 @@ module Api::V1::Projects::CatalogFilters
       query = query.kind(kind)
     end
 
+    if dev_status = filter_dev_status
+      query = query.dev_status(dev_status)
+    end
+
+    if genre = filter_genre
+      query = query.genre(genre)
+    end
+
     query = query.with_web_build if web_build_only?
 
     slugs = filter_tag_slugs
@@ -54,5 +67,12 @@ module Api::V1::Projects::CatalogFilters
     return query.id.eq(-1_i64) unless tags.size == slugs.size
 
     query.with_all_tags(tags.map(&.id))
+  end
+
+  private def filter_choice(name : Symbol, allowed : Array(String)) : String?
+    value = params.get?(name).try(&.strip)
+    return nil unless value
+
+    allowed.includes?(value) ? value : nil
   end
 end

@@ -14,6 +14,8 @@ class ProjectSerializer < BaseSerializer
       title:        @project.title,
       tagline:      @project.tagline,
       kind:         @project.kind,
+      dev_status:   @project.dev_status,
+      genre:        @project.genre,
       status:       @project.status,
       nsfw:         @project.nsfw,
       ai_usage:     @project.ai_usage,

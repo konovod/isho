@@ -4,6 +4,7 @@ class ProjectFactory < Avram::Factory
     title "Test Project #{number}"
     slug "test-project-#{number}"
     kind "game"
+    dev_status "active"
     status "draft"
     nsfw false
     ai_usage "ai_free"

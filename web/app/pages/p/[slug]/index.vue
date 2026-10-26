@@ -37,10 +37,9 @@ if (!project.value) {
 
 const isOwner = computed(() => user.value?.id === project.value?.author.id)
 const authorName = computed(() => project.value?.author.display_name || project.value?.author.username || '')
-const kindLabel = computed(() => {
-  const labels: Record<string, string> = { game: 'Игра', tool: 'Инструмент', asset: 'Ассет' }
-  return labels[project.value?.kind ?? ''] ?? project.value?.kind ?? ''
-})
+const kindLabel = computed(() => projectKindLabel(project.value?.kind))
+const genreName = computed(() => project.value?.genre ? genreLabel(project.value.genre) : '')
+const devStatus = computed(() => devStatusLabel(project.value?.dev_status))
 const initials = computed(() => authorName.value.slice(0, 2))
 const aiUsage = computed(() => aiUsageOption(project.value?.ai_usage))
 const playableBuild = computed(() => project.value?.builds.find(build => build.kind === 'web' && build.play_url) ?? null)
@@ -82,6 +81,8 @@ useHead(() => ({
               {{ project.status === 'published' ? 'Опубликован' : 'Черновик' }}
             </span>
             <span class="muted small">{{ kindLabel }}</span>
+            <span v-if="genreName" class="muted small">· {{ genreName }}</span>
+            <span class="badge badge-stage">{{ devStatus }}</span>
             <span v-if="project.nsfw" class="badge badge-nsfw">18+</span>
             <span class="badge badge-ai" :title="aiUsage.description">ИИ: {{ aiUsage.label }}</span>
           </div>

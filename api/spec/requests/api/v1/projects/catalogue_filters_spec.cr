@@ -26,6 +26,43 @@ describe "catalogue filters" do
       project_slugs("/api/v1/projects?kind=unknown").size.should eq 1
     end
 
+    it "filters by development status" do
+      beta = publish(dev_status: "beta")
+      publish(dev_status: "active")
+      publish(dev_status: "completed")
+
+      project_slugs("/api/v1/projects?dev_status=beta").should eq [beta.slug]
+    end
+
+    it "ignores an unknown development status" do
+      publish(dev_status: "beta")
+
+      project_slugs("/api/v1/projects?dev_status=unknown").size.should eq 1
+    end
+
+    it "filters by genre" do
+      horror = publish(genre: "horror")
+      publish(genre: "puzzle")
+      publish
+
+      project_slugs("/api/v1/projects?genre=horror").should eq [horror.slug]
+    end
+
+    it "ignores an unknown genre" do
+      publish(genre: "horror")
+
+      project_slugs("/api/v1/projects?genre=unknown").size.should eq 1
+    end
+
+    it "combines type, development status and genre" do
+      matching = publish(kind: "game", dev_status: "beta", genre: "horror")
+      publish(kind: "game", dev_status: "beta", genre: "puzzle")
+      publish(kind: "game", dev_status: "active", genre: "horror")
+      publish(kind: "tool", dev_status: "beta")
+
+      project_slugs("/api/v1/projects?kind=game&dev_status=beta&genre=horror").should eq [matching.slug]
+    end
+
     it "keeps only projects with a browser build" do
       playable = publish
       add_web_build(playable)
@@ -95,6 +132,15 @@ describe "catalogue filters" do
       items["items"].as_a.map(&.["projects_count"].as_i).should eq [1, 1]
     end
 
+    it "counts only projects with the selected development status and genre" do
+      unity = create_tag("Unity", "unity")
+      publish_with_tags([unity], dev_status: "beta", genre: "horror")
+      publish_with_tags([unity], dev_status: "active", genre: "horror")
+
+      items = tag_items("/api/v1/tags?dev_status=beta&genre=horror&min_projects=1")
+      items["items"].as_a.map(&.["projects_count"].as_i).should eq [1]
+    end
+
     it "keeps a selected tag when the tag search would hide it" do
       unity = create_tag("Unity", "unity")
       two_d = create_tag("2D", "2d")
@@ -138,17 +184,26 @@ private def create_tag(name : String, slug : String) : Tag
   Tag::SaveOperation.create!(name: name, slug: slug)
 end
 
-private def publish(kind = "game", nsfw = false) : Project
+private def publish(kind = "game", nsfw = false, dev_status = "active", genre : String? = nil) : Project
   ProjectFactory.create do |operation|
     operation.status("published")
     operation.published_at(Time.utc)
     operation.kind(kind)
     operation.nsfw(nsfw)
+    operation.dev_status(dev_status)
+    operation.genre(genre) if genre
+    operation
   end
 end
 
-private def publish_with_tags(tags : Array(Tag), kind = "game", nsfw = false) : Project
-  project = publish(kind: kind, nsfw: nsfw)
+private def publish_with_tags(
+  tags : Array(Tag),
+  kind = "game",
+  nsfw = false,
+  dev_status = "active",
+  genre : String? = nil,
+) : Project
+  project = publish(kind: kind, nsfw: nsfw, dev_status: dev_status, genre: genre)
   tags.each { |tag| ProjectTag::SaveOperation.create!(project_id: project.id, tag_id: tag.id) }
   project
 end

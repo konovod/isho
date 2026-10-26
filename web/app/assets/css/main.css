@@ -726,6 +726,39 @@ p {
   gap: 12px;
 }
 
+/* Type, status and genre are fixed categories, so they are selects rather
+   than another row of tag pills. Tags stay for everything that does not fit. */
+.tag-filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.tag-filter-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tag-filter-select-label {
+  font-size: 12.5px;
+  color: var(--muted-strong);
+  white-space: nowrap;
+}
+
+.tag-filter-select .select {
+  width: auto;
+  height: 34px;
+  padding: 4px 28px 4px 10px;
+  font-size: 13px;
+}
+
+.tag-filter-select .select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .tag-filter-title {
   font-size: 13px;
   font-weight: 650;
@@ -772,15 +805,6 @@ p {
 
 .tag-filter-list {
   gap: 7px;
-}
-
-/* Separates the type/browser pills from the tags they narrow. */
-.tag-filter-sep {
-  flex: 0 0 auto;
-  width: 1px;
-  height: 18px;
-  margin: 0 2px;
-  background: var(--border);
 }
 
 .tag-filter-hint {
@@ -940,6 +964,12 @@ p {
 .badge-published {
   background: color-mix(in srgb, var(--success) 14%, transparent);
   color: var(--success);
+}
+
+.badge-stage {
+  background: var(--bg-soft);
+  color: var(--muted-strong);
+  border: 1px solid var(--border);
 }
 
 .badge-banned {
@@ -3215,6 +3245,20 @@ p {
   .tag-filter-count {
     grid-row: 1;
     grid-column: 2;
+  }
+
+  /* Three selects in a row do not fit a phone: let them share the line and
+     wrap by pairs instead of shrinking the labels to nothing. */
+  .tag-filter-controls {
+    gap: 8px;
+  }
+
+  .tag-filter-select {
+    flex: 1 1 140px;
+  }
+
+  .tag-filter-select .select {
+    width: 100%;
   }
 
   /* Keep the strip to one line on phones: the chips scroll sideways

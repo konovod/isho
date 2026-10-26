@@ -18,7 +18,9 @@ module Db::Stress
   TAG_SQL_PATTERN      = "stress-teg-%"
   TOPIC_SQL_PATTERN    = "stress-topic-%"
 
-  KINDS = %w[game tool asset]
+  KINDS        = %w[game tool asset]
+  DEV_STATUSES = AppSettings::PROJECT_DEV_STATUSES
+  GENRES       = AppSettings::PROJECT_GENRES
 
   module Support
     record RowCounts,

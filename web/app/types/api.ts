@@ -3,6 +3,26 @@ export type Theme = 'light' | 'dark'
 /** AI involvement, from the least to the most. */
 export type AiUsage = 'ai_free' | 'partial' | 'significant' | 'full'
 
+/** What the project is. `genre` only makes sense for games. */
+export type ProjectKind = 'game' | 'tool' | 'asset'
+/** How far the project got; unrelated to the publication `status`. */
+export type ProjectDevStatus = 'alpha' | 'beta' | 'active' | 'completed' | 'contest'
+export type ProjectGenre =
+  | 'action'
+  | 'adventure'
+  | 'arcade'
+  | 'puzzle'
+  | 'strategy'
+  | 'rpg'
+  | 'simulator'
+  | 'racing'
+  | 'platformer'
+  | 'horror'
+  | 'shooter'
+  | 'visual_novel'
+  | 'sport'
+  | 'other'
+
 export interface ApiUser {
   id: number
   username: string
@@ -355,7 +375,9 @@ export interface ProjectCard {
   slug: string
   title: string
   tagline: string | null
-  kind: string
+  kind: ProjectKind
+  dev_status: ProjectDevStatus
+  genre: ProjectGenre | null
   status: string
   nsfw: boolean
   ai_usage: AiUsage

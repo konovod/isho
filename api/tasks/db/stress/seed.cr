@@ -160,12 +160,15 @@ class Db::Stress::Seed < LuckyTask::Task
       project = ProjectQuery.new.slug(slug).first?
 
       unless project
+        kind = Db::Stress::KINDS[index % Db::Stress::KINDS.size]
         project = SaveProject.create!(
           title: Db::Stress::Support.project_title(index),
           slug: slug,
           tagline: Db::Stress::Support.tagline(index),
           description: Db::Stress::Support.project_description(index),
-          kind: Db::Stress::KINDS[index % Db::Stress::KINDS.size],
+          kind: kind,
+          dev_status: Db::Stress::DEV_STATUSES[index % Db::Stress::DEV_STATUSES.size],
+          genre: kind == "game" ? Db::Stress::GENRES[index % Db::Stress::GENRES.size] : nil,
           user_id: users[(index - 1) % users.size].id,
           status: "published",
           published_at: Db::Stress::Support.project_published_at(index),
