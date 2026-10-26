@@ -18,6 +18,7 @@ class Api::V1::Profiles::Show < ApiAction
 
     json({
       user:     UserSerializer.new(user),
+      stats:    ProfileStatsSerializer.new(ProfileStats.for_user(user, current_user?)),
       projects: projects.map { |project| ProjectSerializer.new(project) },
     })
   end

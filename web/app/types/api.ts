@@ -13,6 +13,15 @@ export interface ApiUser {
   created_at: string
 }
 
+/** Counters shown on a public profile. */
+export interface ProfileStats {
+  projects_count: number
+  comments_count: number
+  likes_given_count: number
+  /** Likes received minus dislikes received, so it can be negative. */
+  likes_received_count: number
+}
+
 /** Limits of the forum AI features for the signed-in user. */
 export interface MeAi {
   enabled: boolean

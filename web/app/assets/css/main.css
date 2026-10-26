@@ -991,6 +991,21 @@ p {
   font-size: 14px;
 }
 
+/* Profile counters: one wrapping row of "12 комментариев" items. */
+.profile-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.profile-stat strong {
+  color: var(--text);
+  font-weight: 650;
+}
+
 .section {
   padding: 26px 0;
 }

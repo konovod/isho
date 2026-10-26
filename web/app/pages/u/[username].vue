@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import type { ApiUser, ProjectCard } from '~/types/api'
+import type { ApiUser, ProfileStats, ProjectCard } from '~/types/api'
 
 const route = useRoute()
 const api = useApi()
 const { user } = useAuth()
+const { plural } = useFormat()
 
 const { data, error } = await useAsyncData(
   () => `profile-${route.params.username}:${user.value?.id ?? 'guest'}`,
-  () => api.get<{ user: ApiUser, projects: ProjectCard[] }>(`/api/v1/users/${route.params.username}`),
+  () => api.get<{ user: ApiUser, stats: ProfileStats, projects: ProjectCard[] }>(`/api/v1/users/${route.params.username}`),
 )
 
 if (!data.value) {
@@ -16,6 +17,44 @@ if (!data.value) {
 
 const name = computed(() => data.value?.user.display_name || data.value?.user.username || '')
 const initials = computed(() => name.value.slice(0, 2))
+
+interface ProfileStat {
+  key: string
+  value: number
+  label: string
+  title?: string
+}
+
+const stats = computed<ProfileStat[]>(() => {
+  const value = data.value?.stats
+  if (!value) return []
+
+  const received = value.likes_received_count
+
+  return [
+    {
+      key: 'projects',
+      value: value.projects_count,
+      label: plural(value.projects_count, 'проект', 'проекта', 'проектов'),
+    },
+    {
+      key: 'comments',
+      value: value.comments_count,
+      label: plural(value.comments_count, 'комментарий', 'комментария', 'комментариев'),
+    },
+    {
+      key: 'likes-given',
+      value: value.likes_given_count,
+      label: `${plural(value.likes_given_count, 'лайк', 'лайка', 'лайков')} поставлено`,
+    },
+    {
+      key: 'likes-received',
+      value: received,
+      label: `${plural(Math.abs(received), 'лайк', 'лайка', 'лайков')} получено`,
+      title: 'Лайки на сообщения минус дизлайки',
+    },
+  ]
+})
 
 useSeoMeta({
   title: () => `${name.value} — ${SITE_NAME}`,
@@ -57,6 +96,12 @@ useHead(() => ({
 
     <p v-if="data.user.bio" class="muted mb-24" style="max-width: 640px;">
       {{ data.user.bio }}
+    </p>
+
+    <p v-if="stats.length" class="profile-stats">
+      <span v-for="stat in stats" :key="stat.key" class="profile-stat" :title="stat.title">
+        <strong>{{ stat.value }}</strong> {{ stat.label }}
+      </span>
     </p>
 
     <div v-if="!data.projects.length" class="empty">
