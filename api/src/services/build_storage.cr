@@ -5,22 +5,6 @@ require "file_utils"
 module BuildStorage
   WEB_DIRECTORY = File.join("public", "media", "web")
 
-  # Latch's uploader interface needs a tempfile and a filename; the assembled
-  # chunk file already is both.
-  private struct UploadAdapter
-    include Latch::UploadedFile
-
-    getter tempfile : File
-    getter filename : String
-
-    def initialize(@tempfile : File, @filename : String)
-    end
-
-    def size : UInt64
-      tempfile.size.to_u64
-    end
-  end
-
   def self.web_dir(public_id : String) : String
     File.join(WEB_DIRECTORY, safe_public_id(public_id))
   end
@@ -39,7 +23,7 @@ module BuildStorage
 
     file = File.open(part_path, "rb")
     begin
-      metadata = uploader.extract_metadata(UploadAdapter.new(file, safe))
+      metadata = uploader.extract_metadata(FileInput.new(file, safe))
       uploader.storage.move(file, location, metadata: metadata)
       BuildUploader::StoredFile.new(id: location, storage_key: "store", metadata: metadata)
     ensure

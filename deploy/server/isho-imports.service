@@ -1,0 +1,30 @@
+[Unit]
+Description=isho import worker (project drafts from a page the author links)
+Documentation=https://github.com/luckyframework/lucky
+After=network-online.target postgresql.service isho-api.service
+Wants=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=isho
+Group=isho
+WorkingDirectory=/srv/isho/api
+EnvironmentFile=/etc/isho/api.env
+# The worker polls import_jobs: it reads the page, asks the model for the text
+# and downloads the screenshots. It is a separate unit from isho-ai, because a
+# slow site must not delay forum answers. Without AI_API_KEY it idles instead of
+# exiting, so systemd does not restart it in a loop.
+ExecStart=/srv/isho/api/bin/tasks imports.worker
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/srv/isho/api
+
+[Install]
+WantedBy=multi-user.target

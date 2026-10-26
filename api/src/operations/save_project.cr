@@ -1,5 +1,5 @@
 class SaveProject < Project::SaveOperation
-  permit_columns kind, dev_status, genre, title, tagline, description, nsfw, ai_usage
+  permit_columns kind, dev_status, genre, title, tagline, description, nsfw, ai_usage, source_url
 
   before_save do
     normalize
@@ -53,7 +53,7 @@ class SaveProject < Project::SaveOperation
 
   private def validate_dev_status
     unless AppSettings::PROJECT_DEV_STATUSES.includes?(dev_status.value.to_s)
-      dev_status.add_error "must be alpha, beta, active, completed or contest"
+      dev_status.add_error "must be prototype, alpha, beta, active, completed, contest or abandoned"
     end
   end
 

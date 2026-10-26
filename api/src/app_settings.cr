@@ -15,7 +15,7 @@ module AppSettings
   # it went, and `genre` only makes sense for games. Keep the labels in
   # web/app/utils/projectOptions.ts in sync.
   PROJECT_KINDS        = %w[game tool asset]
-  PROJECT_DEV_STATUSES = %w[alpha beta active completed contest]
+  PROJECT_DEV_STATUSES = %w[prototype alpha beta active completed contest abandoned]
   PROJECT_GENRES       = %w[
     action adventure arcade puzzle strategy rpg simulator racing platformer
     horror shooter visual_novel sport other
@@ -98,7 +98,26 @@ module AppSettings
   AI_DEFAULT_DAILY_JOBS          =           200
   AI_DEFAULT_DAILY_INPUT_TOKENS  = 1_500_000_i64
   AI_DEFAULT_DAILY_OUTPUT_TOKENS =   300_000_i64
-  RESERVED_USERNAMES             = %w[
+
+  # Import of a project draft from a page the author owns. The server fetches
+  # the page and the images itself: the model has no browser, and a URL it
+  # invents must never be fetched.
+  IMPORT_JOBS_PER_DAY    =              3
+  IMPORT_MAX_INPUT_CHARS =         14_000
+  IMPORT_MAX_TOKENS      =          1_500
+  IMPORT_MAX_PAGE_BYTES  =  2_000_000_i64
+  IMPORT_MAX_IMAGES      =              6
+  IMPORT_MAX_PIXELS      = 40_000_000_i64
+  IMPORT_MIN_CONFIDENCE  =            0.4
+  IMPORT_RETENTION       = 30.days
+  IMPORT_REDIRECTS       = 3
+  IMPORT_TIMEOUT         = 20.seconds
+  # Only links that are obviously a downloadable build become a Download row.
+  IMPORT_FILE_EXTENSIONS = %w[
+    .zip .exe .msi .dmg .apk .7z .rar .tar.gz .unitypackage
+  ]
+
+  RESERVED_USERNAMES = %w[
     admin api dashboard login logout me new settings sign_in sign_up
     projects users assets articles jams forum support help about terms privacy
   ]
@@ -236,6 +255,18 @@ module AppSettings
 
   def self.ai_quick_timeout : Time::Span
     env_int("AI_QUICK_TIMEOUT_SECONDS", 20).seconds
+  end
+
+  # Imports reach third-party sites, so they have their own switch on top of the
+  # AI key: turning them off must not touch the forum.
+  def self.import_enabled? : Bool
+    return false if ENV["IMPORT_ENABLED"]?.try(&.strip.downcase) == "off"
+
+    ai_enabled?
+  end
+
+  def self.import_jobs_per_day : Int32
+    env_int("IMPORT_JOBS_PER_DAY", IMPORT_JOBS_PER_DAY)
   end
 
   private def self.env_int(name : String, default : Int32) : Int32

@@ -15,6 +15,9 @@ class Project < BaseModel
     column moderation_note : String?
     column moderated_at : Time?
     belongs_to moderated_by : User?
+    # Set by an import: the page the draft was built from. Shown to the author
+    # and moderators only, never to visitors.
+    column source_url : String?
     has_many screenshots : Screenshot
     has_many downloads : Download
     has_many builds : Build

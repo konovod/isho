@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AiUsage, Build, Devlog, Download, ProjectDetail, ProjectDevStatus, ProjectGenre, ProjectKind, Screenshot, StorageUsage, Tag, TagDraft } from '~/types/api'
+import type { AiUsage, Build, Devlog, Download, ImportJob, ProjectDetail, ProjectDevStatus, ProjectGenre, ProjectKind, Screenshot, StorageUsage, Tag, TagDraft } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
@@ -27,6 +27,52 @@ const { data, pending, error: loadError, refresh } = await useAsyncData(
 const project = computed(() => data.value?.project ?? null)
 const allTags = computed(() => data.value?.tags ?? [])
 const devlogs = computed(() => data.value?.devlogs ?? [])
+
+/* Import */
+
+const importId = Number(route.query.import ?? 0) || 0
+const importRunning = ref(false)
+let importTimer: ReturnType<typeof setInterval> | null = null
+
+const sourceHost = computed(() => {
+  const url = project.value?.source_url
+  if (!url) return ''
+  try {
+    return new URL(url).host
+  }
+  catch {
+    return url
+  }
+})
+
+// The draft exists before its screenshots do: keep asking until the job ends
+// and then reload the project once, so the gallery fills in by itself.
+onMounted(() => {
+  if (!importId) return
+  importRunning.value = true
+
+  importTimer = setInterval(async () => {
+    try {
+      const result = await api.get<{ import: ImportJob }>(`/api/v1/projects/imports/${importId}`)
+      if (!['done', 'failed', 'skipped', 'cancelled'].includes(result.import.status)) return
+
+      stopImportPolling()
+      if (result.import.error && result.import.status !== 'done') error.value = result.import.error
+      await refresh()
+    }
+    catch {
+      // The next tick tries again; a lost poll must not break the page.
+    }
+  }, 2000)
+})
+
+onBeforeUnmount(stopImportPolling)
+
+function stopImportPolling() {
+  if (importTimer) clearInterval(importTimer)
+  importTimer = null
+  importRunning.value = false
+}
 
 const tab = ref<'details' | 'screenshots' | 'devlogs' | 'builds' | 'downloads'>('details')
 const form = reactive({
@@ -405,6 +451,22 @@ async function removeBuild(id: number) {
           <button class="btn btn-danger btn-sm" @click="removeProject">
             Удалить
           </button>
+        </div>
+      </div>
+
+      <div v-if="project.source_url" class="notice notice-warn">
+        <div class="notice-body">
+          <div class="notice-title">
+            Черновик собран по ссылке
+          </div>
+          <div class="notice-text">
+            Источник:
+            <a :href="project.source_url" target="_blank" rel="nofollow noopener noreferrer">{{ sourceHost }}</a>.
+            Проверьте описание, жанр, теги и скриншоты перед публикацией.
+          </div>
+          <div v-if="importRunning" class="notice-text-success">
+            Загружаем скриншоты — страница обновится сама.
+          </div>
         </div>
       </div>
 

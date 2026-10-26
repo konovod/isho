@@ -3,8 +3,15 @@
 module Ai::Budget
   SQL = <<-SQL
     SELECT COUNT(*), COALESCE(SUM(prompt_tokens), 0), COALESCE(SUM(completion_tokens), 0)
-    FROM ai_jobs
-    WHERE created_at >= $1
+    FROM (
+      SELECT prompt_tokens, completion_tokens
+      FROM ai_jobs
+      WHERE created_at >= $1
+      UNION ALL
+      SELECT prompt_tokens, completion_tokens
+      FROM import_jobs
+      WHERE created_at >= $1 AND status IN ('done', 'skipped', 'failed')
+    ) AS jobs
     SQL
 
   def self.available? : Bool

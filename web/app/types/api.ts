@@ -6,7 +6,14 @@ export type AiUsage = 'ai_free' | 'partial' | 'significant' | 'full'
 /** What the project is. `genre` only makes sense for games. */
 export type ProjectKind = 'game' | 'tool' | 'asset'
 /** How far the project got; unrelated to the publication `status`. */
-export type ProjectDevStatus = 'alpha' | 'beta' | 'active' | 'completed' | 'contest'
+export type ProjectDevStatus =
+  | 'prototype'
+  | 'alpha'
+  | 'beta'
+  | 'active'
+  | 'completed'
+  | 'contest'
+  | 'abandoned'
 export type ProjectGenre =
   | 'action'
   | 'adventure'
@@ -314,6 +321,19 @@ export interface MarkdownImage {
   url: string
 }
 
+/** A draft being built from a page the author linked. */
+export interface ImportJob {
+  id: number
+  status: 'queued' | 'running' | 'done' | 'failed' | 'skipped' | 'cancelled'
+  step: 'fetch' | 'extract' | 'ai' | 'screenshots' | 'done'
+  source_url: string
+  error: string | null
+  /** Set as soon as the draft exists; the page navigates to it. */
+  project_slug: string | null
+  created_at: string
+  finished_at: string | null
+}
+
 export interface Download {
   id: number
   label: string
@@ -396,6 +416,8 @@ export interface ProjectDetail extends ProjectCard {
   builds: Build[]
   moderation_note: string | null
   moderated_at: string | null
+  /** The page an imported draft came from; the author and moderators only. */
+  source_url?: string | null
 }
 
 export interface ProjectList {

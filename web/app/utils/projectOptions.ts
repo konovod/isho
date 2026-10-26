@@ -12,11 +12,13 @@ export const PROJECT_KINDS: ProjectOption<ProjectKind>[] = [
 ]
 
 export const PROJECT_DEV_STATUSES: ProjectOption<ProjectDevStatus>[] = [
+  { value: 'prototype', label: 'Прототип' },
   { value: 'alpha', label: 'Альфа' },
   { value: 'beta', label: 'Бета' },
   { value: 'active', label: 'Активный' },
   { value: 'completed', label: 'Завершён' },
   { value: 'contest', label: 'Конкурсный' },
+  { value: 'abandoned', label: 'Заброшен' },
 ]
 
 /** Only games get a genre; the server clears it for tools and assets. */

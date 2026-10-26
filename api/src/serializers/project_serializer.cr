@@ -46,6 +46,8 @@ class ProjectSerializer < BaseSerializer
     {
       moderation_note: @project.moderation_note,
       moderated_at:    @project.moderated_at,
+      # Where an imported draft came from; visitors never see it.
+      source_url: @project.source_url,
     }
   end
 
