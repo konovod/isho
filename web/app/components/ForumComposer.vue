@@ -75,42 +75,44 @@ defineExpose({ focus })
 </script>
 
 <template>
-  <section ref="container" class="card card-pad forum-composer">
-    <div class="row-between mb-16">
-      <h2 class="section-title" style="margin-bottom: 0;">
+  <section ref="container" class="card forum-composer">
+    <header class="forum-composer-head">
+      <h2 class="section-title">
         Ответить
       </h2>
       <span class="muted small">Markdown, как в дневниках</span>
-    </div>
+    </header>
 
-    <div v-if="quote" class="forum-composer-quote">
-      <div class="row-between mb-8">
-        <span class="forum-quote-author">
-          Цитата: {{ quoteAuthor }}<template v-if="quote?.text"> · фрагмент</template>
-        </span>
-        <button type="button" class="btn btn-ghost btn-sm" @click="emit('cancel-quote')">
-          Убрать
+    <div class="forum-composer-body">
+      <div v-if="quote" class="forum-composer-quote">
+        <div class="row-between mb-8">
+          <span class="forum-quote-author">
+            Цитата: {{ quoteAuthor }}<template v-if="quote?.text"> · фрагмент</template>
+          </span>
+          <button type="button" class="btn btn-ghost btn-sm" @click="emit('cancel-quote')">
+            Убрать
+          </button>
+        </div>
+        <p class="muted small">{{ quotePreview }}</p>
+      </div>
+
+      <div v-if="error" class="form-error">
+        {{ error }}
+      </div>
+
+      <MarkdownEditor
+        id="forum-reply"
+        v-model="body"
+        :rows="10"
+        :maxlength="20000"
+        placeholder="Ваш ответ…"
+      />
+
+      <div class="row mt-16">
+        <button class="btn btn-primary" :disabled="saving" @click="submit">
+          {{ saving ? 'Отправляем…' : 'Отправить' }}
         </button>
       </div>
-      <p class="muted small">{{ quotePreview }}</p>
-    </div>
-
-    <div v-if="error" class="form-error">
-      {{ error }}
-    </div>
-
-    <MarkdownEditor
-      id="forum-reply"
-      v-model="body"
-      :rows="10"
-      :maxlength="20000"
-      placeholder="Ваш ответ…"
-    />
-
-    <div class="row mt-16">
-      <button class="btn btn-primary" :disabled="saving" @click="submit">
-        {{ saving ? 'Отправляем…' : 'Отправить' }}
-      </button>
     </div>
   </section>
 </template>

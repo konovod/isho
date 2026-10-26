@@ -36,10 +36,13 @@ function pageLink(page: number): string {
     <NuxtLink
       v-if="page > 1"
       :to="pageLink(page - 1)"
-      class="btn btn-ghost btn-sm"
+      class="forum-page-link forum-page-nav"
+      aria-label="Предыдущая страница"
+      title="Предыдущая страница"
     >
-      ← Назад
+      ‹
     </NuxtLink>
+    <span v-else class="forum-page-link forum-page-nav disabled" aria-hidden="true">‹</span>
 
     <div class="forum-pagination-pages">
       <NuxtLink
@@ -56,9 +59,12 @@ function pageLink(page: number): string {
     <NuxtLink
       v-if="page < pages"
       :to="pageLink(page + 1)"
-      class="btn btn-ghost btn-sm"
+      class="forum-page-link forum-page-nav"
+      aria-label="Следующая страница"
+      title="Следующая страница"
     >
-      Вперёд →
+      ›
     </NuxtLink>
+    <span v-else class="forum-page-link forum-page-nav disabled" aria-hidden="true">›</span>
   </nav>
 </template>

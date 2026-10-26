@@ -38,12 +38,14 @@ useSeoMeta({
 </script>
 
 <template>
-  <div v-if="project" class="container">
-    <div class="row mb-16">
-      <NuxtLink :to="`/p/${project.slug}`" class="muted small">
-        ← {{ project.title }}
-      </NuxtLink>
-    </div>
+  <div v-if="project" class="container forum-page">
+    <nav class="forum-crumbs" aria-label="Хлебные крошки">
+      <NuxtLink to="/forum">Форум</NuxtLink>
+      <span class="forum-crumb-sep" aria-hidden="true">›</span>
+      <NuxtLink :to="`/p/${project.slug}`">{{ project.title }}</NuxtLink>
+      <span class="forum-crumb-sep" aria-hidden="true">›</span>
+      <span>Обсуждение</span>
+    </nav>
 
     <div class="page-head">
       <div>

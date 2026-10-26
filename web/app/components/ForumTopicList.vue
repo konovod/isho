@@ -24,6 +24,10 @@ function lastPostPath(topic: ForumTopic): string {
   return `${base}${page}#last`
 }
 
+function repliesLabel(topic: ForumTopic): string {
+  return `${topic.replies_count} ${plural(topic.replies_count, 'ответ', 'ответа', 'ответов')}`
+}
+
 function displayName(user: { display_name: string | null, username: string }): string {
   return user.display_name || user.username
 }
@@ -34,7 +38,7 @@ function displayName(user: { display_name: string | null, username: string }): s
     <article
       v-for="topic in topics"
       :key="topic.id"
-      class="card forum-topic-row"
+      class="forum-topic-row"
       :class="{ 'is-unread': topic.unread_count > 0 }"
     >
       <div class="forum-topic-main">
@@ -66,13 +70,9 @@ function displayName(user: { display_name: string | null, username: string }): s
       </div>
 
       <div class="forum-topic-stats">
-        <span class="forum-topic-replies">
-          {{ topic.replies_count }}
-          {{ plural(topic.replies_count, 'ответ', 'ответа', 'ответов') }}
-        </span>
         <span
           v-if="topic.replies_count > 0 && topic.last_post_author"
-          class="forum-topic-last-author small"
+          class="forum-topic-last-author"
           title="Последний ответ"
         >
           <NuxtLink :to="`/u/${topic.last_post_author.username}`">
@@ -81,20 +81,23 @@ function displayName(user: { display_name: string | null, username: string }): s
         </span>
         <NuxtLink
           :to="lastPostPath(topic)"
-          class="muted small"
+          class="forum-topic-last-date"
           title="Перейти к последнему сообщению"
         >
           {{ dateTime(topic.last_post_at) }}
         </NuxtLink>
+        <NuxtLink
+          :to="topicPath(topic)"
+          class="forum-topic-replies"
+          :title="repliesLabel(topic)"
+          :aria-label="repliesLabel(topic)"
+        >
+          {{ topic.replies_count }}
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.7-.9L3 21l2-4.9a8.4 8.4 0 0 1-1-4A8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z" />
+          </svg>
+        </NuxtLink>
       </div>
-
-      <NuxtLink
-        :to="topicPath(topic)"
-        class="forum-topic-open"
-        aria-label="Открыть тему"
-      >
-        →
-      </NuxtLink>
     </article>
   </div>
 </template>

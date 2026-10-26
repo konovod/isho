@@ -44,9 +44,20 @@ function childrenOf(section: ForumSection): ForumSection[] {
     <section v-for="group in groups" :key="group.title" class="forum-group">
       <h2 class="forum-group-title">{{ group.title }}</h2>
 
-      <div class="card forum-group-card">
+      <div class="forum-group-card">
         <template v-for="section in group.items" :key="section.id">
-          <ForumSectionRow :section="section" />
+          <div class="forum-subcat">
+            <ForumSectionRow :section="section" />
+            <NuxtLink
+              v-if="section.slug !== 'projects'"
+              :to="`/forum/${section.slug}/new`"
+              class="forum-subcat-plus"
+              :title="`Новая тема в разделе «${section.title}»`"
+              :aria-label="`Новая тема в разделе «${section.title}»`"
+            >
+              +
+            </NuxtLink>
+          </div>
 
           <div v-if="childrenOf(section).length" class="forum-section-children">
             <ForumSectionRow

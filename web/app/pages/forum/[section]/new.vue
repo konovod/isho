@@ -196,12 +196,16 @@ async function moveToSuggested() {
 </script>
 
 <template>
-  <div class="container">
-    <div class="row mb-16">
-      <NuxtLink :to="`/forum/${sectionSlug}`" class="muted small">
-        ← {{ section?.section.title || 'Раздел' }}
+  <div class="container forum-page">
+    <nav class="forum-crumbs" aria-label="Хлебные крошки">
+      <NuxtLink to="/forum">Форум</NuxtLink>
+      <span class="forum-crumb-sep" aria-hidden="true">›</span>
+      <NuxtLink :to="`/forum/${sectionSlug}`">
+        {{ section?.section.title || 'Раздел' }}
       </NuxtLink>
-    </div>
+      <span class="forum-crumb-sep" aria-hidden="true">›</span>
+      <span>Новая тема</span>
+    </nav>
 
     <div class="page-head">
       <div>

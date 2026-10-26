@@ -46,18 +46,18 @@ useHead(() => ({
 </script>
 
 <template>
-  <div v-if="section" class="container">
-    <div class="row mb-16 forum-breadcrumbs">
-      <NuxtLink to="/forum" class="muted small">
-        ← Форум
-      </NuxtLink>
+  <div v-if="section" class="container forum-page">
+    <nav class="forum-crumbs" aria-label="Хлебные крошки">
+      <NuxtLink to="/forum">Форум</NuxtLink>
       <template v-if="section.parent">
-        <span class="muted small">/</span>
-        <NuxtLink :to="`/forum/${section.parent.slug}`" class="muted small">
+        <span class="forum-crumb-sep" aria-hidden="true">›</span>
+        <NuxtLink :to="`/forum/${section.parent.slug}`">
           {{ section.parent.title }}
         </NuxtLink>
       </template>
-    </div>
+      <span class="forum-crumb-sep" aria-hidden="true">›</span>
+      <span>{{ section.title }}</span>
+    </nav>
 
     <div class="page-head">
       <div>

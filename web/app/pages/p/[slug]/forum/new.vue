@@ -59,12 +59,16 @@ async function submit() {
 </script>
 
 <template>
-  <div class="container">
-    <div class="row mb-16">
-      <NuxtLink :to="`/p/${slug}/forum`" class="muted small">
-        ← Обсуждение проекта
-      </NuxtLink>
-    </div>
+  <div class="container forum-page">
+    <nav class="forum-crumbs" aria-label="Хлебные крошки">
+      <NuxtLink to="/forum">Форум</NuxtLink>
+      <span class="forum-crumb-sep" aria-hidden="true">›</span>
+      <NuxtLink :to="`/p/${slug}`">{{ project?.title }}</NuxtLink>
+      <span class="forum-crumb-sep" aria-hidden="true">›</span>
+      <NuxtLink :to="`/p/${slug}/forum`">Обсуждение</NuxtLink>
+      <span class="forum-crumb-sep" aria-hidden="true">›</span>
+      <span>Новая тема</span>
+    </nav>
 
     <div class="page-head">
       <div>

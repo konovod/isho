@@ -374,7 +374,7 @@ useHead(() => ({
 </script>
 
 <template>
-  <div v-if="topic" class="container">
+  <div v-if="topic" class="container forum-page">
     <button
       v-if="quoteSelection && user"
       type="button"
@@ -386,25 +386,25 @@ useHead(() => ({
       Цитировать
     </button>
 
-    <div class="row mb-16 forum-breadcrumbs">
-      <NuxtLink to="/forum" class="muted small">Форум</NuxtLink>
+    <nav class="forum-crumbs" aria-label="Хлебные крошки">
+      <NuxtLink to="/forum">Форум</NuxtLink>
       <template v-if="topic.section.parent">
-        <span class="muted small">/</span>
-        <NuxtLink :to="`/forum/${topic.section.parent.slug}`" class="muted small">
+        <span class="forum-crumb-sep" aria-hidden="true">›</span>
+        <NuxtLink :to="`/forum/${topic.section.parent.slug}`">
           {{ topic.section.parent.title }}
         </NuxtLink>
       </template>
-      <span class="muted small">/</span>
-      <NuxtLink :to="`/forum/${topic.section.slug}`" class="muted small">
+      <span class="forum-crumb-sep" aria-hidden="true">›</span>
+      <NuxtLink :to="`/forum/${topic.section.slug}`">
         {{ topic.section.title }}
       </NuxtLink>
       <template v-if="topic.project">
-        <span class="muted small">/</span>
-        <NuxtLink :to="`/p/${topic.project.slug}`" class="muted small">
+        <span class="forum-crumb-sep" aria-hidden="true">›</span>
+        <NuxtLink :to="`/p/${topic.project.slug}`">
           {{ topic.project.title }}
         </NuxtLink>
       </template>
-    </div>
+    </nav>
 
     <div v-if="actionError" class="form-error">
       {{ actionError }}

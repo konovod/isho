@@ -21,7 +21,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="container">
+  <div class="container forum-page">
     <div class="page-head">
       <div>
         <h1>Форум</h1>

@@ -250,30 +250,115 @@ async function save() {
     class="forum-post"
     :class="{ 'is-unread': unread }"
   >
-    <aside class="forum-post-author">
-      <span class="avatar">{{ initials }}</span>
-      <NuxtLink :to="`/u/${post.author.username}`" class="forum-post-author-name">
-        {{ authorName }}
-      </NuxtLink>
-      <span class="muted small">@{{ post.author.username }}</span>
-      <span
-        v-if="post.author.ai_flair"
-        class="forum-flair"
-        title="Сгенерировано ИИ из последних сообщений автора"
-      >
-        <span aria-hidden="true">✦</span> {{ post.author.ai_flair }}
-      </span>
-    </aside>
+    <header class="forum-post-head">
+      <div class="forum-post-who">
+        <span class="avatar">{{ initials }}</span>
+        <div class="forum-post-who-text">
+          <NuxtLink :to="`/u/${post.author.username}`" class="forum-post-author-name">
+            {{ authorName }}
+          </NuxtLink>
+          <span class="forum-post-user">@{{ post.author.username }}</span>
+          <span
+            v-if="post.author.ai_flair"
+            class="forum-flair"
+            title="Сгенерировано ИИ из последних сообщений автора"
+          >
+            <span aria-hidden="true">✦</span> {{ post.author.ai_flair }}
+          </span>
+        </div>
+      </div>
 
-    <div class="forum-post-main">
-      <header class="forum-post-head">
-        <span class="muted small">
-          {{ dateTime(post.created_at) }}
-          <template v-if="post.edited"> · изменено</template>
-          <span v-if="unread" class="forum-post-new">новое</span>
-        </span>
-
+      <div class="forum-post-side">
         <div class="forum-post-actions">
+          <div ref="reactionsEl" class="forum-reactions">
+            <div
+              v-for="kind in reactionKinds"
+              :key="kind"
+              class="forum-reaction"
+              :class="[kind, { 'is-active': reactions.my_reaction === kind }]"
+            >
+              <button
+                type="button"
+                class="forum-reaction-vote"
+                :disabled="isOwnPost"
+                :aria-label="kind === 'like' ? 'Нравится' : 'Не нравится'"
+                :aria-pressed="reactions.my_reaction === kind"
+                :title="voteTitle(kind)"
+                @click="vote(kind)"
+              >
+                <svg
+                  v-if="kind === 'like'"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+                <svg
+                  v-else
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M17 14V2" />
+                  <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" />
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                class="forum-reaction-count"
+                aria-haspopup="dialog"
+                :aria-expanded="voters?.kind === kind"
+                :aria-label="`Кто проголосовал: ${kind === 'like' ? 'нравится' : 'не нравится'}`"
+                @click="toggleVoters(kind)"
+              >
+                {{ countFor(kind) }}
+              </button>
+
+              <div
+                v-if="voters?.kind === kind"
+                class="forum-reaction-popup"
+                role="dialog"
+                :aria-label="kind === 'like' ? 'Кому нравится' : 'Кому не нравится'"
+              >
+                <p v-if="voters.loading" class="muted small">
+                  Загружаем…
+                </p>
+                <p v-else-if="voters.error" class="form-error small">
+                  {{ voters.error }}
+                </p>
+                <template v-else-if="!voters.items.length">
+                  <p class="muted small">
+                    Пока никто не голосовал.
+                  </p>
+                </template>
+                <template v-else>
+                  <NuxtLink
+                    v-for="voter in voters.items"
+                    :key="voter.id"
+                    :to="`/u/${voter.username}`"
+                    class="forum-reaction-voter"
+                  >
+                    {{ voterName(voter) }}
+                    <span class="muted">@{{ voter.username }}</span>
+                  </NuxtLink>
+                  <p v-if="voters.truncated" class="forum-reaction-more muted small">
+                    … и ещё {{ voters.total - voters.items.length }}
+                  </p>
+                </template>
+              </div>
+            </div>
+          </div>
+
           <button
             v-if="currentUserId"
             type="button"
@@ -300,8 +385,16 @@ async function save() {
             Удалить
           </button>
         </div>
-      </header>
 
+        <span class="forum-post-date">
+          {{ dateTime(post.created_at) }}
+          <template v-if="post.edited"> · изменено</template>
+          <span v-if="unread" class="forum-post-new">новое</span>
+        </span>
+      </div>
+    </header>
+
+    <div class="forum-post-main">
       <div v-if="post.quote" class="forum-quote">
         <div class="forum-quote-author">
           <NuxtLink
@@ -352,98 +445,9 @@ async function save() {
         </div>
       </template>
 
-      <footer ref="reactionsEl" class="forum-reactions">
-        <div
-          v-for="kind in reactionKinds"
-          :key="kind"
-          class="forum-reaction"
-          :class="[kind, { 'is-active': reactions.my_reaction === kind }]"
-        >
-          <button
-            type="button"
-            class="forum-reaction-vote"
-            :disabled="isOwnPost"
-            :aria-label="kind === 'like' ? 'Нравится' : 'Не нравится'"
-            :aria-pressed="reactions.my_reaction === kind"
-            :title="voteTitle(kind)"
-            @click="vote(kind)"
-          >
-            <svg
-              v-if="kind === 'like'"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
-            <svg
-              v-else
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M17 14V2" />
-              <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" />
-            </svg>
-          </button>
-
-          <button
-            type="button"
-            class="forum-reaction-count"
-            aria-haspopup="dialog"
-            :aria-expanded="voters?.kind === kind"
-            :aria-label="`Кто проголосовал: ${kind === 'like' ? 'нравится' : 'не нравится'}`"
-            @click="toggleVoters(kind)"
-          >
-            {{ countFor(kind) }}
-          </button>
-
-          <div
-            v-if="voters?.kind === kind"
-            class="forum-reaction-popup"
-            role="dialog"
-            :aria-label="kind === 'like' ? 'Кому нравится' : 'Кому не нравится'"
-          >
-            <p v-if="voters.loading" class="muted small">
-              Загружаем…
-            </p>
-            <p v-else-if="voters.error" class="form-error small">
-              {{ voters.error }}
-            </p>
-            <template v-else-if="!voters.items.length">
-              <p class="muted small">
-                Пока никто не голосовал.
-              </p>
-            </template>
-            <template v-else>
-              <NuxtLink
-                v-for="voter in voters.items"
-                :key="voter.id"
-                :to="`/u/${voter.username}`"
-                class="forum-reaction-voter"
-              >
-                {{ voterName(voter) }}
-                <span class="muted">@{{ voter.username }}</span>
-              </NuxtLink>
-              <p v-if="voters.truncated" class="forum-reaction-more muted small">
-                … и ещё {{ voters.total - voters.items.length }}
-              </p>
-            </template>
-          </div>
-        </div>
-
-        <p v-if="reactionError" class="forum-reaction-error">
-          {{ reactionError }}
-        </p>
-      </footer>
+      <p v-if="reactionError" class="forum-reaction-error">
+        {{ reactionError }}
+      </p>
     </div>
   </article>
 </template>

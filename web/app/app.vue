@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const THEME_COLORS = { dark: '#0f1116', light: '#f6f7fb' } as const
+const THEME_COLORS = { dark: '#131314', light: '#cfd2d5' } as const
 const siteName = SITE_NAME
 
 const { user, loaded, fetchMe } = useAuth()

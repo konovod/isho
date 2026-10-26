@@ -41,9 +41,8 @@ const counts = computed(() => {
           {{ section.unread_topics_count }}
         </span>
       </h3>
-      <p v-if="section.description" class="muted small">{{ section.description }}</p>
-      <p class="muted small">{{ counts }}</p>
+      <p v-if="section.description" class="forum-section-desc">{{ section.description }}</p>
     </div>
-    <span class="forum-section-arrow">→</span>
+    <span class="forum-section-counts">{{ counts }}</span>
   </NuxtLink>
 </template>
