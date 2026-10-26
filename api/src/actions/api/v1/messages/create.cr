@@ -14,12 +14,24 @@ class Api::V1::Messages::Create < ApiAction
       ), status: 422)
     end
 
+    # The blocker knows about their own choice, so the closed conversation is
+    # reported to them. The other side must not learn about the block: their
+    # message is accepted and kept in their own history, but never delivered.
+    if UserBlockQuery.new.blocker(current_user.id).blocked_user(peer.id).first?
+      return json(ErrorSerializer.new(
+        code: "blocked_peer",
+        message: "Вы заблокировали этого пользователя. Разблокируйте, чтобы написать.",
+      ), status: 422)
+    end
+
+    delivered = UserBlockQuery.new.blocker(peer.id).blocked_user(current_user.id).first?.nil?
     fields = params.nested?("private_message")
 
     message = SavePrivateMessage.create!(
       sender_id: current_user.id,
       recipient_id: peer.id,
       body: fields["body"]? || "",
+      delivered: delivered,
     )
 
     saved = PrivateMessageQuery.new.id(message.id).preload_sender.first? ||

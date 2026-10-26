@@ -1,7 +1,13 @@
 class ForumSectionSerializer < BaseSerializer
   # `user` enables per-user unread counters and applies the viewer's content
   # preferences to project discussions; visitors get zeroes and fewer topics.
-  def initialize(@section : ForumSection, @user : User? = nil)
+  # `blocked_user_ids` keeps blocked authors out of the unread counter without
+  # changing the total counters.
+  def initialize(
+    @section : ForumSection,
+    @user : User? = nil,
+    @blocked_user_ids : Array(Int64) = [] of Int64,
+  )
   end
 
   def render
@@ -60,7 +66,8 @@ class ForumSectionSerializer < BaseSerializer
   private def unread_topics_count : Int64
     user = @user
     return 0_i64 unless user
+    return topics_query.unread_for(user.id).select_count if @blocked_user_ids.empty?
 
-    topics_query.unread_for(user.id).select_count
+    topics_query.unread_visible_for(user.id).select_count
   end
 end

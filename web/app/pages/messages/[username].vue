@@ -25,6 +25,7 @@ if (!data.value && error.value) {
 const peer = computed(() => data.value?.peer ?? null)
 const messages = computed(() => data.value?.items ?? [])
 const hasMore = computed(() => data.value?.has_more ?? false)
+const blocked = computed(() => data.value?.blocked === true)
 
 const peerName = computed(() => peer.value?.display_name || peer.value?.username || '')
 const initials = computed(() => peerName.value.slice(0, 2))
@@ -216,11 +217,16 @@ useSeoMeta({
     </div>
 
     <MessageComposer
-      v-if="user && !banned && !impersonating && emailConfirmed"
+      v-if="user && !banned && !impersonating && emailConfirmed && !blocked"
       :username="peer.username"
       class="mt-24"
       @posted="onPosted"
     />
+
+    <div v-else-if="blocked" class="empty mt-24">
+      Вы заблокировали этого пользователя. Переписка закрыта —
+      <NuxtLink :to="`/u/${peer.username}`">разблокируйте в профиле</NuxtLink>.
+    </div>
 
     <div v-else-if="banned" class="empty mt-24">
       Аккаунт забанен — писать нельзя до окончания срока.

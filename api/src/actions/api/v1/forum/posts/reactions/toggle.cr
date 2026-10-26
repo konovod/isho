@@ -7,6 +7,7 @@ class Api::V1::Forum::Posts::Reactions::Toggle < ApiAction
   post "/api/v1/forum/posts/:id/reactions" do
     post = find_forum_post!(params.get(:id))
     require_visible_forum_topic!(post.topic)
+    require_visible_forum_post!(post)
 
     if post.user_id == current_user.id
       return json(ErrorSerializer.new(

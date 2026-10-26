@@ -15,6 +15,17 @@ class ForumPostQuery < ForumPost::BaseQuery
     user_id(user_id)
   end
 
+  # Messages written by an account the viewer blocked.
+  def excluding_blocked_authors(blocker_id : Int64) : self
+    where(<<-SQL, blocker_id)
+      forum_posts.user_id NOT IN (
+        SELECT user_blocks.blocked_user_id
+        FROM user_blocks
+        WHERE user_blocks.blocker_id = ?
+      )
+    SQL
+  end
+
   def since(time : Time)
     created_at.gte(time)
   end

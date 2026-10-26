@@ -6,14 +6,20 @@ class Api::V1::Messages::Show < ApiAction
     require_other_user!(peer)
 
     per_page = AppSettings::PRIVATE_MESSAGES_PER_PAGE
-    messages, has_more = conversation_page(PrivateMessageQuery.new.between(current_user.id, peer.id), per_page)
+    query = PrivateMessageQuery.new
+      .between(current_user.id, peer.id)
+      .visible_to(current_user.id)
+    messages, has_more = conversation_page(query, per_page)
     context.response.headers["Cache-Control"] = "private, no-store"
+
+    blocked = !UserBlockQuery.new.blocker(current_user.id).blocked_user(peer.id).first?.nil?
 
     json({
       peer:         UserSerializer.new(peer),
       items:        messages.map { |message| PrivateMessageSerializer.new(message, current_user.id) },
       has_more:     has_more,
       unread_count: DirectMessages.unread_count(current_user),
+      blocked:      blocked,
     })
   end
 

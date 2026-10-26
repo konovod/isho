@@ -21,6 +21,28 @@ class PrivateMessageQuery < PrivateMessage::BaseQuery
     read_at.is_nil
   end
 
+  def delivered_only
+    delivered(true)
+  end
+
+  # A message is visible to its sender even when it was never delivered, so
+  # the blocked author still sees their own side of the conversation.
+  def visible_to(viewer_id : Int64)
+    where("(private_messages.delivered = TRUE OR private_messages.sender_id = ?)", viewer_id)
+  end
+
+  # Safety net for counters: even an old unread row from a blocked account
+  # must not light up the badge.
+  def not_from_blocked(blocker_id : Int64)
+    where(<<-SQL, blocker_id)
+      private_messages.sender_id NOT IN (
+        SELECT user_blocks.blocked_user_id
+        FROM user_blocks
+        WHERE user_blocks.blocker_id = ?
+      )
+    SQL
+  end
+
   def older_than(message_id : Int64)
     id.lt(message_id)
   end

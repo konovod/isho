@@ -75,8 +75,8 @@ module AppSettings
   AI_SUGGESTION_MAX_INPUT_CHARS  =  2_000
   AI_SUGGESTION_MAX_TOKENS       =    120
   AI_SUGGESTION_MIN_CONFIDENCE   =    0.6
-  AI_FLAIR_MAX_CHARS             =     64
-  AI_FLAIR_MIN_POSTS             =     10
+  AI_FLAIR_MAX_CHARS             =     32
+  AI_FLAIR_MIN_POSTS             =      3
   AI_FLAIR_MIN_NEW_POSTS         =      3
   AI_FLAIR_LOOKBACK_POSTS        =    100
   AI_FLAIR_POST_CHARS            =    300

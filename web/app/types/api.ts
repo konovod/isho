@@ -88,6 +88,18 @@ export interface PrivateMessageList {
   items: PrivateMessage[]
   has_more: boolean
   unread_count: number
+  /** Set when the current user blocked this peer; the composer stays closed. */
+  blocked: boolean
+}
+
+/** One account in the current user's blacklist. */
+export interface BlockedUser {
+  user: ApiUser
+  blocked_at: string
+}
+
+export interface BlockedUserList {
+  items: BlockedUser[]
 }
 
 /** Active moderation ban shown to the user and in the admin list. */
@@ -177,6 +189,8 @@ export interface ForumTopic {
   read_posts_count: number | null
   unread_count: number
   first_unread_page: number
+  /** First unread message in the visible sequence; null without a blacklist. */
+  first_unread_post_id: number | null
   /** Only returned on the first page of the topic. */
   ai_answer: ForumAiAnswer | null
 }

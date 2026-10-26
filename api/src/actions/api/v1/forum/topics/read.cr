@@ -41,20 +41,33 @@ class Api::V1::Forum::Topics::Read < ApiAction
       .for_topic(topic.id)
       .first?
 
+    # The marker never goes back. A row written before `last_post_id` existed
+    # is treated as read up to the post its count points at.
+    newer = read.nil? ||
+            read.last_post_id.nil? ||
+            last_post.id > read.last_post_id.not_nil!
+
     read = if read
-             read_count > read.read_count ? SaveForumTopicRead.update!(read, read_count: read_count) : read
+             newer ? SaveForumTopicRead.update!(read, read_count: read_count, last_post_id: last_post.id) : read
            else
              SaveForumTopicRead.create!(
                user_id: current_user.id,
                topic_id: topic.id,
                read_count: read_count,
+               last_post_id: last_post.id,
              )
            end
 
-    unread = topic.total_posts - read.read_count
+    unread = if forum_blocks?
+               ForumReadState.for_topics([topic.id], current_user.id)[topic.id].unread_count
+             else
+               remaining = topic.total_posts - read.read_count
+               remaining.positive? ? remaining : 0
+             end
+
     json({
       read_posts_count: read.read_count,
-      unread_count:     unread.positive? ? unread : 0,
+      unread_count:     unread,
     })
   end
 end

@@ -9,6 +9,7 @@ class MarkPrivateMessagesRead < Avram::Operation
       .for_recipient(user.id)
       .from(peer.id)
       .unread
+      .delivered_only
       .update(read_at: Time.utc)
   end
 end

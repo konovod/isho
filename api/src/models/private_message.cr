@@ -7,6 +7,9 @@ class PrivateMessage < BaseModel
     belongs_to recipient : User
     column body : String
     column read_at : Time?
+    # False when the recipient blocked the sender: the sender keeps the
+    # message in their own conversation, the recipient never sees it.
+    column delivered : Bool
   end
 
   def read? : Bool

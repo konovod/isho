@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AiUsage, Me, StorageUsage } from '~/types/api'
+import type { AiUsage, BlockedUserList, Me, StorageUsage } from '~/types/api'
 import { formatApiError } from '~/composables/useApi'
 
 definePageMeta({ middleware: 'auth' })
@@ -17,7 +17,37 @@ const { data: storage } = await useAsyncData(
   () => api.get<StorageUsage>('/api/v1/me/storage'),
 )
 
+const { data: blockedUsers, refresh: refreshBlockedUsers } = await useAsyncData(
+  'me-blocked-users',
+  () => api.get<BlockedUserList>('/api/v1/me/blocked_users'),
+)
+
 const usedProjects = computed(() => storage.value?.projects.filter(project => project.used_bytes > 0) ?? [])
+
+const unblocking = ref('')
+const blockError = ref('')
+
+async function unblock(username: string) {
+  unblocking.value = username
+  blockError.value = ''
+
+  try {
+    await api.del(`/api/v1/users/${encodeURIComponent(username)}/block`)
+    if (blockedUsers.value) {
+      blockedUsers.value = {
+        items: blockedUsers.value.items.filter(item => item.user.username !== username),
+      }
+    }
+    clearNuxtData()
+  }
+  catch (err) {
+    blockError.value = formatApiError(err, 'Не удалось разблокировать пользователя')
+    await refreshBlockedUsers()
+  }
+  finally {
+    unblocking.value = ''
+  }
+}
 
 const form = reactive({
   show_nsfw: user.value?.show_nsfw ?? true,
@@ -138,6 +168,44 @@ async function save() {
         {{ saving ? 'Сохраняем…' : 'Сохранить' }}
       </button>
     </form>
+
+    <div class="card card-pad settings-card mt-24">
+      <h2 class="section-title">
+        Чёрный список
+      </h2>
+      <p class="muted small mb-16">
+        Заблокированные пользователи не видны вам на форуме, а их личные сообщения не приходят.
+        Они не узнают, что вы их заблокировали.
+      </p>
+
+      <div v-if="blockError" class="form-error">
+        {{ blockError }}
+      </div>
+
+      <div v-if="!blockedUsers?.items.length" class="muted small">
+        В чёрном списке никого нет.
+      </div>
+
+      <ul v-else class="conversation-list">
+        <li v-for="item in blockedUsers.items" :key="item.user.id">
+          <div class="conversation-row">
+            <NuxtLink :to="`/u/${item.user.username}`" class="conversation-main">
+              {{ item.user.display_name || item.user.username }}
+              <span class="muted small">@{{ item.user.username }}</span>
+            </NuxtLink>
+
+            <button
+              class="btn btn-ghost btn-sm"
+              type="button"
+              :disabled="!!user?.impersonation || unblocking === item.user.username"
+              @click="unblock(item.user.username)"
+            >
+              {{ unblocking === item.user.username ? 'Разблокируем…' : 'Разблокировать' }}
+            </button>
+          </div>
+        </li>
+      </ul>
+    </div>
 
     <div v-if="storage" class="card card-pad settings-card mt-24">
       <h2 class="section-title">

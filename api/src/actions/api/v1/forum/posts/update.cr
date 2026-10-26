@@ -7,13 +7,16 @@ class Api::V1::Forum::Posts::Update < ApiAction
   patch "/api/v1/forum/posts/:id" do
     post = find_forum_post!(params.get(:id))
     require_visible_forum_topic!(post.topic)
+    require_visible_forum_post!(post)
     require_forum_editor!(post.user_id)
 
     updated = SaveForumPost.update!(post, params)
+    blocker_id = forum_blocks? ? current_user.id : nil
     json ForumPostSerializer.new(
       reload_forum_post(updated),
-      forum_quote_page(updated),
+      forum_quote_page(updated, blocker_id),
       ForumReactions.summary(updated.id, current_user?.try(&.id)),
+      forum_blocked_usernames,
     )
   end
 end

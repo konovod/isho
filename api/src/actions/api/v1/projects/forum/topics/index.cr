@@ -1,6 +1,7 @@
 class Api::V1::Projects::Forum::Topics::Index < ApiAction
   include Api::Auth::SkipRequireSession
   include Api::V1::Projects::ProjectParams
+  include Api::V1::Forum::Blocks
   include Api::V1::Forum::Params
   include Api::V1::Forum::ReadState
 
@@ -20,6 +21,10 @@ class Api::V1::Projects::Forum::Topics::Index < ApiAction
       .preload_project
       .preload_last_post_user
 
+    if forum_blocks? && (blocker = current_user?)
+      query = query.excluding_blocked_authors(blocker.id)
+    end
+
     total = query.clone.select_count
     topics = query
       .limit(per_page)
@@ -27,10 +32,22 @@ class Api::V1::Projects::Forum::Topics::Index < ApiAction
       .results
 
     read_counts = forum_read_counts(topics)
+    states = if forum_blocks? && (viewer = current_user?)
+               ForumReadState.for_topics(topics.map(&.id), viewer.id)
+             else
+               {} of Int64 => ForumReadState::State
+             end
 
     json({
-      items: topics.map { |topic| ForumTopicSerializer.new(topic, read_counts.try { |counts| counts[topic.id]? }) },
-      meta:  pagination_meta(page, per_page, total),
+      items: topics.map { |topic|
+        ForumTopicSerializer.new(
+          topic,
+          read_counts.try { |counts| counts[topic.id]? },
+          state: states[topic.id]?,
+          blocked_user_ids: forum_blocked_ids,
+        )
+      },
+      meta: pagination_meta(page, per_page, total),
     })
   end
 end

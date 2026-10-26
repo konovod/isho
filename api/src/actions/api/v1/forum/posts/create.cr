@@ -20,6 +20,11 @@ class Api::V1::Forum::Posts::Create < ApiAction
       quote_text: fields["quote_text"]?,
     )
 
-    json ForumPostSerializer.new(reload_forum_post(post), forum_quote_page(post)), status: 201
+    blocker_id = forum_blocks? ? current_user.id : nil
+    json ForumPostSerializer.new(
+      reload_forum_post(post),
+      forum_quote_page(post, blocker_id),
+      blocked_usernames: forum_blocked_usernames,
+    ), status: 201
   end
 end

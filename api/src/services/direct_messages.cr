@@ -35,7 +35,12 @@ module DirectMessages
   end
 
   def self.unread_count(user : User) : Int64
-    PrivateMessageQuery.new.for_recipient(user.id).unread.select_count
+    PrivateMessageQuery.new
+      .for_recipient(user.id)
+      .unread
+      .delivered_only
+      .not_from_blocked(user.id)
+      .select_count
   end
 
   # One row per peer with the latest message; the unread counter is per peer
@@ -52,7 +57,8 @@ module DirectMessages
           ELSE private_messages.sender_id
         END AS peer_id
       FROM private_messages
-      WHERE private_messages.sender_id = $1 OR private_messages.recipient_id = $1
+      WHERE (private_messages.sender_id = $1 OR private_messages.recipient_id = $1)
+        AND (private_messages.delivered = TRUE OR private_messages.sender_id = $1)
     ),
     last AS (
       SELECT DISTINCT ON (peer_id) peer_id, id, body, sender_id, created_at
@@ -71,6 +77,10 @@ module DirectMessages
         WHERE unread.sender_id = last.peer_id
           AND unread.recipient_id = $1
           AND unread.read_at IS NULL
+          AND unread.delivered = TRUE
+          AND unread.sender_id NOT IN (
+            SELECT blocked_user_id FROM user_blocks WHERE blocker_id = $1
+          )
       )::bigint AS unread_count
     FROM last
     ORDER BY last.created_at DESC, last.id DESC

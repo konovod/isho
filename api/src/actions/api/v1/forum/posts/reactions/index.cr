@@ -9,6 +9,7 @@ class Api::V1::Forum::Posts::Reactions::Index < ApiAction
   get "/api/v1/forum/posts/:id/reactions" do
     post = find_forum_post!(params.get(:id))
     require_visible_forum_topic!(post.topic)
+    require_visible_forum_post!(post)
 
     kind = params.get?(:kind).try(&.strip).presence || ForumPostReaction::LIKE
     unless ForumPostReaction.valid_kind?(kind)

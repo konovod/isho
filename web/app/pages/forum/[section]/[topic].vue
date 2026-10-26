@@ -35,7 +35,17 @@ const pageOffset = computed(() => {
   const meta = data.value?.meta
   return ((meta?.page ?? 1) - 1) * (meta?.per_page ?? 20)
 })
+const firstUnreadPostId = computed(() => data.value?.topic.first_unread_post_id ?? null)
 const firstUnreadIndex = computed(() => {
+  if ((data.value?.topic.unread_count ?? 0) <= 0) return -1
+
+  // With a blacklist the server sends the first visible unread post, because
+  // the absolute read count no longer matches the visible sequence.
+  const firstUnread = firstUnreadPostId.value
+  if (firstUnread !== null) {
+    return posts.value.findIndex(post => post.id >= firstUnread)
+  }
+
   const read = data.value?.topic.read_posts_count
   if (read === null || read === undefined) return -1
 
@@ -130,11 +140,20 @@ async function markTopicRead() {
   // target account's unread state.
   if (!user.value || user.value.impersonation || !topic.value || !posts.value.length) return
 
-  const read = topic.value.read_posts_count
-  if (read !== null && pageOffset.value + posts.value.length <= read) return
+  if (topic.value.unread_count <= 0) return
 
+  const firstUnread = topic.value.first_unread_post_id
   const lastPost = posts.value[posts.value.length - 1]
   if (!lastPost) return
+
+  if (firstUnread !== null && firstUnread !== undefined) {
+    // Never mark read while the reader is on a page before the unread block.
+    if (lastPost.id < firstUnread) return
+  }
+  else {
+    const read = topic.value.read_posts_count
+    if (read !== null && pageOffset.value + posts.value.length <= read) return
+  }
 
   try {
     await api.post(`/api/v1/forum/topics/${topic.value.id}/read`, {
@@ -291,7 +310,9 @@ async function onPosted(post: ForumPost) {
   const current = data.value
   if (!current) return
 
-  const totalAfter = current.topic.replies_count + 2
+  // `meta.total` counts the messages this viewer can see, so a reply lands on
+  // the right page even when blocked messages are filtered out.
+  const totalAfter = current.meta.total + 1
   const lastPage = Math.max(1, Math.ceil(totalAfter / current.meta.per_page))
 
   if (lastPage !== current.meta.page) {
